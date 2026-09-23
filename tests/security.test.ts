@@ -44,3 +44,28 @@ describe('staging basic auth', () => {
     expect(safeEqual('abc', 'abcd')).toBe(false);
   });
 });
+
+import { clientIp } from '@/infrastructure/security/request-guards';
+import { BodyTooLargeError, readTextLimited } from '@/lib/http';
+
+describe('clientIp', () => {
+  it('ignora lo que el cliente inventa al inicio de X-Forwarded-For', () => {
+    const h = new Headers({ 'x-forwarded-for': '6.6.6.6, 203.0.113.9' });
+    expect(clientIp(h, 1)).toBe('203.0.113.9');
+    expect(clientIp(h, 2)).toBe('6.6.6.6');
+    expect(clientIp(new Headers({ 'x-real-ip': '1.2.3.4' }))).toBe('1.2.3.4');
+  });
+});
+
+describe('readTextLimited', () => {
+  const req = (body: string, headers: Record<string, string> = {}) => new Request('https://x.test', { method: 'POST', body, headers });
+  it('lee cuerpos dentro del límite', async () => {
+    expect(await readTextLimited(req('{"a":1}'), 100)).toBe('{"a":1}');
+  });
+  it('rechaza por Content-Length sin leer', async () => {
+    await expect(readTextLimited(req('x', { 'content-length': '999999' }), 100)).rejects.toBeInstanceOf(BodyTooLargeError);
+  });
+  it('corta el stream si el cuerpo real excede el límite', async () => {
+    await expect(readTextLimited(req('x'.repeat(500)), 100)).rejects.toBeInstanceOf(BodyTooLargeError);
+  });
+});

@@ -19,7 +19,25 @@ export type OrderStatus =
 /** Tiempo tras el cual un reclamo `processing` se considera abandonado (proceso caído). */
 export const FULFILLMENT_CLAIM_TTL_MS = 5 * 60_000;
 
+/** Lo que el cliente pidió (viaja en la metadata del pago). */
 export interface OrderLine { readonly sku: string; readonly quantity: number }
+
+/**
+ * Línea tal como se vendió: nombre y precio CONGELADOS al momento del pago.
+ * Cambiar precios o retirar un producto nunca altera pedidos pasados (correos, reportes, producción).
+ */
+export interface OrderItem extends OrderLine {
+  readonly name: string;
+  readonly unitCents: number;
+}
+
+/** Desglose cobrado por el procesador de pagos (fuente de verdad del dinero). */
+export interface OrderAmounts {
+  readonly subtotal: Money;
+  readonly discount: Money;
+  readonly shipping: Money;
+  readonly tax: Money;
+}
 
 export interface ShippingAddress {
   readonly name: string;
@@ -33,10 +51,13 @@ export interface ShippingAddress {
 
 export interface Order {
   readonly id: string;
+  /** Número visible para el cliente (AA-10001). Lo asigna la base de datos; null hasta guardarse. */
+  readonly number: number | null;
   readonly paymentRef: string;             // Stripe Checkout Session id (único)
   readonly status: OrderStatus;
-  readonly lines: readonly OrderLine[];
+  readonly lines: readonly OrderItem[];
   readonly total: Money;
+  readonly amounts: OrderAmounts;
   readonly email: string | null;
   readonly phone: string | null;
   readonly shipping: ShippingAddress | null;
@@ -54,3 +75,7 @@ export const decodeLines = (value: string): OrderLine[] =>
     .map((part) => part.split(':'))
     .filter(([sku, qty]) => sku && /^\d+$/.test(qty ?? ''))
     .map(([sku, qty]) => ({ sku, quantity: Number(qty) }));
+
+/** Número de pedido legible, único y buscable. Respaldo: final del id de pago (antes de guardarse). */
+export const orderLabel = (o: Pick<Order, 'number' | 'paymentRef'>): string =>
+  o.number != null ? `AA-${o.number}` : o.paymentRef.slice(-8).toUpperCase();

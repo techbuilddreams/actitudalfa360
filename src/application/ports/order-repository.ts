@@ -1,7 +1,7 @@
 import type { Order, OrderStatus } from '@/domain/order';
 
 export interface OrderRepository {
-  /** Inserta si no existe (idempotente por paymentRef, garantizado por índice único). */
+  /** Inserta si no existe (idempotente por paymentRef, garantizado por índice único). Devuelve el pedido con su número. */
   createIfAbsent(order: Order): Promise<{ created: boolean; order: Order }>;
 
   /**
@@ -15,6 +15,9 @@ export interface OrderRepository {
   completeFulfillment(id: string, result: { status: 'fulfillment_created'; ref: string } | { status: 'fulfillment_failed' }): Promise<void>;
 
   findByPaymentRef(paymentRef: string): Promise<Order | undefined>;
+
+  /** Verifica que el almacenamiento responde (para /api/health). */
+  ping(): Promise<void>;
 }
 
 export type { OrderStatus };

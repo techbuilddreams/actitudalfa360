@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { env, isProduction, requireEnv } from '@/config/env';
 import { site } from '@/config/site';
 import { flatShipping } from '@/domain/cart';
+import { orderLabel } from '@/domain/order';
 import { makeCreateCheckout } from '@/application/use-cases/create-checkout';
 import { makeHandlePayment } from '@/application/use-cases/handle-payment';
 import type { OrderRepository } from '@/application/ports/order-repository';
@@ -31,6 +32,7 @@ let notifier: Notifier | undefined;
 export const catalog = staticCatalog;
 export const logger = consoleLogger;
 export const checkoutLimiter = createRateLimiter(10, 60_000);
+export const pageLookupLimiter = createRateLimiter(30, 60_000); // /gracias consulta a Stripe: evita agotar su cuota
 
 export function paymentGateway(): StripeGateway {
   payments ??= new StripeGateway({
@@ -45,7 +47,7 @@ export function paymentGateway(): StripeGateway {
   return payments;
 }
 
-function orderRepository(): OrderRepository {
+export function orderRepository(): OrderRepository {
   if (orders) return orders;
   const url = env().DATABASE_URL;
   if (url) orders = new MySqlOrderRepository(getDb(url, env().DB_POOL_SIZE));
@@ -63,7 +65,7 @@ function notifications(): Notifier {
   const list: Notifier[] = [new LogNotifier(logger)];
   if (e.SMTP_USER && e.SMTP_PASSWORD) {
     const mailer = new SmtpMailer({ host: e.SMTP_HOST, port: e.SMTP_PORT, user: e.SMTP_USER, password: e.SMTP_PASSWORD, from: e.MAIL_FROM });
-    list.push(new EmailNotifier(mailer, catalog, logger, e.ORDER_NOTIFY_EMAIL));
+    list.push(new EmailNotifier(mailer, logger, e.ORDER_NOTIFY_EMAIL));
   } else {
     logger.warn('Correo desactivado: faltan SMTP_USER/SMTP_PASSWORD');
   }
@@ -77,7 +79,6 @@ export const createCheckout = () =>
     payments: paymentGateway(),
     shippingFor: flatShipping(env().SHIPPING_FLAT_CENTS),
     siteUrl: env().NEXT_PUBLIC_SITE_URL.replace(/\/$/, ''),
-    newId: randomUUID,
   });
 
 export const handlePayment = () =>
@@ -85,10 +86,21 @@ export const handlePayment = () =>
     orders: orderRepository(),
     catalog,
     fulfillment: env().PRINTIFY_AUTO_ORDER
-      ? new PrintifyFulfillment({ token: requireEnv('PRINTIFY_API_TOKEN'), shopId: requireEnv('PRINTIFY_SHOP_ID') })
+      ? new PrintifyFulfillment({ token: requireEnv('PRINTIFY_API_TOKEN'), shopId: requireEnv('PRINTIFY_SHOP_ID'), catalog })
       : null,
     notifier: notifications(),
     logger,
     newId: randomUUID,
     now: () => new Date(),
   });
+
+/**
+ * Datos para la página de gracias. Primero nuestra base (número de pedido real);
+ * Stripe solo confirma el estado del pago. Nunca expone la dirección.
+ */
+export async function orderConfirmation(paymentRef: string) {
+  const summary = await paymentGateway().getCheckoutSummary(paymentRef);
+  if (!summary) return null;
+  const order = await orderRepository().findByPaymentRef(summary.paymentRef).catch(() => undefined);
+  return { ...summary, label: order ? orderLabel(order) : null };
+}

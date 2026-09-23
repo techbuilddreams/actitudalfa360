@@ -1,5 +1,13 @@
 import Link from 'next/link';
 import { site } from '@/config/site';
+import { MobileMenu } from './mobile-menu';
+
+const LINKS = [
+  { href: '/#pilares', label: 'Pilares' },
+  { href: '/#tienda', label: 'Colección' },
+  { href: '/#manifiesto', label: 'Manifiesto' },
+  { href: '/#preguntas', label: 'Preguntas' },
+] as const;
 
 export function SiteHeader() {
   return (
@@ -8,14 +16,13 @@ export function SiteHeader() {
         <Link className="brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/img/sello-68.webp" width={34} height={34} alt="" />
-          {site.name.toUpperCase()}
+          <span>{site.name}</span>
         </Link>
         <div className="navlinks">
-          <Link href="/#pilares">Pilares</Link>
-          <Link href="/#tienda">Tienda</Link>
-          <Link href="/#preguntas">Preguntas</Link>
-          <Link className="btn" href="/#tienda">Ver tienda</Link>
+          {LINKS.map((l) => <Link key={l.href} href={l.href}>{l.label}</Link>)}
+          <Link className="btn ghost sm" href="/#tienda">Tienda</Link>
         </div>
+        <MobileMenu links={LINKS} />
       </div>
     </nav>
   );

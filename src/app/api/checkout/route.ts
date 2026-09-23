@@ -4,7 +4,7 @@ import { MAX_LINES, MAX_QTY_PER_LINE } from '@/domain/cart';
 import { env } from '@/config/env';
 import { checkoutLimiter, createCheckout, logger } from '@/infrastructure/container';
 import { clientIp, isSameOrigin } from '@/infrastructure/security/request-guards';
-import { json } from '@/lib/http';
+import { BodyTooLargeError, json, readTextLimited } from '@/lib/http';
 
 const Body = z.object({
   items: z
@@ -16,17 +16,15 @@ const Body = z.object({
 export async function POST(req: Request) {
   if (!isSameOrigin(req.headers, env().NEXT_PUBLIC_SITE_URL)) return json(403, { error: 'Origen no permitido.' });
 
-  const rl = checkoutLimiter.hit(clientIp(req.headers));
+  const rl = checkoutLimiter.hit(clientIp(req.headers, env().TRUSTED_PROXY_HOPS));
   if (!rl.allowed) return json(429, { error: 'Demasiados intentos. Espera un minuto.' }, { 'Retry-After': String(rl.retryAfterSec) });
 
   if (!req.headers.get('content-type')?.startsWith('application/json')) return json(415, { error: 'Formato no válido.' });
-  const raw = await req.text();
-  if (raw.length > 4_096) return json(413, { error: 'Petición demasiado grande.' });
-
   let body: z.infer<typeof Body>;
   try {
-    body = Body.parse(JSON.parse(raw));
-  } catch {
+    body = Body.parse(JSON.parse(await readTextLimited(req, 4_096)));
+  } catch (err) {
+    if (err instanceof BodyTooLargeError) return json(413, { error: 'Petición demasiado grande.' });
     return json(400, { error: 'Petición no válida.' });
   }
 

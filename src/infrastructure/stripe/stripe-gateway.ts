@@ -1,7 +1,8 @@
 import 'server-only';
 import Stripe from 'stripe';
 import { usd } from '@/domain/money';
-import { decodeLines, encodeLines, type ShippingAddress } from '@/domain/order';
+import { InvalidWebhookError } from '@/domain/errors';
+import { decodeLines, encodeLines, type OrderLine, type ShippingAddress } from '@/domain/order';
 import type { CheckoutRequest, CheckoutSummary, PaidCheckout, PaymentGateway } from '@/application/ports/payment-gateway';
 
 const HANDLED = new Set(['checkout.session.completed', 'checkout.session.async_payment_succeeded']);
@@ -32,6 +33,7 @@ export class StripeGateway implements PaymentGateway {
           price_data: {
             currency: l.variant.price.currency,
             unit_amount: l.variant.price.cents,
+            tax_behavior: 'exclusive', // precio sin impuesto; Stripe Tax lo suma si está activo
             product_data: {
               name: `${l.product.name} — ${l.variant.label}`,
               metadata: { sku: l.variant.sku },
@@ -45,6 +47,7 @@ export class StripeGateway implements PaymentGateway {
               type: 'fixed_amount',
               display_name: 'Envío estándar EE. UU.',
               fixed_amount: { amount: req.shipping.cents, currency: req.shipping.currency },
+              tax_behavior: 'exclusive',
               delivery_estimate: {
                 minimum: { unit: 'business_day', value: this.opts.deliveryDays.min },
                 maximum: { unit: 'business_day', value: this.opts.deliveryDays.max },
@@ -59,29 +62,54 @@ export class StripeGateway implements PaymentGateway {
         metadata: { lines: encodeLines(lines) },
         payment_intent_data: { metadata: { lines: encodeLines(lines) } },
       },
-      { idempotencyKey: req.idempotencyKey },
     );
     if (!session.url) throw new Error('Stripe no devolvió URL de checkout');
     return { url: session.url };
   }
 
   async parseWebhook(rawBody: string, signature: string): Promise<PaidCheckout | null> {
+    // Falta de configuración ≠ firma inválida: esto lanza un Error normal (500) para que se note en los logs.
     if (!this.opts.webhookSecret) throw new Error('Falta STRIPE_WEBHOOK_SECRET');
-    // Lanza si la firma no es válida o el evento es viejo (tolerancia 300 s por defecto).
-    const event = this.stripe.webhooks.constructEvent(rawBody, signature, this.opts.webhookSecret);
+    let event: Stripe.Event;
+    try {
+      // Lanza si la firma no es válida o el evento es viejo (tolerancia 300 s por defecto).
+      event = this.stripe.webhooks.constructEvent(rawBody, signature, this.opts.webhookSecret);
+    } catch (err) {
+      if (err instanceof Stripe.errors.StripeSignatureVerificationError) throw new InvalidWebhookError();
+      throw err;
+    }
     if (!HANDLED.has(event.type)) return null;
 
     const s = event.data.object as Stripe.Checkout.Session;
     if (s.payment_status !== 'paid') return null;
 
+    const cents = (n: number | null | undefined) => usd(n ?? 0);
     return {
       paymentRef: s.id,
-      lines: decodeLines(s.metadata?.lines ?? ''),
-      total: usd(s.amount_total ?? 0),
+      lines: await this.linesOf(s),
+      total: cents(s.amount_total),
+      amounts: {
+        subtotal: cents(s.amount_subtotal),
+        discount: cents(s.total_details?.amount_discount),
+        shipping: cents(s.total_details?.amount_shipping),
+        tax: cents(s.total_details?.amount_tax),
+      },
       email: s.customer_details?.email ?? null,
       phone: s.customer_details?.phone ?? null,
       shipping: toAddress(s),
     };
+  }
+
+  /** Líneas desde la metadata; si faltara, se reconstruyen desde Stripe para no perder nunca un pedido pagado. */
+  private async linesOf(s: Stripe.Checkout.Session): Promise<OrderLine[]> {
+    const fromMeta = decodeLines(s.metadata?.lines ?? '');
+    if (fromMeta.length > 0) return fromMeta;
+    const items = await this.stripe.checkout.sessions.listLineItems(s.id, { limit: 100, expand: ['data.price.product'] });
+    return items.data.flatMap((li) => {
+      const product = li.price?.product;
+      const sku = product && typeof product === 'object' && !('deleted' in product && product.deleted) ? product.metadata?.sku : undefined;
+      return sku && li.quantity ? [{ sku, quantity: li.quantity }] : [];
+    });
   }
 
   async getCheckoutSummary(paymentRef: string): Promise<CheckoutSummary | null> {

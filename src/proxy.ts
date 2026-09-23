@@ -6,8 +6,11 @@ import { isAuthorized } from '@/infrastructure/security/basic-auth';
  * 2) CSP estricta con nonce por petición + encabezados de seguridad.
  */
 export function proxy(request: NextRequest) {
-  const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging';
+  // Variable de servidor (se lee al ejecutar, no se congela en el build).
+  const isStaging = process.env.APP_ENV === 'staging';
   const credentials = process.env.STAGING_BASIC_AUTH;
+  // Falla cerrado: staging sin contraseña configurada NO queda público.
+  if (isStaging && !credentials) return new NextResponse('Staging sin STAGING_BASIC_AUTH', { status: 503, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
   if (isStaging && credentials && !isAuthorized(request.headers.get('authorization'), credentials)) {
     return new NextResponse('Autenticación requerida', {
       status: 401,
@@ -46,11 +49,8 @@ export const config = {
   matcher: [
     {
       // Todo excepto API (Stripe debe poder llegar al webhook), estáticos y archivos públicos.
+      // Sin excepción para prefetch: un encabezado "Purpose: prefetch" no puede saltarse la contraseña de staging.
       source: '/((?!api|_next/static|_next/image|img|fonts|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|\\.well-known).*)',
-      missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
-      ],
     },
   ],
 };

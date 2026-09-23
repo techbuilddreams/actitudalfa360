@@ -38,6 +38,8 @@ export default async function ProductPage({ params }: Params) {
   if (!product) notFound();
   const v = defaultVariant(product);
   const others = catalog.all().filter((p) => p.slug !== product.slug);
+  // El h1 lleva nombre + frase ("Taza negra 15 oz — Háblame…"): se separan solo para el diseño.
+  const [name, quote] = product.h1.split(/\s+—\s+/, 2);
   const trail = [{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/#tienda' }, { name: product.name, path: `/productos/${product.slug}` }];
 
   return (
@@ -52,33 +54,45 @@ export default async function ProductPage({ params }: Params) {
       </nav>
 
       <div className="pdp">
-        <div className="gallery"><ProductGallery images={product.images} tag={product.tag} priority /></div>
-        <div>
-          <span className="mono">{product.category}</span>
-          <h1>{product.h1}</h1>
-          <span className="price">{formatMoney(v.price)}</span>
+        <ProductGallery images={product.images} tag={product.tag} />
+        <div className="pdp-info">
+          <p className="eyebrow">{product.category}</p>
+          <h1>
+            <span className="pdp-name">{name}</span>
+            {quote && <><span className="sr-only"> — </span><span className="pdp-quote">{quote}</span></>}
+          </h1>
+          <p className="pdp-price">{formatMoney(v.price)}</p>
           <p className="pitch">{product.shortPitch}</p>
           <div className="buybox">
-            <p className="ship">{deliveryPromise} · envío fijo {formatMoney({ cents: env().SHIPPING_FLAT_CENTS, currency: 'usd' })}</p>
             <BuyBox sku={v.sku} label="Comprar ahora" />
+            <p className="ship">{deliveryPromise} · envío fijo {formatMoney({ cents: env().SHIPPING_FLAT_CENTS, currency: 'usd' })}</p>
             <Assurances />
           </div>
-          <ul className="bullets">{product.bullets.map((b) => <li key={b}>{b}</li>)}</ul>
-          <dl className="specs">
-            {product.specs.map((s) => (<Fragment key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></Fragment>))}
-          </dl>
-          <p className="long">{product.longDescription}</p>
+          <ol className="bullets">{product.bullets.map((b) => <li key={b}>{b}</li>)}</ol>
         </div>
       </div>
 
-      <section aria-labelledby="faq-h">
-        <div className="head"><div><span className="mono">Preguntas</span><h2 id="faq-h">Sobre este producto</h2></div></div>
+      <section className="story" aria-labelledby="story-h">
+        <div>
+          <p className="eyebrow">La pieza</p>
+          <h2 id="story-h">En detalle</h2>
+        </div>
+        <div>
+          <p className="long">{product.longDescription}</p>
+          <dl className="specs">
+            {product.specs.map((s) => (<Fragment key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></Fragment>))}
+          </dl>
+        </div>
+      </section>
+
+      <section className="split" aria-labelledby="faq-h">
+        <div className="head"><div><p className="eyebrow">Preguntas</p><h2 id="faq-h">Sobre este producto</h2></div></div>
         <Faq items={product.faq} />
       </section>
 
       {others.length > 0 && (
         <section className="related" aria-labelledby="rel-h">
-          <div className="head"><div><span className="mono">También te puede servir</span><h2 id="rel-h">Completa el equipo</h2></div></div>
+          <div className="head"><div><p className="eyebrow">También te puede servir</p><h2 id="rel-h">Completa el equipo</h2></div></div>
           <div className="products">{others.map((p) => <ProductCard key={p.slug} product={p} />)}</div>
         </section>
       )}

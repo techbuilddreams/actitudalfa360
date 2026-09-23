@@ -1,4 +1,6 @@
-import { FULFILLMENT_CLAIM_TTL_MS, type Order } from '@/domain/order';
+import { RetryLaterError } from '@/domain/errors';
+import { usd } from '@/domain/money';
+import { FULFILLMENT_CLAIM_TTL_MS, type Order, type OrderAmounts, type OrderItem, type OrderLine } from '@/domain/order';
 import type { CatalogRepository } from '../ports/catalog';
 import type { FulfillmentProvider } from '../ports/fulfillment';
 import type { Logger } from '../ports/logger';
@@ -21,15 +23,44 @@ export type HandlePaymentResult = 'created' | 'duplicate';
 /**
  * Caso de uso: registrar un pago confirmado exactamente una vez
  * y (opcionalmente) crear el pedido de producción en espera.
+ *
+ * Regla de oro: un pago cobrado SIEMPRE queda guardado, aunque falle todo lo demás.
  */
 export function makeHandlePayment(deps: HandlePaymentDeps) {
+  /** Congela nombre y precio de venta. Un SKU desconocido no bloquea el pedido: se guarda y se avisa. */
+  const snapshot = (lines: readonly OrderLine[]): OrderItem[] =>
+    lines.map((l) => {
+      const found = deps.catalog.findVariant(l.sku);
+      if (!found) {
+        deps.logger.error('order_unknown_sku', { sku: l.sku });
+        return { ...l, name: l.sku, unitCents: 0 };
+      }
+      const { product, variant } = found;
+      const name = product.name.includes(variant.label) ? product.name : `${product.name} — ${variant.label}`;
+      return { ...l, name, unitCents: variant.price.cents };
+    });
+
+  /**
+   * El desglose debe cuadrar con el total (lo exige un CHECK en la base). Si Stripe lo reportara distinto
+   * (p. ej. impuestos incluidos), se guarda solo el total: jamás rechazamos un pago cobrado por un desglose.
+   */
+  const reconcile = (paid: PaidCheckout): OrderAmounts => {
+    const a = paid.amounts;
+    if (a.subtotal.cents + a.shipping.cents + a.tax.cents === paid.total.cents + a.discount.cents) return a;
+    deps.logger.error('order_amounts_mismatch', { paymentRef: paid.paymentRef });
+    const zero = usd(0);
+    return { subtotal: zero, discount: zero, shipping: zero, tax: zero };
+  };
+
   return async (paid: PaidCheckout): Promise<HandlePaymentResult> => {
     const draft: Order = {
       id: deps.newId(),
+      number: null,
       paymentRef: paid.paymentRef,
       status: deps.fulfillment ? 'fulfillment_pending' : 'paid',
-      lines: paid.lines,
+      lines: snapshot(paid.lines),
       total: paid.total,
+      amounts: reconcile(paid),
       email: paid.email,
       phone: paid.phone,
       shipping: paid.shipping,
@@ -43,19 +74,25 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
     else deps.logger.info('Pago ya registrado', { paymentRef: paid.paymentRef });
 
     // 2) Producción: solo el proceso que gana el reclamo atómico la ejecuta.
-    //    Un reintento de Stripe recupera pedidos cuyo proceso anterior se cayó a mitad.
     if (deps.fulfillment) {
       const now = deps.now();
       const staleBefore = new Date(now.getTime() - FULFILLMENT_CLAIM_TTL_MS);
       if (await deps.orders.claimForFulfillment(order.id, now, staleBefore)) {
         try {
-          const ref = await deps.fulfillment.createDraftOrder(order, deps.catalog);
+          const ref = await deps.fulfillment.createDraftOrder(order);
           await deps.orders.completeFulfillment(order.id, { status: 'fulfillment_created', ref });
         } catch (err) {
           const reason = err instanceof Error ? err.message : 'desconocido';
           deps.logger.error('No se pudo crear el pedido de producción', { orderId: order.id, reason });
           await deps.orders.completeFulfillment(order.id, { status: 'fulfillment_failed' });
           await deps.notifier.fulfillmentFailed(order, reason);
+        }
+      } else {
+        // Perdimos el reclamo. Si el otro proceso sigue "trabajando", pedimos a Stripe que reintente más tarde:
+        // si ese proceso murió, el reintento (tras vencer el reclamo) lo recupera. Nunca queda atascado en silencio.
+        const current = await deps.orders.findByPaymentRef(paid.paymentRef);
+        if (current?.status === 'fulfillment_processing') {
+          throw new RetryLaterError('Producción en curso por otro proceso; reintentar');
         }
       }
     }

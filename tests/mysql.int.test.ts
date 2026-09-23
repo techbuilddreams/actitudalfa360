@@ -5,6 +5,8 @@ import { MySqlOrderRepository } from '@/infrastructure/db/mysql-order-repository
 import { makeHandlePayment } from '@/application/use-cases/handle-payment';
 import { staticCatalog } from '@/infrastructure/catalog/static-catalog';
 import { usd } from '@/domain/money';
+import { RetryLaterError } from '@/domain/errors';
+import { amounts } from './fixtures';
 
 const url = process.env.TEST_DATABASE_URL;
 const noop = { info: () => {}, warn: () => {}, error: () => {} };
@@ -20,23 +22,26 @@ describe.skipIf(!url)('MySQL (integración, concurrencia real)', () => {
       newId: randomUUID, now: () => new Date(),
     });
     const paid = {
-      paymentRef: `cs_test_${randomUUID()}`, lines: [{ sku: 'AA360-TAZA-15-NEGRA', quantity: 1 }], total: usd(3398),
+      paymentRef: `cs_test_${randomUUID()}`, lines: [{ sku: 'AA360-TAZA-15-NEGRA', quantity: 1 }], total: usd(3398), amounts: amounts(2499),
       email: null, phone: null,
       shipping: { name: 'A B', line1: '1', city: 'Troy', state: 'NY', postalCode: '12182', country: 'US' },
     };
-    const results = await Promise.all(Array.from({ length: 20 }, () => handle(paid)));
-    expect(results.filter((r) => r === 'created')).toHaveLength(1);
+    const results = await Promise.allSettled(Array.from({ length: 20 }, () => handle(paid)));
+    expect(results.filter((r) => r.status === 'fulfilled' && r.value === 'created')).toHaveLength(1);
+    expect(results.every((r) => r.status === 'fulfilled' || r.reason instanceof RetryLaterError)).toBe(true);
     expect(createDraftOrder).toHaveBeenCalledTimes(1);
     const order = await repo().findByPaymentRef(paid.paymentRef);
     expect(order?.status).toBe('fulfillment_created');
     expect(order?.fulfillmentRef).toBe('pf_1');
+    expect(order?.number).toBeGreaterThanOrEqual(10001);
+    expect(order?.lines[0]?.unitCents).toBe(2499);
   });
 
   it('un reclamo vencido (proceso caído) se puede recuperar; uno vigente no', async () => {
     const r = repo();
     const ref = `cs_test_${randomUUID()}`;
     const { order } = await r.createIfAbsent({
-      id: randomUUID(), paymentRef: ref, status: 'fulfillment_pending', lines: [{ sku: 'X', quantity: 1 }], total: usd(1),
+      id: randomUUID(), paymentRef: ref, number: null, status: 'fulfillment_pending', lines: [{ sku: 'X', quantity: 1, name: 'X', unitCents: 1 }], total: usd(1), amounts: amounts(0, 0),
       email: null, phone: null, shipping: null, fulfillmentRef: null, createdAt: new Date(),
     });
     const t0 = new Date('2026-09-23T10:00:00Z');

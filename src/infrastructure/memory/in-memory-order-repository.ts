@@ -6,12 +6,14 @@ type Row = Order & { claimedAt: Date | null };
 /** Para pruebas y desarrollo local. Mismas garantías que MySQL (JS es de un solo hilo). */
 export class InMemoryOrderRepository implements OrderRepository {
   private readonly rows = new Map<string, Row>(); // key: paymentRef
+  private seq = 10000;
 
   async createIfAbsent(order: Order) {
     const existing = this.rows.get(order.paymentRef);
     if (existing) return { created: false, order: strip(existing) };
-    this.rows.set(order.paymentRef, { ...order, claimedAt: null });
-    return { created: true, order };
+    const saved = { ...order, number: ++this.seq };
+    this.rows.set(order.paymentRef, { ...saved, claimedAt: null });
+    return { created: true, order: saved };
   }
 
   async claimForFulfillment(id: string, now: Date, staleBefore: Date) {
@@ -34,6 +36,8 @@ export class InMemoryOrderRepository implements OrderRepository {
     const r = this.rows.get(paymentRef);
     return r ? strip(r) : undefined;
   }
+
+  async ping() {}
 
   private byId(id: string) {
     for (const r of this.rows.values()) if (r.id === id) return r;

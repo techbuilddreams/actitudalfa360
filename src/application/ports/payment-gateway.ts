@@ -1,5 +1,5 @@
 import type { Money } from '@/domain/money';
-import type { OrderLine, ShippingAddress } from '@/domain/order';
+import type { OrderAmounts, OrderLine, ShippingAddress } from '@/domain/order';
 import type { PricedCart } from '@/domain/cart';
 
 export interface CheckoutRequest {
@@ -7,7 +7,6 @@ export interface CheckoutRequest {
   readonly shipping: Money;
   readonly successUrl: string;
   readonly cancelUrl: string;
-  readonly idempotencyKey: string;
 }
 
 /** Pago confirmado, ya traducido del proveedor a nuestro lenguaje. */
@@ -15,6 +14,7 @@ export interface PaidCheckout {
   readonly paymentRef: string;
   readonly lines: readonly OrderLine[];
   readonly total: Money;
+  readonly amounts: OrderAmounts;
   readonly email: string | null;
   readonly phone: string | null;
   readonly shipping: ShippingAddress | null;
@@ -29,7 +29,7 @@ export interface CheckoutSummary {
 
 export interface PaymentGateway {
   createCheckout(req: CheckoutRequest): Promise<{ url: string }>;
-  /** Verifica la firma y devuelve el pago si el evento es un pago completado; null si se ignora. */
+  /** Verifica la firma (lanza InvalidWebhookError) y devuelve el pago si el evento es un pago completado; null si se ignora. */
   parseWebhook(rawBody: string, signature: string): Promise<PaidCheckout | null>;
   getCheckoutSummary(paymentRef: string): Promise<CheckoutSummary | null>;
 }

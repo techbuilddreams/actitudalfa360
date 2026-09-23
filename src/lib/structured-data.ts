@@ -7,14 +7,15 @@ import { defaultVariant, type Faq, type Product } from '@/domain/product';
 const abs = (path: string) => `${site.url}${path}`;
 const ORG_ID = abs('/#org');
 
+/**
+ * Refleja la política REAL: hecho a pedido ⇒ sin devoluciones por cambio de opinión.
+ * (Lo dañado/defectuoso se reemplaza o reembolsa: es una garantía, no una devolución.)
+ * Declarar "devoluciones gratis 30 días" sería publicidad engañosa para Google Merchant Center.
+ */
 const returnPolicy = {
   '@type': 'MerchantReturnPolicy',
   applicableCountry: 'US',
-  returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-  merchantReturnDays: site.returns.days,
-  returnMethod: 'https://schema.org/ReturnByMail',
-  returnFees: 'https://schema.org/FreeReturn',
-  itemCondition: 'https://schema.org/DamagedCondition',
+  returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
   url: abs('/politicas#devoluciones'),
 };
 

@@ -1,20 +1,26 @@
 import 'server-only';
-import { and, eq, lt, or } from 'drizzle-orm';
+import { and, eq, lt, or, sql } from 'drizzle-orm';
 import { usd } from '@/domain/money';
-import type { Order, OrderStatus } from '@/domain/order';
+import type { Order, OrderItem, OrderStatus } from '@/domain/order';
 import type { OrderRepository } from '@/application/ports/order-repository';
 import type { Db } from './client';
 import { orders } from './schema';
 
-
 type Row = typeof orders.$inferSelect;
+
+/** Filas anteriores al snapshot solo tenían {sku, quantity}: se completan sin inventar precios. */
+const toItem = (l: Partial<OrderItem> & { sku: string; quantity: number }): OrderItem => ({
+  sku: l.sku, quantity: l.quantity, name: l.name ?? l.sku, unitCents: l.unitCents ?? 0,
+});
 
 const toDomain = (r: Row): Order => ({
   id: r.id,
+  number: r.orderNumber,
   paymentRef: r.paymentRef,
   status: r.status as OrderStatus,
-  lines: r.lines,
+  lines: r.lines.map(toItem),
   total: usd(r.totalCents),
+  amounts: { subtotal: usd(r.subtotalCents), discount: usd(r.discountCents), shipping: usd(r.shippingCents), tax: usd(r.taxCents) },
   email: r.email,
   phone: r.phone,
   shipping: r.shipping ?? null,
@@ -32,13 +38,21 @@ export class MySqlOrderRepository implements OrderRepository {
   constructor(private readonly db: Db) {}
 
   async createIfAbsent(order: Order) {
+    // Camino rápido para reintentos de Stripe (el caso común): no intenta INSERT,
+    // así no consume números de pedido. La carrera real la sigue resolviendo el índice único.
+    const already = await this.findByPaymentRef(order.paymentRef);
+    if (already) return { created: false, order: already };
     try {
-      await this.db.insert(orders).values({
+      const [res] = await this.db.insert(orders).values({
         id: order.id,
         paymentRef: order.paymentRef,
         status: order.status,
         lines: [...order.lines],
         totalCents: order.total.cents,
+        subtotalCents: order.amounts.subtotal.cents,
+        discountCents: order.amounts.discount.cents,
+        shippingCents: order.amounts.shipping.cents,
+        taxCents: order.amounts.tax.cents,
         currency: order.total.currency,
         email: order.email,
         phone: order.phone,
@@ -46,7 +60,8 @@ export class MySqlOrderRepository implements OrderRepository {
         fulfillmentRef: order.fulfillmentRef,
         createdAt: order.createdAt,
       });
-      return { created: true, order };
+      // insertId = valor AUTO_INCREMENT generado en ESTA conexión (order_number): sin carreras ni consulta extra.
+      return { created: true, order: { ...order, number: Number(res.insertId) } };
     } catch (e) {
       if (!isDuplicateKey(e)) throw e;
       const existing = await this.findByPaymentRef(order.paymentRef);
@@ -77,6 +92,10 @@ export class MySqlOrderRepository implements OrderRepository {
       .update(orders)
       .set({ status: result.status, ...(result.status === 'fulfillment_created' ? { fulfillmentRef: result.ref } : {}) })
       .where(and(eq(orders.id, id), eq(orders.status, 'fulfillment_processing')));
+  }
+
+  async ping() {
+    await this.db.execute(sql`SELECT 1`);
   }
 
   async findByPaymentRef(paymentRef: string) {

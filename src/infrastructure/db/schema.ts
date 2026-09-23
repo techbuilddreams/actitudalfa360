@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { check, char, index, int, json, mysqlEnum, mysqlTable, timestamp, uniqueIndex, varchar } from 'drizzle-orm/mysql-core';
-import type { OrderLine, OrderStatus, ShippingAddress } from '@/domain/order';
+import type { OrderItem, OrderStatus, ShippingAddress } from '@/domain/order';
 
 const STATUSES = ['paid', 'fulfillment_pending', 'fulfillment_processing', 'fulfillment_created', 'fulfillment_failed'] as const satisfies readonly OrderStatus[];
 
@@ -8,10 +8,16 @@ export const orders = mysqlTable(
   'orders',
   {
     id: char('id', { length: 36 }).primaryKey(),
+    // Número visible (AA-10001): secuencial, único, lo asigna MySQL sin carreras.
+    orderNumber: int('order_number', { unsigned: true }).notNull().autoincrement().unique('orders_order_number_uq'),
     paymentRef: varchar('payment_ref', { length: 255 }).notNull(),
     status: mysqlEnum('status', STATUSES).notNull(),
-    lines: json('lines').$type<OrderLine[]>().notNull(),
+    lines: json('lines').$type<OrderItem[]>().notNull(),
     totalCents: int('total_cents', { unsigned: true }).notNull(),
+    subtotalCents: int('subtotal_cents', { unsigned: true }).notNull().default(0),
+    discountCents: int('discount_cents', { unsigned: true }).notNull().default(0),
+    shippingCents: int('shipping_cents', { unsigned: true }).notNull().default(0),
+    taxCents: int('tax_cents', { unsigned: true }).notNull().default(0),
     currency: char('currency', { length: 3 }).notNull(),
     email: varchar('email', { length: 320 }),
     phone: varchar('phone', { length: 40 }),
@@ -26,7 +32,11 @@ export const orders = mysqlTable(
     // Índice compuesto: cubre "pedidos por estado, recientes primero" (panel/reintentos) y el filtro por estado.
     index('orders_status_created_idx').on(t.status, t.createdAt),
     index('orders_created_idx').on(t.createdAt),
+    index('orders_email_idx').on(t.email), // búsqueda de pedidos por cliente (soporte / "mis pedidos")
     check('orders_currency_ck', sql`${t.currency} = 'usd'`),
     check('orders_lines_ck', sql`JSON_LENGTH(${t.lines}) > 0`),
+    // El dinero cuadra: subtotal + envío + impuesto = total + descuento (sin restas: columnas UNSIGNED).
+    // subtotal = 0 solo en filas anteriores al desglose.
+    check('orders_amounts_ck', sql`${t.subtotalCents} = 0 OR ${t.subtotalCents} + ${t.shippingCents} + ${t.taxCents} = ${t.totalCents} + ${t.discountCents}`),
   ],
 );

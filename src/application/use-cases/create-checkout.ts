@@ -8,7 +8,6 @@ export interface CreateCheckoutDeps {
   payments: PaymentGateway;
   shippingFor: (cart: PricedCart) => Money;
   siteUrl: string;
-  newId: () => string;
 }
 
 /** Caso de uso: convertir un carrito en una sesión de pago segura. */
@@ -19,8 +18,8 @@ export function makeCreateCheckout(deps: CreateCheckoutDeps) {
       cart,
       shipping: deps.shippingFor(cart),
       successUrl: `${deps.siteUrl}/gracias?pedido={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${deps.siteUrl}/#tienda`,
-      idempotencyKey: deps.newId(),
+      // Si cancela, vuelve a la pieza que estaba viendo (o a la tienda si llevaba varias).
+      cancelUrl: cart.lines.length === 1 ? `${deps.siteUrl}/productos/${cart.lines[0]!.product.slug}` : `${deps.siteUrl}/#tienda`,
     });
   };
 }

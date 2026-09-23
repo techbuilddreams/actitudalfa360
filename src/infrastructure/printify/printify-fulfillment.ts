@@ -1,20 +1,20 @@
 import 'server-only';
 import type { CatalogRepository } from '@/application/ports/catalog';
 import type { FulfillmentProvider } from '@/application/ports/fulfillment';
-import type { Order } from '@/domain/order';
+import { orderLabel, type Order } from '@/domain/order';
 
 /** Crea pedidos en Printify. Sin `send_to_production`: quedan EN ESPERA hasta aprobarlos. */
 export class PrintifyFulfillment implements FulfillmentProvider {
   readonly name = 'printify';
 
-  constructor(private readonly opts: { token: string; shopId: string }) {}
+  constructor(private readonly opts: { token: string; shopId: string; catalog: CatalogRepository }) {}
 
-  async createDraftOrder(order: Order, catalog: CatalogRepository): Promise<string> {
+  async createDraftOrder(order: Order): Promise<string> {
     if (!order.shipping) throw new Error('Pedido sin dirección de envío');
     const [first, ...rest] = order.shipping.name.trim().split(/\s+/);
 
     const line_items = order.lines.map((l) => {
-      const found = catalog.findVariant(l.sku);
+      const found = this.opts.catalog.findVariant(l.sku);
       if (!found) throw new Error(`SKU desconocido: ${l.sku}`);
       const f = found.variant.fulfillment;
       return { product_id: f.productId, variant_id: f.variantId, quantity: l.quantity };
@@ -29,7 +29,7 @@ export class PrintifyFulfillment implements FulfillmentProvider {
       },
       body: JSON.stringify({
         external_id: order.paymentRef,
-        label: `Web ${order.id.slice(0, 8)}`,
+        label: `Web ${orderLabel(order)}`,
         line_items,
         shipping_method: 1,
         send_shipping_notification: true,

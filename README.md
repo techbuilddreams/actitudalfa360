@@ -40,7 +40,7 @@ Ver `.env.example`. Se configuran en Hostinger (Web App → Environment variable
 npm run dev          # local
 npm run check        # lint + typecheck + tests
 npm run build        # build de producción
-npm start            # arranca (las migraciones corren solas al iniciar, src/instrumentation.ts)
+npm start            # arranca: valida la configuración y aplica migraciones (src/instrumentation.ts)
 npm run db:generate  # nueva migración tras cambiar src/infrastructure/db/schema.ts
 ```
 
@@ -49,18 +49,25 @@ Test de integración MySQL: `TEST_DATABASE_URL=mysql://… npm test`.
 ## Base de datos y concurrencia
 
 - **Idempotencia:** índice único en `orders.payment_ref`; el mismo pago nunca crea dos pedidos.
-- **Sin carreras en la producción:** el pedido pasa a `fulfillment_processing` con un `UPDATE … WHERE status=…` (compare-and-set). Solo el proceso que cambia la fila produce el pedido. Si ese proceso se cae, el reclamo vence a los 5 min y el siguiente reintento de Stripe lo recupera.
-- **Restricciones en la base:** `status` es ENUM, montos `UNSIGNED`, `CHECK` de moneda y de líneas no vacías. La base rechaza datos inválidos aunque el código fallara.
-- **Índices:** compuesto `(status, created_at)` para listados/reintentos y `created_at` para reportes.
+- **Sin carreras en la producción:** el pedido pasa a `fulfillment_processing` con un `UPDATE … WHERE status=…` (compare-and-set). Solo el proceso que cambia la fila produce el pedido. Quien pierde el reclamo mientras otro trabaja responde 500 ⇒ Stripe reintenta más tarde; si el primero murió, el reclamo vence a los 5 min y el reintento lo recupera. Nada queda atascado en silencio.
+- **Snapshot de venta:** cada línea guarda nombre y precio al momento del pago; el pedido guarda subtotal, descuento, envío e impuesto tal como los cobró Stripe. Cambiar precios o retirar productos no altera pedidos pasados.
+- **Número de pedido:** `order_number` AUTO_INCREMENT único desde 10001 (se muestra como `AA-10001`) en correo y página de gracias.
+- **Restricciones en la base:** `status` es ENUM, montos `UNSIGNED`, `CHECK` de moneda, de líneas no vacías y de que los montos cuadren (subtotal + envío + impuesto = total + descuento).
+- **Índices:** compuesto `(status, created_at)` para listados/reintentos, `created_at` para reportes y `email` para soporte.
+- **Migraciones:** SQL versionado en `drizzle/` (equivalente a Liquibase/Flyway). Se aplican al arrancar con `GET_LOCK` (seguro con varias instancias). Probadas contra MariaDB 10.11, el motor de Hostinger.
 - **Pool:** `DB_POOL_SIZE` (5 por defecto) con cola acotada, suficiente para hosting compartido sin agotar conexiones.
 - Probado con 20 webhooks simultáneos contra MySQL real (`tests/mysql.int.test.ts`).
 
 ## Seguridad
 
+- **Arranque a prueba de errores:** en staging/producción el servidor NO arranca si falta la base de datos, las llaves de Stripe, si producción usa una llave de prueba (o staging una live), o si Printify automático no tiene token. Mejor un deploy fallido visible que pedidos perdidos.
 - CSP estricta con nonce por petición (`src/proxy.ts`), HSTS, X-Frame-Options DENY, sin `X-Powered-By`.
+- Staging con contraseña (falla cerrado: sin `STAGING_BASIC_AUTH` responde 503, nunca queda público).
+- `/api/health` verifica la base de verdad (503 si cae). En producción solo responde `{ok}`.
+- Página de gracias: correo enmascarado, límite de consultas por IP.
 - Precios siempre del servidor; el cliente solo envía `sku` y `quantity` (validado con Zod).
-- Checkout: verificación de origen, rate limit 10/min por IP, tamaño máximo de petición.
-- Webhook: firma de Stripe verificada con el SDK; idempotencia por índice único en MySQL; 500 ⇒ Stripe reintenta.
+- Checkout: verificación de origen, rate limit 10/min por IP (IP del proxy de confianza, `TRUSTED_PROXY_HOPS`), cuerpo máximo 4 KB leído en streaming.
+- Webhook: firma de Stripe verificada con el SDK (firma inválida ⇒ 400; error de configuración ⇒ 500 con causa real); cuerpo máximo 512 KB; idempotencia por índice único en MySQL; 500 ⇒ Stripe reintenta.
 - Llave de Stripe restringida (solo Checkout Sessions, Products, Prices, Shipping Rates).
 - Pedidos de Printify se crean **en espera**: nada se produce sin aprobación.
 - Dependabot semanal sobre `develop`.

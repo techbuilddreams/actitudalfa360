@@ -18,6 +18,16 @@ const mono = localFont({
   display: 'swap',
   preload: false,
 });
+// Serifa editorial (solo latin): titulares de sección, citas y firma. Se usa en el hero ⇒ precarga.
+const serif = localFont({
+  src: [
+    { path: './fonts/CormorantGaramond-Medium.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/CormorantGaramond-MediumItalic.woff2', weight: '500', style: 'italic' },
+  ],
+  variable: '--font-serif',
+  display: 'swap',
+  preload: true,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -43,13 +53,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // CSP con nonce por petición ⇒ cada página se renderiza al pedirla (los scripts llevan el nonce).
   await connection();
   return (
-    <html lang={site.lang} className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang={site.lang} className={`${display.variable} ${body.variable} ${mono.variable} ${serif.variable}`}>
       <body>
         {site.isStaging && <div className="preview-bar">Staging · no es la tienda real · pagos en modo prueba</div>}
         <a className="skip" href="#main">Ir al contenido</a>
         <SiteHeader />
         <main className="wrap" id="main">{children}</main>
-        <div className="wrap"><SiteFooter /></div>
+        <SiteFooter />
       </body>
     </html>
   );
