@@ -1,0 +1,43 @@
+# Visión: membresía y comunidad "El 360"
+
+> Visión aprobada por Luis (CEO) el 2026-11-26. Fuente de verdad del rumbo del producto.
+
+## Idea central
+
+Una **membresía de disciplina con rendición de cuentas**, no un grupo para charlar.
+Lo que retiene es que alguien te pregunte cada día *"¿cumpliste hoy?"*.
+Se premia la **disciplina real**, no la actividad (publicar/comentar).
+
+## Niveles
+
+| Nivel | Precio | Qué incluye |
+|---|---|---|
+| Gratis (embudo) | $0 | Reto público de 30 días, contenido semanal |
+| **Miembro** (arranque) | ~$12/mes | Registro diario de los 4 pilares (cuerpo, mente, dinero, palabra) · escuadras de 5 que se ven el progreso · reto nuevo cada mes · descuento en la tienda · pieza exclusiva de miembro |
+| **Círculo** (después) | ~$49–99/mes | Llamada en vivo mensual · grupo pequeño de negocio/dinero · acceso directo al fundador y a los embajadores |
+
+**Se empieza con lo más simple: solo el nivel de $12.** Los niveles superiores se agregan cuando haya miembros que se quedan.
+
+## Modelo de "campus" con embajadores (referencia de estructura: The Real World)
+
+- **Fase inicial:** la marca arranca con Luis como la cara visible.
+- **Después:** **embajadores** por pilar — personas con resultado comprobado en un área (cuerpo, dinero, mente, carácter) que enseñan a otros a obtenerlo.
+- Cada pilar puede convertirse en un "campus" con su embajador, contenido y retos.
+- **Distintos niveles de membresía = distintos accesos** (qué campus, qué llamadas, qué grupos).
+- Se toma de The Real World la **estructura** (campus por área, expertos con resultados, niveles de acceso); **no** su tono ni su asociación de marca. La marca ya dice: *"No es dominar a nadie, es dominarte a ti."*
+
+## Diferenciador
+
+La **puntuación 360 diaria con escuadras**: cumplir en los 4 pilares, visible a tu escuadra.
+
+## Ruta: validar antes de construir
+
+1. **Fase 1 — sin código:** lanzar en una plataforma existente (Skool o similar; confirmar precios vigentes). Medir: ¿pagan?, ¿se quedan después del mes 2?
+2. **Fase 2 — plataforma propia:** con ~50–100 miembros que retienen, construir el registro 360, escuadras, campus y niveles en el sitio (Stripe ya integrado; LLC de EE. UU., cobro recurrente con Stripe sin problema).
+   El punto de cruce: cuando la comisión de la plataforma cuesta más que mantener la propia.
+
+## Decisiones abiertas
+
+- Plataforma de la fase 1 (recomendación: Skool, por retos + ranking + cursos nativos).
+- Cómo se selecciona, se valida y se le paga a un embajador (reparto de ingresos por campus vs. pago fijo).
+- Nombre definitivo de los niveles.
