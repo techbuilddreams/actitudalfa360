@@ -2,9 +2,22 @@
 
 > QA de diseño y Rompedor de compra revisaron `maqueta-unificada.html` después de las decisiones 1-8.
 > El CTO verificó contra el código las afirmaciones clave (`cart.ts:5`, `env.ts:36`, `vision-membresia.md:36`,
-> el menú y «palabra» en la línea 558). Nada de esto está corregido todavía.
+> el menú y «palabra» en la línea 558). Las 6 decisiones están aplicadas (abajo); las correcciones sin decisión siguen pendientes.
 
-## Decisiones que necesita Luis antes del código
+## Decididas por Luis (2026-11-27), aplicadas a la maqueta como 9-14
+
+| # | Tema | Decisión |
+|---|------|----------|
+| 9 | Ventana de registro | **Sí**: se registra el día anterior hasta las 12:00 del siguiente (zona del participante). |
+| 10 | Membresía fase 1 | **Esperar**: no se vende hasta que existan escuadra y registro. Sin Skool, sin botón de pago; «Avísame cuando abra». Cambia la fase 1 de `docs/vision-membresia.md`. |
+| 11 | Arranque del reto | **Registro propio**: correo diario + enlaces firmados de un toque + puntuación simple en Supabase. |
+| 12 | Niveles | **Subir sí; si bajas, esos días cuentan como Base.** Quitado «de este mes». |
+| 13 | Pieza de miembro | **Quitada.** |
+| 14 | Menú | **Reto, Pilares, Tienda, Membresía.** Guías fuera del menú y del pie hasta que existan. |
+
+También corregido de paso: «palabra» → «carácter» en la FAQ; «plantilla» quitada (el registro la sustituye).
+
+## Decisiones que necesitaba Luis (texto original)
 
 1. **Ventana para registrar el día.** Recomendación del CTO: se puede *registrar* el día anterior hasta el
    mediodía siguiente. No es recuperar: anotas lo que hiciste, no lo haces después. Sin esto, quien se duerme

@@ -1,6 +1,6 @@
 <title>Maqueta unificada Alfa 360</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Maqueta unificada de Actitud Alfa 360 para aprobar: home, /reto-30-dias y ficha de producto, con las resoluciones del CTO y las cuatro decisiones de Luis.">
+<meta name="description" content="Maqueta unificada de Actitud Alfa 360 para aprobar: home, /reto-30-dias y ficha de producto, con las resoluciones del CTO y las decisiones de Luis (1-14).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap">
@@ -228,7 +228,7 @@ body.sin-notas .stage .shot{display:none}
 /* Pie */
 .foot{background:var(--ink-2);border-top:1px solid var(--hair);padding-block:64px calc(48px + env(safe-area-inset-bottom,0px));font-size:14px;color:var(--stone)}
 .foot-grid{display:grid;gap:32px;grid-template-columns:1fr 1fr}
-@media (min-width:900px){.foot-grid{grid-template-columns:2fr repeat(4,1fr)}}
+@media (min-width:900px){.foot-grid{grid-template-columns:2fr repeat(3,1fr)}}
 .foot h4{margin:0 0 12px;font:500 11px/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:var(--bone)}
 .foot ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .foot a{text-decoration:none;display:inline-flex;min-height:36px;align-items:center}
@@ -349,6 +349,12 @@ body.sin-notas .stage .shot{display:none}
     <span>2 · cuarto pilar = Carácter</span>
     <span>3 · sin precio de fundador</span>
     <span>4 · fotos nuevas (marcos de papel; las tomas pendientes van rotuladas)</span>
+    <span>9 · registrar el día hasta el mediodía siguiente</span>
+    <span>10 · membresía: esperar (no se vende aún)</span>
+    <span>11 · registro propio</span>
+    <span>12 · niveles: subir sí, bajar cuenta Base</span>
+    <span>13 · sin pieza de miembro</span>
+    <span>14 · menú de 4</span>
   </div>
 </div>
 
@@ -359,7 +365,6 @@ body.sin-notas .stage .shot{display:none}
     <nav class="nav" aria-label="Principal">
       <a href="#reto" data-nav="reto">Reto</a>
       <a href="#home" data-nav="pilares">Pilares</a>
-      <a href="#home" data-nav="guias">Guías</a>
       <a href="#ficha" data-nav="tienda">Tienda</a>
       <a href="#home" data-nav="membresia">Membresía</a>
     </nav>
@@ -373,7 +378,6 @@ body.sin-notas .stage .shot{display:none}
       <ul>
         <li><a href="#reto">Reto de 30 días</a></li>
         <li><a href="#home">Pilares</a></li>
-        <li><a href="#home">Guías</a></li>
         <li><a href="#ficha">Tienda</a></li>
         <li><a href="#home">Membresía</a></li>
       </ul>
@@ -439,8 +443,8 @@ body.sin-notas .stage .shot{display:none}
         <h2 id="h-como">Treinta días, una pregunta cada noche</h2>
       </div>
       <ol class="steps">
-        <li><div><h3>Dejas tu correo</h3><p>Te llegan las reglas y la plantilla de 30 días. Empiezas al día siguiente.</p></div></li>
-        <li><div><h3>Cada noche: ¿cumpliste hoy?</h3><p>Cuatro casillas, una por pilar. Treinta segundos.</p></div></li>
+        <li><div><h3>Dejas tu correo</h3><p>Te llegan las reglas y confirmas el correo. El día 1 es mañana.</p></div></li>
+        <li><div><h3>Cada noche: ¿cumpliste hoy?</h3><p>Cuatro casillas, una por pilar, en el mismo correo. Treinta segundos. Si te dormiste, tienes hasta el mediodía.</p></div></li>
         <li><div><h3>Al día 30, tu puntuación 360</h3><p>Ves en qué pilar cumples y en cuál te caes. Sin adornos.</p></div></li>
       </ol>
     </div>
@@ -452,7 +456,7 @@ body.sin-notas .stage .shot{display:none}
         <p class="eyebrow">El registro</p>
         <h2 id="h-registro">Así se ve cumplir</h2>
         <p class="lede">No es una app más. Es una pregunta honesta que te llega todos los días a la misma hora.</p>
-        <p class="nota"><b>Conversión §2.4.</b> El diferenciador se muestra en vez de describirse. Las casillas funcionan en la maqueta. En el reto gratis no hay escuadra: la escuadra es de la membresía (visión §Miembro).</p>
+        <p class="nota"><b>Conversión §2.4.</b> El diferenciador se muestra en vez de describirse. Las casillas funcionan en la maqueta. En el reto gratis no hay escuadra: la escuadra es de la membresía (visión §Miembro). <b>Decisión 11:</b> el registro es propio: correo diario con enlaces firmados de un toque por pilar y puntuación simple en Supabase. Nada de esto existe aún en <b>src/</b>.</p>
       </div>
       <div class="registro" aria-label="Ejemplo del registro diario">
         <div class="registro-top">
@@ -483,20 +487,19 @@ body.sin-notas .stage .shot{display:none}
     <div class="wrap">
       <div class="member">
         <div class="stack">
-          <p class="eyebrow">Después del reto</p>
+          <p class="eyebrow">Próximamente</p>
           <div class="member-name"><h2 id="h-member" class="h3">Membresía El 360</h2><span class="price num">$12 <small>al mes</small></span></div>
-          <p class="lede">Para que alguien te pregunte cada día si cumpliste, también después del día 30.</p>
-          <a class="btn ghost" href="#home">Ver la membresía</a>
-          <p class="micro">Cancelas cuando quieras, en un toque y sin llamadas.</p>
+          <p class="lede">Para que alguien te pregunte cada día si cumpliste, también después del día 30. Todavía no está abierta.</p>
+          <a class="btn ghost" href="#home">Avísame cuando abra</a>
+          <p class="micro">Si haces el reto, te avisamos por correo. No cobramos nada hasta que abra.</p>
         </div>
-        <ul class="checks">
+        <ul class="checks" aria-label="Lo que tendrá">
           <li>Registro diario de los cuatro pilares</li>
           <li>Una escuadra de 5 personas que ve tu progreso</li>
           <li>Un reto nuevo cada mes</li>
-          <li>Una pieza exclusiva de miembro</li>
         </ul>
       </div>
-      <p class="nota" style="margin-top:24px"><b>Decisión 3.</b> Sin «precio de fundador» ni cupos. El precio va junto al nombre, en texto de cuerpo (CTO). El botón es secundario porque el CTA principal de la home es el reto. En la fase 1 este botón lleva a Skool.</p>
+      <p class="nota" style="margin-top:24px"><b>Decisión 3.</b> Sin «precio de fundador» ni cupos. <b>Decisión 10 (Luis, 2026-11-27): esperar.</b> No se vende la membresía hasta que existan la escuadra y el registro; por eso no hay botón de pago ni Skool. El botón apunta a la lista de aviso (mismo alta del reto, con una casilla). <b>Decisión 13:</b> se quita «una pieza exclusiva de miembro».</p>
     </div>
   </section>
 
@@ -552,10 +555,10 @@ body.sin-notas .stage .shot{display:none}
     <div class="wrap">
       <div class="sec-head"><p class="eyebrow">Preguntas</p><h2 id="h-faq">Antes de empezar</h2></div>
       <div class="faq">
-        <details open><summary>¿Qué pasa después de los 30 días?</summary><p>Te quedas con tu puntuación y tu plantilla. Si quieres seguir con alguien que te pregunte cada día, la membresía El 360 cuesta $12 al mes y la cancelas cuando quieras.</p></details>
+        <details open><summary>¿Qué pasa después de los 30 días?</summary><p>Te quedas con tu puntuación por pilar. Estamos preparando la membresía El 360 ($12 al mes) para seguir con una escuadra; te avisamos por correo cuando abra.</p></details>
         <details><summary>¿El reto es gratis de verdad?</summary><p>Sí. No pedimos tarjeta. Solo tu correo, para mandarte las reglas y el registro de cada noche.</p></details>
         <details><summary>¿Necesito ir al gimnasio?</summary><p>No. El mínimo del pilar Cuerpo son 20 minutos de movimiento. Caminar cuenta.</p></details>
-        <details><summary>¿Por qué se llama Actitud Alfa?</summary><p>Porque el «alfa» es contigo mismo: dominar tus horas, tu dinero y tu palabra. Nada que ver con dominar a otros.</p></details>
+        <details><summary>¿Por qué se llama Actitud Alfa?</summary><p>Porque el «alfa» es contigo mismo: dominar tus horas, tu dinero y tu carácter. Nada que ver con dominar a otros.</p></details>
         <details><summary>¿Cuánto tarda un pedido de la tienda?</summary><p>Cada pieza se hace a pedido: de 2 a 5 días hábiles de producción y de 3 a 7 de envío. En la ficha de cada producto ves la fecha estimada.</p></details>
       </div>
     </div>
@@ -618,7 +621,7 @@ body.sin-notas .stage .shot{display:none}
       <div class="sec-head">
         <p class="eyebrow">Las reglas</p>
         <h2 id="h-reglas">Un mínimo por pilar, cada día</h2>
-        <p class="lede">Eliges un nivel el día 1 y lo mantienes los 30 días. Base es para quien trabaja doble turno; Estándar, para quien ya tiene rutina.</p>
+        <p class="lede">Eliges un nivel el día 1. Puedes subir de Base a Estándar cuando quieras; si bajas, esos días cuentan como Base. Base es para quien trabaja doble turno; Estándar, para quien ya tiene rutina.</p>
       </div>
       <table class="rules">
         <caption class="sr">Reglas del reto por pilar y nivel</caption>
@@ -643,10 +646,11 @@ body.sin-notas .stage .shot{display:none}
       <div class="stack">
         <div class="callout">
           <p>Ese día queda sin cumplir y hoy sigues en el día que toca: si ayer fallaste el día 9, hoy haces el 10. No recuperas el día perdido ni haces dos en uno.</p>
+          <p>¿Se te pasó marcar por la noche? Puedes anotar el día anterior hasta el mediodía siguiente. Anotas lo que hiciste; no lo haces después.</p>
           <p>Al día 30 cuenta tu puntuación, no tu racha.</p>
           <p>Otros retos te obligan a reiniciar. Aquí, quien maneja doce horas y falla un martes no abandona el miércoles.</p>
         </div>
-        <p class="nota"><b>Decidido (Luis, 2026-11-27): sin reinicio y sin recuperar.</b> El día del reto lo marca el calendario desde que empiezas, no los días cumplidos. Un día fallado vale cero y no se puede rellenar después.</p>
+        <p class="nota"><b>Decidido (Luis, 2026-11-27): sin reinicio y sin recuperar.</b> El día del reto lo marca el calendario desde que empiezas, no los días cumplidos. Un día fallado vale cero y no se puede rellenar después. <b>Decisión 9:</b> sí se puede <i>registrar</i> el día anterior hasta las 12:00 del siguiente, en la zona horaria del participante (hay que capturarla en el alta).</p>
       </div>
     </div>
   </section>
@@ -657,7 +661,7 @@ body.sin-notas .stage .shot{display:none}
       <ol class="steps">
         <li><div><h3>Por la mañana</h3><p>Escribes la promesa del pilar Carácter. Una línea.</p></div></li>
         <li><div><h3>Durante el día</h3><p>Cumples los cuatro mínimos, en el orden que te deje tu trabajo.</p></div></li>
-        <li><div><h3>Por la noche</h3><p>Te llega «¿Cumpliste hoy?». Marcas cuatro casillas y listo.</p></div></li>
+        <li><div><h3>Por la noche</h3><p>Te llega «¿Cumpliste hoy?». Marcas cuatro casillas y listo. Si te dormiste, lo anotas antes del mediodía.</p></div></li>
       </ol>
     </div>
   </section>
@@ -665,13 +669,13 @@ body.sin-notas .stage .shot{display:none}
   <section class="sec band" aria-labelledby="h-despues">
     <div class="wrap member">
       <div class="stack">
-        <p class="eyebrow">Al terminar</p>
+        <p class="eyebrow">Al terminar · próximamente</p>
         <div class="member-name"><h2 id="h-despues" class="h3">Sigue con una escuadra</h2><span class="price num">$12 <small>al mes</small></span></div>
-        <p class="lede">La membresía El 360 te pone en una escuadra de 5 personas que ve si cumpliste. Es lo que hace que el día 31 se parezca al día 1.</p>
+        <p class="lede">La membresía El 360 te pondrá en una escuadra de 5 personas que ve si cumpliste. Todavía no está abierta.</p>
       </div>
       <div class="stack" style="align-content:end">
-        <a class="btn ghost" href="#home">Ver la membresía</a>
-        <p class="micro">Cancelas cuando quieras, en un toque.</p>
+        <a class="btn ghost" href="#home">Avísame cuando abra</a>
+        <p class="micro">No cobramos nada hasta que abra.</p>
       </div>
     </div>
   </section>
@@ -680,10 +684,11 @@ body.sin-notas .stage .shot{display:none}
     <div class="wrap">
       <div class="sec-head"><p class="eyebrow">Preguntas</p><h2 id="h-faq-reto">Sobre el reto</h2></div>
       <div class="faq">
-        <details open><summary>¿Qué hacen con mi correo?</summary><p>Te mandamos las reglas, la plantilla y el registro de cada noche. No lo vendemos ni lo compartimos. Te das de baja con un clic en cualquier correo.</p></details>
+        <details open><summary>¿Qué hacen con mi correo?</summary><p>Te mandamos las reglas y el registro de cada noche. No lo vendemos ni lo compartimos. Te das de baja con un clic en cualquier correo.</p></details>
         <details><summary>¿Qué cuenta como leer?</summary><p>Un libro, en papel, digital o audio. Redes sociales, noticias y videos cortos no cuentan.</p></details>
         <details><summary>¿Qué cuenta como «lo tuyo» en el pilar Dinero?</summary><p>Tiempo en algo que te hace crecer fuera del sueldo: tu negocio, aprender una habilidad, ordenar tu presupuesto o ahorrar.</p></details>
-        <details><summary>¿Puedo cambiar de nivel a mitad del reto?</summary><p>Puedes subir de Base a Estándar cuando quieras. Bajar no cuenta para el reto de este mes.</p></details>
+        <details><summary>¿Puedo cambiar de nivel a mitad del reto?</summary><p>Sí. Puedes subir de Base a Estándar cuando quieras. Si bajas a Base, esos días cuentan como Base.</p></details>
+        <details><summary>¿Y si me duermo antes de marcar?</summary><p>Puedes anotar el día anterior hasta el mediodía siguiente. Es anotar lo que ya hiciste, no hacerlo después.</p></details>
       </div>
       <p class="health" style="margin-top:40px">Este reto no sustituye el consejo médico. Si tienes una condición de salud o llevas tiempo sin hacer ejercicio, consulta a tu médico antes de empezar.</p>
     </div>
@@ -701,7 +706,7 @@ body.sin-notas .stage .shot{display:none}
         <p class="err" role="alert" hidden></p>
         <p class="micro">Gratis y sin tarjeta. Te das de baja con un clic.</p>
       </form>
-      <p class="nota"><b>Depende del paso 3 (Resend)</b> y de una tabla de suscriptores con doble confirmación. Sin eso, este formulario no puede salir a producción.</p>
+      <p class="nota"><b>Decisión 11: registro propio.</b> Depende del paso 3 (Resend), de una tabla de suscriptores con doble confirmación y zona horaria, y del registro (enlaces firmados + puntuación en Supabase). Sin eso, este formulario no puede salir a producción.</p>
     </div>
   </section>
 </section>
@@ -808,7 +813,6 @@ body.sin-notas .stage .shot{display:none}
       </div>
       <div><h4>Reto</h4><ul><li><a href="#reto">Reto de 30 días</a></li><li><a href="#home">Membresía</a></li></ul></div>
       <div><h4>Pilares</h4><ul><li><a href="#home">Cuerpo</a></li><li><a href="#home">Mente</a></li><li><a href="#home">Dinero</a></li><li><a href="#home">Carácter</a></li></ul></div>
-      <div><h4>Guías</h4><ul><li><a href="#home">Cómo ser más disciplinado</a></li><li><a href="#home">Hábitos de éxito</a></li><li><a href="#home">Rutina para el doble turno</a></li></ul></div>
       <div><h4>Tienda</h4><ul><li><a href="#ficha">Taza negra 15 oz</a></li><li><a href="#ficha">Vaso térmico 20 oz</a></li><li><a href="#home">Envíos y devoluciones</a></li></ul></div>
     </div>
     <div class="legal"><span>© 2026 Tech Build Dreams LLC</span><span>hola@actitudalfa360.com</span><a href="#home">Privacidad</a></div>
