@@ -124,6 +124,20 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 4. **DNS del dominio** (Luis + CTO) — puede ir en paralelo con 1–3
    - **HECHO** (2026-11-27). Detalle en "Dónde estamos".
 5. **Primer deploy de staging + smoke** (CTO): compra de prueba con Stripe en modo test, de punta a punta (pago → pedido → correo → Printify en espera).
+   - **2026-11-27, en curso.** No hace falta código: el correo se salta sin SMTP y `env.ts` ya acepta `rk_test_`.
+   - Llave encontrada: `STRIPE_SECRET_KEY` (`rk_test_…dnPl`, cuenta `acct_1UImVaGpmK8g…`) en `.env.staging` local
+     (ignorado por git). Probada en solo lectura: lee checkout sessions, products y prices (200); webhooks → 403.
+     Son justo los permisos mínimos. **Se reusa.**
+   - La `whsec_` de ese archivo NO sirve: era el webhook de la URL de Hostinger. Hace falta un endpoint nuevo.
+   - **Falta (Luis, ~3 min, en el dashboard de Stripe con el perfil de Actitud Alfa, modo Sandbox/Test):**
+     1. Webhooks → *Add endpoint* → `https://actitudalfa360-git-develop-techbuilddreams.vercel.app/api/webhooks/stripe?x-vercel-protection-bypass=<secreto de Vercel → Deployment Protection>`,
+        eventos `checkout.session.completed` y `checkout.session.async_payment_succeeded`. Copiar el *Signing secret*.
+     2. Vercel → Environment Variables, **solo Preview**, *Sensitive*: `STRIPE_SECRET_KEY` (el `rk_test_` de `.env.staging`)
+        y `STRIPE_WEBHOOK_SECRET` (el `whsec_` nuevo).
+     3. Avisar al CTO: push a `develop` → comprobar variables (sin valores) → compra con 4242 → webhook 200 →
+        pedido `paid` en Supabase → Printify en espera → `SHOW statement_timeout` por el 6543.
+   - Trampas: el Chrome "Browser 3" no tiene sesión en Stripe. El clasificador bloquea leer el token de la CLI de Vercel
+     (y no hay `vercel` en el PATH): las variables van por el dashboard o el conector MCP.
 6. **Membresía** (trabajo nuevo, otra sesión, plan propio): usuarios, niveles, campus, Bunny. Ver `vision-membresia.md`. Antes: fase 1 en Skool para validar.
 
 ## Decisiones abiertas (con recomendación)
