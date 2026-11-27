@@ -9,9 +9,12 @@
   (Postgres real); sin esa variable los de integración se saltan en local, pero en CI corren siempre (service `postgres:17`).
 - **Paso 1 HECHO** (2026-11-26). **Paso 2 HECHO en código** (2026-11-26): 4 rondas especialista → QA → rompedor;
   QA aprobó, el rompedor no encontró P0/P1 en la última, y el CTO verificó la suite y el mutante sin `FOR UPDATE` (muere 3/3).
-  Falta solo lo de Luis en Supabase (ver paso 2, "Falta"). **Paso 4 en curso** (ver abajo).
-- Mientras no exista `DATABASE_MIGRATION_URL` en Vercel, **la build de `develop` falla a propósito** (`vercel-build` migra
-  antes de compilar). El último deploy bueno sigue sirviendo; no es una caída.
+  **Paso 2 desplegado en staging (2026-11-27):** build de `develop` con `migrations_ok`; verificado en Supabase:
+  2 migraciones, RLS activo, `anon`/`authenticated` sin privilegios, rol `postgres` con `statement_timeout=15s` e
+  `idle_in_transaction_session_timeout=15s` (el `ALTER ROLE` SÍ está permitido en Supabase). **Paso 4 HECHO.**
+- **Staging responde 500 a propósito** hasta el paso 5: `assertDeployable` exige `STRIPE_SECRET_KEY` y
+  `STRIPE_WEBHOOK_SECRET` en staging (log: "Configuración inválida: STRIPE_SECRET_KEY es obligatoria en staging…").
+  La base ya no falta: la siguiente barrera es Stripe.
 - **Hostinger ya no existe** (plan cancelado y reembolsado el 2026-11-10). Nada de este proyecto está en vivo.
 - El código **todavía** usa SMTP (paso 3).
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
@@ -105,8 +108,8 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - **Proyecto de staging:** `actitudalfa360-staging` (ref `jsusmetqafmechlkbjyu`, us-east-1, Postgres 17, plan gratis,
      org `actitudalfa360` con la cuenta `actitudalfa360@gmail.com`). Ya existía vacío (0 tablas); se renombró el 2026-11-27.
      Host de los poolers: `aws-2-us-east-1.pooler.supabase.com`, usuario `postgres.jsusmetqafmechlkbjyu`, base `postgres`.
-   - **Falta (Luis):** contraseña de la base (o "Reset database password") y poner en
-     Vercel por entorno `DATABASE_URL` (pooler transacción, 6543) y `DATABASE_MIGRATION_URL` (pooler sesión, 5432).
+   - **HECHO 2026-11-27:** `DATABASE_URL` (6543) y `DATABASE_MIGRATION_URL` (5432) en Vercel con alcance **solo Preview**
+     (se guardaron primero en Production por error y se movieron; producción NO debe apuntar a staging).
      Sin `DATABASE_MIGRATION_URL` la build de Vercel falla a propósito. Las ramas de feature NO migran
      (sus previews pueden ver `schema: behind` en `/api/health`).
    - Reescribir `src/infrastructure/db/schema.ts` con `pg-core`: ENUM nativo, `CHECK` de montos y moneda, `order_number` como identity desde 10001, índice único en `payment_ref`, índices `(status, created_at)`, `created_at`, `email`.
@@ -165,15 +168,15 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
   backfill → `VALIDATE CONSTRAINT` en una migración aparte. Igual con `NOT NULL` (vía CHECK NOT VALID). La ronda 2
   rompió esto con `orders_processing_claim_ck`; como no había base, se fusionó todo en la inicial.
 - `statement_timeout` va en el rol (`ALTER ROLE <rol> IN DATABASE <db> SET`, migración 0001), no como parámetro de
-  conexión: el pooler de transacción no conserva `SET` y puede rechazar parámetros de arranque. **Sin verificar contra
-  Supavisor**: al crear el proyecto, `SHOW statement_timeout` por el 6543 debe decir `15s`. El ajuste persiste aunque
+  conexión: el pooler de transacción no conserva `SET` y puede rechazar parámetros de arranque. Verificado en el rol
+  `postgres` de Supabase el 2026-11-27 (`pg_db_role_setting`); falta ver `SHOW` desde la app por el 6543 (paso 5). El ajuste persiste aunque
   se borre el esquema. Si la app pasa a un rol propio (deuda), moverlo a ese rol.
 - **El `ALTER ROLE` sobre `postgres` también limita a 15 s** (statement e idle-in-transaction) el SQL editor/Studio de
   Supabase y `supabase db push`. Para una consulta larga en Studio: `SET statement_timeout = 0;` en esa sesión. La salida
   definitiva es el rol de app de mínimo privilegio (deuda): el límite pasa a ese rol y `postgres` queda libre.
-- **Verificar al crear el proyecto Supabase:** que `ALTER ROLE ... IN DATABASE ... SET` está permitido al rol `postgres`
-  (si no, la migración 0001 falla y la build lo muestra), y que por el puerto 6543 `SHOW statement_timeout` y
-  `SHOW idle_in_transaction_session_timeout` dan `15s`.
+- `ALTER ROLE ... IN DATABASE ... SET` **sí está permitido** al rol `postgres` en Supabase (verificado 2026-11-27).
+- **Redeploy desde el dashboard de Vercel** puede reconstruir un commit VIEJO (el 2026-11-27 se relanzó `bc7d3fc`, previo
+  al paso 2). Para staging: redeploy del deploy más reciente de `develop`, o un push.
 - Sin probar a propósito: el `SET statement_timeout = '10min'` de `migrate.mjs` (mutante M23). Probarlo exige una DDL de
   más de 15 s; no compensa hasta que haya una migración así.
 - La tortura R11 (`tests/postgres.int.test.ts`, 200 rondas, ~2 s; `R11_ROUNDS` la cambia) es la única que mata quitar el
