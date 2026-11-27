@@ -10,7 +10,7 @@
 - El código **todavía** está conectado a Hostinger: MySQL, SMTP y migraciones al arrancar.
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
 - **Un solo repo:** `techbuilddreams/actitudalfa360` (antes `actitudalfa360-site`, renombrado 2026-11-26).
-  La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. La carpeta local sigue siendo `actitudalfa360-site`.
+  La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. Carpeta local: `~/repos/actitudalfa360` (renombrada el mismo día; la memoria de Claude se copió a la ruta nueva).
 - En Vercel existe un proyecto VIEJO `actitudalfa360` (Nuxt, `prj_cYMTPQkvTcOK7zArmDejQ0TcuEl9`) que tiene los dominios
   `actitudalfa360.com` y `www`. No se toca hasta el paso 4: ahí se mueven los dominios al proyecto nuevo.
 - La rama por defecto en GitHub es `develop`: al crear el proyecto en Vercel, la de producción hay que fijarla en `main`
