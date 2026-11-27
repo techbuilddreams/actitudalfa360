@@ -11,11 +11,12 @@ CREATE TABLE "orders" (
 	"shipping_cents" integer DEFAULT 0 NOT NULL,
 	"tax_cents" integer DEFAULT 0 NOT NULL,
 	"currency" char(3) NOT NULL,
-	"email" varchar(320),
+	"email" text,
 	"phone" varchar(40),
 	"shipping" jsonb,
 	"fulfillment_ref" varchar(64),
 	"claimed_at" timestamp with time zone,
+	"claim_token" uuid,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "orders_total_cents_ck" CHECK ("orders"."total_cents" >= 0),
@@ -25,7 +26,8 @@ CREATE TABLE "orders" (
 	CONSTRAINT "orders_tax_cents_ck" CHECK ("orders"."tax_cents" >= 0),
 	CONSTRAINT "orders_currency_ck" CHECK ("orders"."currency" = 'usd'),
 	CONSTRAINT "orders_lines_ck" CHECK (CASE WHEN jsonb_typeof("orders"."lines") = 'array' THEN jsonb_array_length("orders"."lines") > 0 ELSE false END),
-	CONSTRAINT "orders_amounts_ck" CHECK ("orders"."subtotal_cents" = 0 OR "orders"."subtotal_cents"::bigint + "orders"."shipping_cents" + "orders"."tax_cents" = "orders"."total_cents"::bigint + "orders"."discount_cents")
+	CONSTRAINT "orders_amounts_ck" CHECK (("orders"."subtotal_cents" = 0 AND "orders"."discount_cents" = 0 AND "orders"."shipping_cents" = 0 AND "orders"."tax_cents" = 0) OR "orders"."subtotal_cents"::bigint + "orders"."shipping_cents" + "orders"."tax_cents" = "orders"."total_cents"::bigint + "orders"."discount_cents"),
+	CONSTRAINT "orders_processing_claim_ck" CHECK ("orders"."status" <> 'fulfillment_processing' OR ("orders"."claimed_at" IS NOT NULL AND "orders"."claim_token" IS NOT NULL))
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX "orders_order_number_uq" ON "orders" USING btree ("order_number");--> statement-breakpoint

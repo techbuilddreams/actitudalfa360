@@ -1,5 +1,5 @@
 {
-  "id": "76b13d97-82a3-4054-a7f9-56a8baa15d8a",
+  "id": "e2033820-0065-4a0d-af88-afc0770078bf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -92,7 +92,7 @@
         },
         "email": {
           "name": "email",
-          "type": "varchar(320)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -117,6 +117,12 @@
         "claimed_at": {
           "name": "claimed_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claim_token": {
+          "name": "claim_token",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -252,7 +258,11 @@
         },
         "orders_amounts_ck": {
           "name": "orders_amounts_ck",
-          "value": "\"orders\".\"subtotal_cents\" = 0 OR \"orders\".\"subtotal_cents\"::bigint + \"orders\".\"shipping_cents\" + \"orders\".\"tax_cents\" = \"orders\".\"total_cents\"::bigint + \"orders\".\"discount_cents\""
+          "value": "(\"orders\".\"subtotal_cents\" = 0 AND \"orders\".\"discount_cents\" = 0 AND \"orders\".\"shipping_cents\" = 0 AND \"orders\".\"tax_cents\" = 0) OR \"orders\".\"subtotal_cents\"::bigint + \"orders\".\"shipping_cents\" + \"orders\".\"tax_cents\" = \"orders\".\"total_cents\"::bigint + \"orders\".\"discount_cents\""
+        },
+        "orders_processing_claim_ck": {
+          "name": "orders_processing_claim_ck",
+          "value": "\"orders\".\"status\" <> 'fulfillment_processing' OR (\"orders\".\"claimed_at\" IS NOT NULL AND \"orders\".\"claim_token\" IS NOT NULL)"
         }
       },
       "isRLSEnabled": false

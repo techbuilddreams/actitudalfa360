@@ -1,6 +1,6 @@
 import { deliveryPromise, site } from '@/config/site';
 import { formatMoney, usd } from '@/domain/money';
-import { orderLabel, type Order } from '@/domain/order';
+import { orderLabel, UNKNOWN_SKU, type Order } from '@/domain/order';
 import type { EmailMessage } from '@/application/ports/mailer';
 
 const esc = (s: string) =>
@@ -21,10 +21,17 @@ function breakdown(order: Order): [string, string][] {
   return rows;
 }
 
+/** Lo que ve el CLIENTE: la línea centinela (líneas perdidas) es interna; él ve "en revisión". */
+const customerItems = (order: Order) => {
+  const known = lineItems({ ...order, lines: order.lines.filter((l) => l.sku !== UNKNOWN_SKU) });
+  const lost = order.lines.some((l) => l.sku === UNKNOWN_SKU);
+  return lost ? [...known, { name: 'Detalle del pedido en revisión', quantity: 0, total: '' }] : known;
+};
+
 /** Correo de confirmación al cliente (HTML con estilos en línea + texto plano). */
 export function orderConfirmationEmail(order: Order): EmailMessage | null {
   if (!order.email) return null;
-  const items = lineItems(order);
+  const items = customerItems(order);
   const extra = breakdown(order);
   const ref = orderLabel(order);
   const name = order.shipping?.name?.split(' ')[0] ?? '';
@@ -32,7 +39,7 @@ export function orderConfirmationEmail(order: Order): EmailMessage | null {
   const address: string[] = a ? [a.name, a.line1, a.line2 ?? "", `${a.city}, ${a.state} ${a.postalCode}`].filter((x) => x.length > 0) : [];
 
   const rows = items
-    .map((i) => `<tr><td style="padding:10px 0;border-bottom:1px solid #2A2926;color:#ECE8E0">${esc(i.name)} × ${i.quantity}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #2A2926;color:#ECE8E0;font-family:Menlo,monospace">${i.total}</td></tr>`)
+    .map((i) => `<tr><td style="padding:10px 0;border-bottom:1px solid #2A2926;color:#ECE8E0">${esc(i.name)}${i.quantity ? ` × ${i.quantity}` : ''}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #2A2926;color:#ECE8E0;font-family:Menlo,monospace">${i.total}</td></tr>`)
     .join('');
 
   const html = `<!doctype html><html lang="es"><body style="margin:0;background:#0E0E0D;font-family:Helvetica,Arial,sans-serif">
@@ -52,7 +59,7 @@ ${address.length ? `<tr><td style="padding-top:20px;color:#9C978C;font-size:14px
   const text = [
     `Gracias${name ? `, ${name}` : ''}. Tu pedido ${ref} está confirmado.`,
     '',
-    ...items.map((i) => `- ${i.name} x${i.quantity}  ${i.total}`),
+    ...items.map((i) => `- ${i.name}${i.quantity ? ` x${i.quantity}` : ''}  ${i.total}`),
     ...extra.map(([k, v]) => `${k}: ${v}`),
     `Total pagado: ${formatMoney(order.total)}`,
     '',

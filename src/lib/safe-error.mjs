@@ -31,6 +31,8 @@ export function safeError(err) {
   for (let depth = 0; depth < 5 && typeof e === 'object' && e !== null; depth++) {
     if (isPostgresError(e)) {
       const pg = /** @type {{ code: string, message?: unknown }} */ (e);
+      // Clase 22 (dato inválido: 22P02, 22003, 22001…): el mensaje repite el VALOR (nombre, dirección). Solo el código.
+      if (pg.code.startsWith('22')) return { reason: 'dato inválido (clase 22)', code: pg.code };
       return { reason: clean(String(pg.message ?? '')), code: pg.code };
     }
     e = /** @type {{cause?: unknown}} */ (e).cause;

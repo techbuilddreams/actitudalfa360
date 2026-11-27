@@ -48,4 +48,15 @@ describe('correo de confirmación', () => {
     expect(mailer.send).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalled();
   });
+
+  it('líneas perdidas (centinela): el cliente ve "detalle en revisión", nunca el texto interno', () => {
+    const lost = makeOrder({ lines: [{ sku: 'DESCONOCIDO', quantity: 1, name: 'Líneas perdidas: revisar el pago en Stripe', unitCents: 0 }] });
+    const m = orderConfirmationEmail(lost)!;
+    for (const body of [m.html, m.text]) {
+      expect(body).not.toContain('DESCONOCIDO');
+      expect(body).not.toContain('Stripe');
+      expect(body).toContain('Detalle del pedido en revisión');
+    }
+    expect(newSaleEmail(lost, 'tienda@example.com').text).toContain('Líneas perdidas: revisar el pago en Stripe');
+  });
 });

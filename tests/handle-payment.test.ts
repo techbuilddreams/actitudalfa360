@@ -104,15 +104,47 @@ describe('handlePayment', () => {
 
   it('si el reclamo se perdió antes de cerrar (otro proceso lo tomó), lo registra y no avisa un fallo que no es suyo', async () => {
     const orders = new InMemoryOrderRepository();
-    vi.spyOn(orders, 'completeFulfillment').mockResolvedValue(false);
+    const complete = vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'recorded', previous: 'fulfillment_processing' });
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
     let n = 0;
     const mk = (createDraftOrder: () => Promise<string>) => makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder }, notifier, logger, newId: () => `id-${++n}`, now: () => new Date() });
     await mk(async () => 'pf_A')(paid);
     expect(logger.error).toHaveBeenCalledWith('fulfillment_claim_lost', expect.objectContaining({ orderId: 'id-1', ref: 'pf_A' }));
+    complete.mockResolvedValue({ kind: 'stale' });
     await mk(async () => { throw new Error('HTTP 500'); })(paidCheckout({ paymentRef: 'cs_test_456' }));
     expect(logger.warn).toHaveBeenCalledWith('fulfillment_claim_lost', expect.objectContaining({ status: 'fulfillment_failed' }));
     expect(notifier.fulfillmentFailed).not.toHaveBeenCalled();
+  });
+
+  it('una ref real que llega tarde sobre un fallo ya avisado ⇒ se registra "recuperado"', async () => {
+    const orders = new InMemoryOrderRepository();
+    vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'recorded', previous: 'fulfillment_failed' });
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: vi.fn(async () => {}) }, logger, newId: () => 'id-1', now: () => new Date() });
+    await handle(paid);
+    expect(logger.error).toHaveBeenCalledWith('fulfillment_recovered', expect.objectContaining({ orderId: 'id-1', ref: 'pf_A' }));
+  });
+
+  it('dos producciones reales ⇒ error de producción doble con las dos refs', async () => {
+    const orders = new InMemoryOrderRepository();
+    vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'double', existingRef: 'pf_B' });
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger, newId: () => 'id-1', now: () => new Date() });
+    await handle(paid);
+    expect(logger.error).toHaveBeenCalledWith('fulfillment_double', expect.objectContaining({ orderId: 'id-1', refs: ['pf_B', 'pf_A'] }));
+  });
+
+  it('repositorio en memoria: un created tardío gana a un failed y un failed nunca pisa created', async () => {
+    let t = 0;
+    const orders = new InMemoryOrderRepository(() => new Date(t));
+    const { order } = await orders.createIfAbsent({ ...(await import('./fixtures')).order(), status: 'fulfillment_pending' });
+    const a = await orders.claimForFulfillment(order.id, 1000);
+    t = 5000;
+    const b = await orders.claimForFulfillment(order.id, 1000);
+    expect(await orders.completeFulfillment(order.id, b!, { status: 'fulfillment_failed' })).toEqual({ kind: 'closed' });
+    expect(await orders.completeFulfillment(order.id, a!, { status: 'fulfillment_created', ref: 'pfA' })).toEqual({ kind: 'recorded', previous: 'fulfillment_failed' });
+    expect(await orders.completeFulfillment(order.id, b!, { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' });
+    expect(await orders.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfA' });
   });
 });

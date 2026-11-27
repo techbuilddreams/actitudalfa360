@@ -10,7 +10,8 @@ import { z } from 'zod';
 const isPostgresUrl = (v: string) => {
   try {
     const u = new URL(v);
-    return u.protocol === 'postgres:' || u.protocol === 'postgresql:';
+    // Un # en la URL es una contraseña sin codificar (p. ej. postgres:5999#Zx@host se leería como puerto 5999).
+    return (u.protocol === 'postgres:' || u.protocol === 'postgresql:') && u.hash === '';
   } catch {
     return false;
   }

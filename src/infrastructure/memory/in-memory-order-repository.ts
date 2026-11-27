@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
+import type { CompleteOutcome, FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
 import type { Order } from '@/domain/order';
 
 type Row = Order & { claimedAt: Date | null; claimToken: string | null };
@@ -32,11 +32,19 @@ export class InMemoryOrderRepository implements OrderRepository {
     return token;
   }
 
-  async completeFulfillment(id: string, token: string, result: FulfillmentResult) {
+  async completeFulfillment(id: string, token: string, result: FulfillmentResult): Promise<CompleteOutcome> {
     const row = this.byId(id);
-    if (!row || row.status !== 'fulfillment_processing' || row.claimToken !== token) return false;
-    this.rows.set(row.paymentRef, { ...row, status: result.status, fulfillmentRef: 'ref' in result ? result.ref : row.fulfillmentRef });
-    return true;
+    if (!row) return { kind: 'stale' };
+    if (row.status === 'fulfillment_processing' && row.claimToken === token) {
+      this.rows.set(row.paymentRef, { ...row, status: result.status, fulfillmentRef: 'ref' in result ? result.ref : row.fulfillmentRef });
+      return { kind: 'closed' };
+    }
+    if (result.status !== 'fulfillment_created') return { kind: 'stale' };
+    if (row.status === 'fulfillment_created') {
+      return row.fulfillmentRef && row.fulfillmentRef !== result.ref ? { kind: 'double', existingRef: row.fulfillmentRef } : { kind: 'stale' };
+    }
+    this.rows.set(row.paymentRef, { ...row, status: 'fulfillment_created', fulfillmentRef: row.fulfillmentRef ?? result.ref });
+    return { kind: 'recorded', previous: row.status };
   }
 
   async findByPaymentRef(paymentRef: string) {

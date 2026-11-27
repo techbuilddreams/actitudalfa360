@@ -22,7 +22,8 @@ import { safeError } from '../src/lib/safe-error.mjs';
 
 // Clave fija del lock (bigint arbitrario, propio de este proyecto).
 const LOCK_KEY = 360_360_001;
-const MIGRATING_BRANCHES = ['main', 'develop'];
+// Rama ⇒ el ÚNICO entorno de Vercel en el que puede migrar (main → producción, develop → staging).
+const MIGRATING_BRANCHES = { main: 'production', develop: 'preview' };
 const migrationsFolder = fileURLToPath(new URL('../drizzle', import.meta.url));
 
 const log = (level, msg, meta = {}) => {
@@ -39,6 +40,7 @@ function checkUrl(raw) {
   } catch {
     return 'DATABASE_MIGRATION_URL no es una URL válida (¿un carácter como # sin codificar en la contraseña?)';
   }
+  if (u.hash !== '') return 'DATABASE_MIGRATION_URL tiene un # (¿contraseña sin codificar? usa %23)';
   if (u.protocol !== 'postgres:' && u.protocol !== 'postgresql:') return 'DATABASE_MIGRATION_URL debe empezar por postgres:// o postgresql://';
   if (u.port === '6543') return 'DATABASE_MIGRATION_URL apunta al pooler de TRANSACCIÓN (6543): usa el de SESIÓN (5432); el lock no funciona en el 6543';
   return null;
@@ -49,10 +51,12 @@ async function main() {
   if (vercel) {
     const ref = process.env.VERCEL_GIT_COMMIT_REF;
     if (!ref) return fail(`VERCEL_GIT_COMMIT_REF vacía (VERCEL_ENV=${vercel}): no se sabe la rama, no se despliega a ciegas`);
-    if (!MIGRATING_BRANCHES.includes(ref)) {
-      log('info', 'migrations_skipped', { reason: `rama ${ref}: solo migran ${MIGRATING_BRANCHES.join('/')}` });
+    const allowedEnv = MIGRATING_BRANCHES[ref];
+    if (!allowedEnv) {
+      log('info', 'migrations_skipped', { reason: `rama ${ref}: solo migran ${Object.keys(MIGRATING_BRANCHES).join('/')}` });
       return 0;
     }
+    if (vercel !== allowedEnv) return fail(`la rama ${ref} solo migra con VERCEL_ENV=${allowedEnv} (hay ${vercel}): variables cruzadas`);
   }
   const url = process.env.DATABASE_MIGRATION_URL;
   if (!url) {
@@ -69,6 +73,8 @@ async function main() {
     sql = postgres(url, { max: 1, prepare: false, idle_timeout: 0, connect_timeout: 15, onnotice: () => {} });
     // Esperar el lock hasta 120 s (otra build migrando); si otra quedó colgada, mejor una build fallida y visible.
     await sql`SET lock_timeout = '120s'`;
+    // La migración no hereda el statement_timeout de la app (una DDL legítima puede tardar más de 15 s).
+    await sql`SET statement_timeout = '10min'`;
     await sql`SELECT pg_advisory_lock(${LOCK_KEY})`;
     try {
       // Ya con el lock: la DDL no debe esperar más de 5 s por la tabla, o bloquearía a los webhooks detrás de ella.

@@ -1,6 +1,6 @@
 import { RetryLaterError } from '@/domain/errors';
 import { usd } from '@/domain/money';
-import { FULFILLMENT_CLAIM_TTL_MS, type Order, type OrderAmounts, type OrderItem, type OrderLine } from '@/domain/order';
+import { FULFILLMENT_CLAIM_TTL_MS, UNKNOWN_SKU, type Order, type OrderAmounts, type OrderItem, type OrderLine } from '@/domain/order';
 import type { CatalogRepository } from '../ports/catalog';
 import type { FulfillmentProvider } from '../ports/fulfillment';
 import type { Logger } from '../ports/logger';
@@ -21,7 +21,7 @@ export interface HandlePaymentDeps {
 export type HandlePaymentResult = 'created' | 'duplicate';
 
 /** Línea centinela para un pago cobrado cuyas líneas se perdieron: se guarda y se revisa a mano en Stripe. */
-const UNKNOWN_LINE: OrderItem = { sku: 'DESCONOCIDO', quantity: 1, name: 'Líneas perdidas: revisar el pago en Stripe', unitCents: 0 };
+const UNKNOWN_LINE: OrderItem = { sku: UNKNOWN_SKU, quantity: 1, name: 'Líneas perdidas: revisar el pago en Stripe', unitCents: 0 };
 
 /**
  * Caso de uso: registrar un pago confirmado exactamente una vez
@@ -93,15 +93,22 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
           reason = err instanceof Error ? err.message : 'desconocido';
           deps.logger.error('No se pudo crear el pedido de producción', { orderId: order.id, reason });
         }
-        const closed = await deps.orders.completeFulfillment(order.id, token, ref ? { status: 'fulfillment_created', ref } : { status: 'fulfillment_failed' });
-        if (ref && !closed) {
-          // Producción creada, pero el turno ya era de otro (tardamos más que el TTL): posible doble producción.
-          deps.logger.error('fulfillment_claim_lost', { orderId: order.id, ref, status: 'fulfillment_created' });
-        } else if (!ref && !closed) {
-          // Nuestro fallo llegó tarde: el pedido es de otro proceso; no avisamos un fallo que no es suyo.
-          deps.logger.warn('fulfillment_claim_lost', { orderId: order.id, status: 'fulfillment_failed' });
-        } else if (!ref) {
-          await deps.notifier.fulfillmentFailed(order, reason);
+        const out = await deps.orders.completeFulfillment(order.id, token, ref ? { status: 'fulfillment_created', ref } : { status: 'fulfillment_failed' });
+        if (out.kind === 'closed') {
+          if (!ref) await deps.notifier.fulfillmentFailed(order, reason);
+        } else if (out.kind === 'recorded') {
+          // Tardamos más que el TTL, pero la ref real de Printify quedó guardada (gana a cualquier fallo).
+          if (out.previous === 'fulfillment_failed') {
+            // Ya se había avisado un fallo de este pedido: ahora está producido.
+            deps.logger.error('fulfillment_recovered', { orderId: order.id, ref });
+          } else {
+            deps.logger.error('fulfillment_claim_lost', { orderId: order.id, ref, status: 'fulfillment_created' });
+          }
+        } else if (out.kind === 'double') {
+          deps.logger.error('fulfillment_double', { orderId: order.id, refs: [out.existingRef, ref] });
+        } else {
+          // Nuestro resultado llegó tarde y no cambia nada: el pedido es de otro proceso; no avisamos un fallo ajeno.
+          deps.logger.warn('fulfillment_claim_lost', { orderId: order.id, status: ref ? 'fulfillment_created' : 'fulfillment_failed' });
         }
       } else {
         // Perdimos el reclamo. Si el otro proceso sigue "trabajando", pedimos a Stripe que reintente más tarde:

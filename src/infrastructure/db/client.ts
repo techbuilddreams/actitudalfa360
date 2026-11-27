@@ -16,6 +16,8 @@ let db: Db | undefined;
  */
 export function getDb(url: string, poolSize = 5): Db {
   if (!db) {
+    // statement_timeout (15 s) NO se pone aquí: va en el rol (migración 0001), porque el pooler de transacción
+    // no conserva SET de sesión y puede rechazar parámetros de arranque desconocidos.
     client = postgres(url, { max: poolSize, prepare: false, idle_timeout: 20, connect_timeout: 10, onnotice: () => {} });
     db = drizzle(client, { schema });
   }

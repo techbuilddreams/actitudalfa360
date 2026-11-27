@@ -13,16 +13,26 @@ export interface OrderRepository {
   claimForFulfillment(id: string, ttlMs: number): Promise<string | null>;
 
   /**
-   * Cierra el reclamo: solo si sigue en `fulfillment_processing` CON ese token (nadie lo recuperó por vencido).
-   * Devuelve false si no cerró nada (el turno ya no era suyo).
+   * Cierra el reclamo. Con el token vigente (sigue en `processing` y nadie lo recuperó por vencido) ⇒ `closed`.
+   * Sin el turno:
+   * - `failed` ⇒ `stale`: no toca nada (un fallo nunca pisa a otro dueño ni a un `created`).
+   * - `created` ⇒ una ref REAL de producción siempre gana a un fallo: se guarda igual (`recorded`, con el estado que
+   *   había: `processing` de otro, o `failed` ya avisado ⇒ "recuperado"). Si ya había OTRA ref ⇒ `double`
+   *   (dos producciones reales; se conserva la primera). La misma ref repetida ⇒ `stale`.
    */
-  completeFulfillment(id: string, token: string, result: FulfillmentResult): Promise<boolean>;
+  completeFulfillment(id: string, token: string, result: FulfillmentResult): Promise<CompleteOutcome>;
 
   findByPaymentRef(paymentRef: string): Promise<Order | undefined>;
 
   /** Verifica que el almacenamiento responde (para /api/health). */
   ping(): Promise<void>;
 }
+
+export type CompleteOutcome =
+  | { kind: 'closed' }
+  | { kind: 'stale' }
+  | { kind: 'recorded'; previous: OrderStatus }
+  | { kind: 'double'; existingRef: string };
 
 export type FulfillmentResult = { status: 'fulfillment_created'; ref: string } | { status: 'fulfillment_failed' };
 

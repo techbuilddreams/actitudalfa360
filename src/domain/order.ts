@@ -19,6 +19,9 @@ export type OrderStatus =
 /** Tiempo tras el cual un reclamo `processing` se considera abandonado (proceso caído). */
 export const FULFILLMENT_CLAIM_TTL_MS = 5 * 60_000;
 
+/** SKU de la línea centinela de un pago cobrado cuyas líneas se perdieron (revisión manual). */
+export const UNKNOWN_SKU = 'DESCONOCIDO';
+
 /** Lo que el cliente pidió (viaja en la metadata del pago). */
 export interface OrderLine { readonly sku: string; readonly quantity: number }
 

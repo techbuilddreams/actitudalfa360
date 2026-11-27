@@ -45,4 +45,20 @@ describe('scripts/migrate.mjs (sin base de datos)', () => {
     expect(r.code).not.toBe(0);
     expect(r.stderr).toContain('VERCEL_GIT_COMMIT_REF');
   });
+
+  it('main exige VERCEL_ENV=production y develop exige preview (si no cuadran, falla)', async () => {
+    const dummy = 'postgresql://u:p@127.0.0.1:1/d';
+    const a = await runMigrate({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'main', DATABASE_MIGRATION_URL: dummy });
+    expect(a.code).not.toBe(0);
+    expect(a.stderr).toContain('main');
+    const b = await runMigrate({ VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 'develop', DATABASE_MIGRATION_URL: dummy });
+    expect(b.code).not.toBe(0);
+    expect(b.stderr).toContain('develop');
+  });
+
+  it('una contraseña con # que parece puerto (postgres:5999#Zx@host) se rechaza sin filtrarla', async () => {
+    const r = await runMigrate({ DATABASE_MIGRATION_URL: 'postgres://postgres:5999#Zx@host/db' });
+    expect(r.code).not.toBe(0);
+    expect(r.stdout + r.stderr).not.toContain('Zx');
+  });
 });

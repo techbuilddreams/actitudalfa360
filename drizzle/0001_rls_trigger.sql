@@ -34,3 +34,14 @@ BEGIN
   END LOOP;
 END;
 $$;
+--> statement-breakpoint
+
+-- statement_timeout de 15 s para el rol que conecta, solo en esta base. Va en el ROL y no en la conexión:
+-- el pooler de transacción (6543) no conserva SET de sesión y puede no reenviar parámetros de arranque;
+-- un ajuste de rol se aplica al abrir cada conexión del servidor, sin depender del estado de sesión.
+-- scripts/migrate.mjs lo sube en su propia sesión (una DDL legítima puede tardar más).
+DO $$
+BEGIN
+  EXECUTE format('ALTER ROLE %I IN DATABASE %I SET statement_timeout = %L', current_user, current_database(), '15s');
+END;
+$$;

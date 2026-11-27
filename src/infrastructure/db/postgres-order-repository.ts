@@ -1,8 +1,8 @@
 import 'server-only';
-import { and, eq, lt, or, sql } from 'drizzle-orm';
+import { and, eq, lt, ne, or, sql } from 'drizzle-orm';
 import { usd } from '@/domain/money';
 import type { Order, OrderItem, OrderStatus } from '@/domain/order';
-import type { FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
+import type { CompleteOutcome, FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
 import type { Logger } from '@/application/ports/logger';
 import type { Db } from './client';
 import { orders } from './schema';
@@ -106,14 +106,34 @@ export class PostgresOrderRepository implements OrderRepository {
     return won[0]?.token ?? null;
   }
 
-  /** Solo el dueño del turno vigente cierra. false ⇒ no cerró nada (el turno era de otro, o ya estaba cerrado). */
-  async completeFulfillment(id: string, token: string, result: FulfillmentResult) {
-    const closed = await this.db
-      .update(orders)
-      .set({ status: result.status, ...(result.status === 'fulfillment_created' ? { fulfillmentRef: result.ref } : {}) })
-      .where(and(eq(orders.id, id), eq(orders.status, 'fulfillment_processing'), eq(orders.claimToken, token)))
-      .returning({ id: orders.id });
-    return closed.length === 1;
+  /** Contrato completo en el puerto. Todo en UNA transacción con la fila bloqueada: sin read-modify-write abierto. */
+  async completeFulfillment(id: string, token: string, result: FulfillmentResult): Promise<CompleteOutcome> {
+    return this.db.transaction(async (tx) => {
+      // 1) Dueño del turno vigente: compare-and-set normal.
+      const closed = await tx
+        .update(orders)
+        .set({ status: result.status, ...(result.status === 'fulfillment_created' ? { fulfillmentRef: result.ref } : {}) })
+        .where(and(eq(orders.id, id), eq(orders.status, 'fulfillment_processing'), eq(orders.claimToken, token)))
+        .returning({ id: orders.id });
+      if (closed.length === 1) return { kind: 'closed' } as const;
+      // 2) Turno perdido. Un fallo tardío no toca nada.
+      if (result.status !== 'fulfillment_created') return { kind: 'stale' } as const;
+      // 3) Una ref real tardía: se bloquea la fila (FOR UPDATE) para decidir y escribir sin carrera.
+      const [row] = await tx
+        .select({ status: orders.status, ref: orders.fulfillmentRef })
+        .from(orders)
+        .where(eq(orders.id, id))
+        .for('update');
+      if (!row) return { kind: 'stale' } as const;
+      if (row.status === 'fulfillment_created') {
+        return row.ref && row.ref !== result.ref ? ({ kind: 'double', existingRef: row.ref } as const) : ({ kind: 'stale' } as const);
+      }
+      await tx
+        .update(orders)
+        .set({ status: 'fulfillment_created', fulfillmentRef: sql`COALESCE(${orders.fulfillmentRef}, ${result.ref})` })
+        .where(and(eq(orders.id, id), ne(orders.status, 'fulfillment_created')));
+      return { kind: 'recorded', previous: row.status as OrderStatus } as const;
+    });
   }
 
   async ping() {

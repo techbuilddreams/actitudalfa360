@@ -14,10 +14,19 @@ describe('safeError (logs sin datos del cliente)', () => {
   it('un error de consulta con PII ⇒ solo código y mensaje de Postgres', () => {
     const out = safeError(drizzleError());
     const text = JSON.stringify(out);
-    expect(out).toEqual({ reason: 'value too long for type character varying(320)', code: '22001' });
+    expect(out.code).toBe('22001');
     expect(text).not.toContain('cliente@correo.com');
     expect(text).not.toContain('Main St');
     expect(text).not.toContain('8095551234');
+  });
+
+  it('clase 22 (dato inválido: 22P02, 22003…) ⇒ solo el código: el mensaje repite el valor del cliente', () => {
+    for (const code of ['22P02', '22003', '22001']) {
+      const cause = Object.assign(new Error('invalid input syntax for type uuid: "Juana Perez, Calle Secreta 42"'), { name: 'PostgresError', code, severity: 'ERROR' });
+      const out = safeError(Object.assign(new Error('Failed query: ...'), { cause }));
+      expect(out.code).toBe(code);
+      expect(JSON.stringify(out)).not.toContain('Juana');
+    }
   });
 
   it('"Failed query" sin causa de Postgres: no se registra la consulta', () => {

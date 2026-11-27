@@ -54,6 +54,8 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     if (!/\/[^/?]*test[^/?]*(\?|$)/.test(url!)) throw new Error('TEST_DATABASE_URL debe apuntar a una base cuyo nombre contenga "test"');
     await admin.unsafe('DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
     await admin.unsafe(SUPABASE_LIKE_ROLES);
+    // El statement_timeout del rol sobrevive al DROP SCHEMA: se limpia para que el test lo vea venir de la migración.
+    await admin.unsafe(`DO $$ BEGIN EXECUTE format('ALTER ROLE %I IN DATABASE %I RESET statement_timeout', current_user, current_database()); END $$;`);
     // Dos builds de Vercel migrando la MISMA base a la vez, sobre una base vacía.
     concurrent = await Promise.all([runMigrate({ DATABASE_MIGRATION_URL: url }), runMigrate({ DATABASE_MIGRATION_URL: url })]);
   }, 60_000);
@@ -128,7 +130,7 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       const b = await r.claimForFulfillment(order.id, TTL); // vencido ⇒ recuperable
       expect(typeof b).toBe('string');
       expect(b).not.toBe(a);
-      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_created', ref: 'pf_9' })).toBe(true);
+      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_created', ref: 'pf_9' })).toEqual({ kind: 'closed' });
       expect(await r.claimForFulfillment(order.id, TTL)).toBeNull(); // terminado: no se vuelve a reclamar
       expect((await r.findByPaymentRef(order.paymentRef))?.fulfillmentRef).toBe('pf_9');
     });
@@ -154,8 +156,8 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       const a = await r.claimForFulfillment(order.id, TTL);
       await ageClaim(order.id, 6);
       const b = await r.claimForFulfillment(order.id, TTL);
-      expect(await r.completeFulfillment(order.id, a!, { status: 'fulfillment_failed' })).toBe(false); // A tardío: rechazado
-      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_created', ref: 'pf_B' })).toBe(true);
+      expect(await r.completeFulfillment(order.id, a!, { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' }); // A tardío: rechazado
+      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_created', ref: 'pf_B' })).toEqual({ kind: 'closed' });
       expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pf_B' });
     });
 
@@ -163,10 +165,43 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       const r = repo();
       const { order } = await r.createIfAbsent(newOrder());
       const t = await r.claimForFulfillment(order.id, TTL);
-      expect(await r.completeFulfillment(order.id, t!, { status: 'fulfillment_created', ref: 'pf_1' })).toBe(true);
-      expect(await r.completeFulfillment(order.id, t!, { status: 'fulfillment_failed' })).toBe(false);
-      expect(await r.completeFulfillment(order.id, randomUUID(), { status: 'fulfillment_failed' })).toBe(false);
+      expect(await r.completeFulfillment(order.id, t!, { status: 'fulfillment_created', ref: 'pf_1' })).toEqual({ kind: 'closed' });
+      expect(await r.completeFulfillment(order.id, t!, { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' });
+      expect(await r.completeFulfillment(order.id, randomUUID(), { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' });
       expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pf_1' });
+    });
+
+    it('R9: A reclama, vence, B reclama; A cierra created tarde y LUEGO B cierra failed ⇒ queda created con la ref de A', async () => {
+      const r = repo();
+      const { order } = await r.createIfAbsent(newOrder());
+      const a = await r.claimForFulfillment(order.id, TTL);
+      await ageClaim(order.id, 6);
+      const b = await r.claimForFulfillment(order.id, TTL);
+      expect(await r.completeFulfillment(order.id, a!, { status: 'fulfillment_created', ref: 'pfA' })).toEqual({ kind: 'recorded', previous: 'fulfillment_processing' });
+      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' }); // failed nunca pisa created
+      expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfA' });
+    });
+
+    it('R9 al revés: B cierra failed y LUEGO A cierra created tarde ⇒ se recupera (created, ref de A)', async () => {
+      const r = repo();
+      const { order } = await r.createIfAbsent(newOrder());
+      const a = await r.claimForFulfillment(order.id, TTL);
+      await ageClaim(order.id, 6);
+      const b = await r.claimForFulfillment(order.id, TTL);
+      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_failed' })).toEqual({ kind: 'closed' });
+      expect(await r.completeFulfillment(order.id, a!, { status: 'fulfillment_created', ref: 'pfA' })).toEqual({ kind: 'recorded', previous: 'fulfillment_failed' });
+      expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfA' });
+    });
+
+    it('dos producciones reales (A y B con refs distintas) ⇒ se conserva la primera y se reporta la doble', async () => {
+      const r = repo();
+      const { order } = await r.createIfAbsent(newOrder());
+      const a = await r.claimForFulfillment(order.id, TTL);
+      await ageClaim(order.id, 6);
+      const b = await r.claimForFulfillment(order.id, TTL);
+      expect(await r.completeFulfillment(order.id, b!, { status: 'fulfillment_created', ref: 'pfB' })).toEqual({ kind: 'closed' });
+      expect(await r.completeFulfillment(order.id, a!, { status: 'fulfillment_created', ref: 'pfA' })).toEqual({ kind: 'double', existingRef: 'pfB' });
+      expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfB' });
     });
 
     it('processing sin claimed_at es imposible (si no, quedaría atascado para siempre)', async () => {
@@ -278,5 +313,36 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     for (const t of tables) expect(t.relrowsecurity, `RLS en ${t.relname}`).toBe(true);
     const grants = await admin`SELECT table_name, grantee, privilege_type FROM information_schema.role_table_grants WHERE table_schema = 'public' AND grantee IN ('anon', 'authenticated')`;
     expect(grants).toEqual([]);
+  });
+
+  it('el pool de la app tiene statement_timeout (una consulta colgada no retiene la conexión para siempre)', async () => {
+    const db = getDb(url!, 10);
+    const { sql: q } = await import('drizzle-orm');
+    const rows = await db.execute<{ statement_timeout: string }>(q`SHOW statement_timeout`);
+    expect(rows[0]?.statement_timeout).toBe('15s');
+  });
+
+  it('volver a migrar con filas representativas (incluido un pedido en processing) sale con 0', async () => {
+    const r = repo();
+    await r.createIfAbsent(newOrder({ status: 'paid' }));
+    await r.createIfAbsent(newOrder({ amounts: amounts(0, 0), total: usd(3398) })); // sin desglose
+    const { order: inFlight } = await r.createIfAbsent(newOrder());
+    expect(await r.claimForFulfillment(inFlight.id, TTL)).not.toBeNull();
+    const { order: done } = await r.createIfAbsent(newOrder());
+    const t = await r.claimForFulfillment(done.id, TTL);
+    await r.completeFulfillment(done.id, t!, { status: 'fulfillment_created', ref: 'pf_x' });
+    const res = await runMigrate({ DATABASE_MIGRATION_URL: url });
+    expect(res, res.stderr).toMatchObject({ code: 0 });
+  });
+
+  // Estos dos alteran la tabla de migraciones: van AL FINAL del archivo.
+  it('checkSchema: falta la última migración ⇒ behind', async () => {
+    await admin`DELETE FROM drizzle.__drizzle_migrations WHERE created_at = (SELECT max(created_at) FROM drizzle.__drizzle_migrations)`;
+    expect(await checkSchema(getDb(url!, 10))).toBe('behind');
+  });
+
+  it('checkSchema: sin tabla de migraciones ⇒ behind', async () => {
+    await admin`DROP TABLE drizzle.__drizzle_migrations`;
+    expect(await checkSchema(getDb(url!, 10))).toBe('behind');
   });
 });

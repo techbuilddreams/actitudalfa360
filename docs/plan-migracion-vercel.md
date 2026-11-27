@@ -77,6 +77,14 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      5 s tras el lock, en Vercel solo migran `main`/`develop`. `/api/health` reporta `schema` (ok/behind/ahead).
      CHECK de cuadre sin hueco con subtotal 0. `toDomain` descarta líneas corruptas. Test de REVOKE con roles tipo
      Supabase. 6 mutantes matados (guardia de token, guardia de estado, REVOKE, CHECKs >= 0, reloj de app, CHECK processing).
+   - **Ronda 3 (QA aprobó la 2; arreglos del Rompedor):** migraciones fusionadas en una inicial (`0000_init` generada +
+     `0001_rls_trigger` a mano; no existía ninguna base). Una ref real de Printify SIEMPRE gana a un fallo:
+     `completeFulfillment` devuelve `closed | stale | recorded | double` (logs `fulfillment_recovered`,
+     `fulfillment_claim_lost`, `fulfillment_double`). `statement_timeout` 15 s en el ROL (migración), no en la conexión.
+     Correo al cliente sin la línea centinela ("Detalle del pedido en revisión"). `migrate.mjs`: `main`↔`production`,
+     `develop`↔`preview`; URL con `#` rechazada (también en `env.ts`). `safeError` registra solo el código en la clase 22.
+   - **Antes del lanzamiento (otro trabajo):** alertas sobre los logs `order_lines_missing`, `fulfillment_claim_lost`,
+     `fulfillment_recovered`, `fulfillment_double` y `webhook_processing_failed`.
    - **Deuda anotada (no se hizo en esta ronda):**
      - Rol de app con mínimo privilegio (hoy la app conecta como el dueño de la tabla).
      - Comprobar que `DATABASE_URL` y `DATABASE_MIGRATION_URL` apuntan al mismo proyecto Supabase.
@@ -132,6 +140,14 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
   entera: validar con try/catch sin propagar el error. `DrizzleQueryError.message` trae TODOS los parámetros
   (correo, dirección): loguear solo con `safeError`.
 - Comparar `claimed_at` en JS pierde los microsegundos de `now()`: por eso el token de turno es un uuid y no la hora.
+- **Migraciones FUTURAS sobre una tabla viva:** nunca `ADD CONSTRAINT ... CHECK` validado de golpe (falla con filas
+  viejas o con un pedido en vuelo, y bloquea la tabla mientras valida). Usar `ADD CONSTRAINT ... NOT VALID` →
+  backfill → `VALIDATE CONSTRAINT` en una migración aparte. Igual con `NOT NULL` (vía CHECK NOT VALID). La ronda 2
+  rompió esto con `orders_processing_claim_ck`; como no había base, se fusionó todo en la inicial.
+- `statement_timeout` va en el rol (`ALTER ROLE <rol> IN DATABASE <db> SET`, migración 0001), no como parámetro de
+  conexión: el pooler de transacción no conserva `SET` y puede rechazar parámetros de arranque. **Sin verificar contra
+  Supavisor**: al crear el proyecto, `SHOW statement_timeout` por el 6543 debe decir `15s`. El ajuste persiste aunque
+  se borre el esquema. Si la app pasa a un rol propio (deuda), moverlo a ese rol.
 - `tests/postgres.int.test.ts` BORRA el esquema `public`: se niega a correr si el nombre de la base no contiene `test`.
 - Un push a `develop` que suba commits viejos sin subir arrastra más de lo esperado: revisar `git log @{u}..` antes de empujar.
 
