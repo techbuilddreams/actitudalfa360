@@ -9,4 +9,7 @@ export class CompositeNotifier implements Notifier {
   async fulfillmentFailed(o: Parameters<Notifier['fulfillmentFailed']>[0], r: string) {
     await Promise.all(this.notifiers.map((n) => n.fulfillmentFailed(o, r)));
   }
+  async fulfillmentAnomaly(...args: Parameters<Notifier['fulfillmentAnomaly']>) {
+    await Promise.all(this.notifiers.map((n) => n.fulfillmentAnomaly(...args)));
+  }
 }

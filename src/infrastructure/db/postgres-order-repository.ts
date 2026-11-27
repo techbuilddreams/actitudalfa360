@@ -128,10 +128,16 @@ export class PostgresOrderRepository implements OrderRepository {
       if (row.status === 'fulfillment_created') {
         return row.ref && row.ref !== result.ref ? ({ kind: 'double', existingRef: row.ref } as const) : ({ kind: 'stale' } as const);
       }
-      await tx
+      const written = await tx
         .update(orders)
         .set({ status: 'fulfillment_created', fulfillmentRef: sql`COALESCE(${orders.fulfillmentRef}, ${result.ref})` })
-        .where(and(eq(orders.id, id), ne(orders.status, 'fulfillment_created')));
+        .where(and(eq(orders.id, id), ne(orders.status, 'fulfillment_created')))
+        .returning({ ref: orders.fulfillmentRef });
+      // Con el FOR UPDATE no debería pasar; si el UPDATE no tocó la fila, NUNCA decir "recorded": se relee y se decide.
+      if (written.length === 0) {
+        const [now] = await tx.select({ ref: orders.fulfillmentRef }).from(orders).where(eq(orders.id, id));
+        return now?.ref && now.ref !== result.ref ? ({ kind: 'double', existingRef: now.ref } as const) : ({ kind: 'stale' } as const);
+      }
       return { kind: 'recorded', previous: row.status as OrderStatus } as const;
     });
   }

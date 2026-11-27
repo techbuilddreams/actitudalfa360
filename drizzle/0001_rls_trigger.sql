@@ -43,5 +43,7 @@ $$;
 DO $$
 BEGIN
   EXECUTE format('ALTER ROLE %I IN DATABASE %I SET statement_timeout = %L', current_user, current_database(), '15s');
+  -- Un proceso congelado DENTRO de una transacción (p. ej. con el FOR UPDATE de completeFulfillment) suelta el lock a los 15 s.
+  EXECUTE format('ALTER ROLE %I IN DATABASE %I SET idle_in_transaction_session_timeout = %L', current_user, current_database(), '15s');
 END;
 $$;

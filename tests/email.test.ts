@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EmailNotifier } from '@/infrastructure/notify/email-notifier';
+import { LogNotifier } from '@/infrastructure/notify/log-notifier';
+import { CompositeNotifier } from '@/infrastructure/notify/composite-notifier';
 import { newSaleEmail, orderConfirmationEmail } from '@/infrastructure/email/order-email';
 import { usd } from '@/domain/money';
 import { amounts, order as makeOrder } from './fixtures';
@@ -58,5 +60,31 @@ describe('correo de confirmación', () => {
       expect(body).toContain('Detalle del pedido en revisión');
     }
     expect(newSaleEmail(lost, 'tienda@example.com').text).toContain('Líneas perdidas: revisar el pago en Stripe');
+  });
+
+  it('anomalía de producción (recuperado / doble): correo SOLO a la tienda, con las refs; nunca al cliente', async () => {
+    const send = vi.fn(async () => {});
+    const n = new EmailNotifier({ send }, logger, 'tienda@example.com');
+    await n.fulfillmentAnomaly(order, 'double', ['pf_B', 'pf_A']);
+    await n.fulfillmentAnomaly(order, 'recovered', ['pf_A']);
+    expect(send).toHaveBeenCalledTimes(2);
+    const msgs = send.mock.calls.map((c) => (c as unknown as [{ to: string; text: string }])[0]);
+    expect(msgs.every((m) => m.to === 'tienda@example.com')).toBe(true);
+    expect(msgs[0]?.text).toContain('pf_B');
+    expect(msgs[0]?.text).toContain('pf_A');
+    expect(msgs[0]?.text).toMatch(/doble/i);
+    expect(msgs[1]?.text).toMatch(/NO crear/);
+    // Sin correo de tienda configurado: no se envía nada (y jamás al cliente).
+    const send2 = vi.fn(async () => {});
+    await new EmailNotifier({ send: send2 }, logger).fulfillmentAnomaly(order, 'double', ['pf_B', 'pf_A']);
+    expect(send2).not.toHaveBeenCalled();
+  });
+
+  it('anomalía: el notifier de log la registra como error y el compuesto la reparte', async () => {
+    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const other = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}), fulfillmentAnomaly: vi.fn(async () => {}) };
+    await new CompositeNotifier([new LogNotifier(log), other]).fulfillmentAnomaly(order, 'recovered', ['pf_A']);
+    expect(log.error).toHaveBeenCalledWith('fulfillment_anomaly', expect.objectContaining({ orderId: order.id, kind: 'recovered', refs: ['pf_A'] }));
+    expect(other.fulfillmentAnomaly).toHaveBeenCalledWith(order, 'recovered', ['pf_A']);
   });
 });

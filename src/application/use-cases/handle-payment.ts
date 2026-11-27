@@ -96,16 +96,18 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
         const out = await deps.orders.completeFulfillment(order.id, token, ref ? { status: 'fulfillment_created', ref } : { status: 'fulfillment_failed' });
         if (out.kind === 'closed') {
           if (!ref) await deps.notifier.fulfillmentFailed(order, reason);
-        } else if (out.kind === 'recorded') {
+        } else if (out.kind === 'recorded' && ref) {
           // Tardamos más que el TTL, pero la ref real de Printify quedó guardada (gana a cualquier fallo).
           if (out.previous === 'fulfillment_failed') {
             // Ya se había avisado un fallo de este pedido: ahora está producido.
             deps.logger.error('fulfillment_recovered', { orderId: order.id, ref });
+            await deps.notifier.fulfillmentAnomaly(order, 'recovered', [ref]);
           } else {
             deps.logger.error('fulfillment_claim_lost', { orderId: order.id, ref, status: 'fulfillment_created' });
           }
-        } else if (out.kind === 'double') {
+        } else if (out.kind === 'double' && ref) {
           deps.logger.error('fulfillment_double', { orderId: order.id, refs: [out.existingRef, ref] });
+          await deps.notifier.fulfillmentAnomaly(order, 'double', [out.existingRef, ref]);
         } else {
           // Nuestro resultado llegó tarde y no cambia nada: el pedido es de otro proceso; no avisamos un fallo ajeno.
           deps.logger.warn('fulfillment_claim_lost', { orderId: order.id, status: ref ? 'fulfillment_created' : 'fulfillment_failed' });

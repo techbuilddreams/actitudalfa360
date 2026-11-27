@@ -83,6 +83,9 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      `fulfillment_claim_lost`, `fulfillment_double`). `statement_timeout` 15 s en el ROL (migración), no en la conexión.
      Correo al cliente sin la línea centinela ("Detalle del pedido en revisión"). `migrate.mjs`: `main`↔`production`,
      `develop`↔`preview`; URL con `#` rechazada (también en `env.ts`). `safeError` registra solo el código en la clase 22.
+   - **Ronda 4:** el UPDATE de la ref tardía usa `RETURNING` (0 filas ⇒ `double`/`stale`, nunca `recorded`); tortura R11
+     en la suite (mata "sin `FOR UPDATE`" 3 de 3); recuperado/doble van por `Notifier.fulfillmentAnomaly` (log + correo a
+     la tienda, nunca al cliente); `idle_in_transaction_session_timeout` 15 s en el rol.
    - **Antes del lanzamiento (otro trabajo):** alertas sobre los logs `order_lines_missing`, `fulfillment_claim_lost`,
      `fulfillment_recovered`, `fulfillment_double` y `webhook_processing_failed`.
    - **Deuda anotada (no se hizo en esta ronda):**
@@ -148,6 +151,16 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
   conexión: el pooler de transacción no conserva `SET` y puede rechazar parámetros de arranque. **Sin verificar contra
   Supavisor**: al crear el proyecto, `SHOW statement_timeout` por el 6543 debe decir `15s`. El ajuste persiste aunque
   se borre el esquema. Si la app pasa a un rol propio (deuda), moverlo a ese rol.
+- **El `ALTER ROLE` sobre `postgres` también limita a 15 s** (statement e idle-in-transaction) el SQL editor/Studio de
+  Supabase y `supabase db push`. Para una consulta larga en Studio: `SET statement_timeout = 0;` en esa sesión. La salida
+  definitiva es el rol de app de mínimo privilegio (deuda): el límite pasa a ese rol y `postgres` queda libre.
+- **Verificar al crear el proyecto Supabase:** que `ALTER ROLE ... IN DATABASE ... SET` está permitido al rol `postgres`
+  (si no, la migración 0001 falla y la build lo muestra), y que por el puerto 6543 `SHOW statement_timeout` y
+  `SHOW idle_in_transaction_session_timeout` dan `15s`.
+- Sin probar a propósito: el `SET statement_timeout = '10min'` de `migrate.mjs` (mutante M23). Probarlo exige una DDL de
+  más de 15 s; no compensa hasta que haya una migración así.
+- La tortura R11 (`tests/postgres.int.test.ts`, 200 rondas, ~2 s; `R11_ROUNDS` la cambia) es la única que mata quitar el
+  `FOR UPDATE` de `completeFulfillment`. No bajarla sin repetir la prueba del mutante.
 - `tests/postgres.int.test.ts` BORRA el esquema `public`: se niega a correr si el nombre de la base no contiene `test`.
 - Un push a `develop` que suba commits viejos sin subir arrastra más de lo esperado: revisar `git log @{u}..` antes de empujar.
 

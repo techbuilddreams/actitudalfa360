@@ -10,7 +10,7 @@ const paid = paidCheckout();
 
 const setup = (fulfillment: FulfillmentProvider | null) => {
   const orders = new InMemoryOrderRepository();
-  const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
+  const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}), fulfillmentAnomaly: async () => {} };
   let n = 0;
   const handle = makeHandlePayment({
     orders, catalog: staticCatalog, fulfillment, notifier, logger: noopLogger,
@@ -83,7 +83,7 @@ describe('handlePayment', () => {
     const createDraftOrder = vi.fn(async () => 'pf_1');
     const orders = new InMemoryOrderRepository();
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
+    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}), fulfillmentAnomaly: async () => {} };
     const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder }, notifier, logger, newId: () => 'id-1', now: () => new Date() });
     expect(await handle(paidCheckout({ lines: [] }))).toBe('created');
     const o = await orders.findByPaymentRef('cs_test_123');
@@ -97,7 +97,7 @@ describe('handlePayment', () => {
   it('el caso de uso no calcula la hora del reclamo: pasa el TTL y la base decide', async () => {
     const orders = new InMemoryOrderRepository();
     const claim = vi.spyOn(orders, 'claimForFulfillment');
-    const { handle } = { handle: makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger: noopLogger, newId: () => 'id-1', now: () => new Date() }) };
+    const { handle } = { handle: makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noopLogger, newId: () => 'id-1', now: () => new Date() }) };
     await handle(paid);
     expect(claim).toHaveBeenCalledWith('id-1', 5 * 60_000);
   });
@@ -106,7 +106,7 @@ describe('handlePayment', () => {
     const orders = new InMemoryOrderRepository();
     const complete = vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'recorded', previous: 'fulfillment_processing' });
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
+    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}), fulfillmentAnomaly: async () => {} };
     let n = 0;
     const mk = (createDraftOrder: () => Promise<string>) => makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder }, notifier, logger, newId: () => `id-${++n}`, now: () => new Date() });
     await mk(async () => 'pf_A')(paid);
@@ -121,18 +121,23 @@ describe('handlePayment', () => {
     const orders = new InMemoryOrderRepository();
     vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'recorded', previous: 'fulfillment_failed' });
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: vi.fn(async () => {}) }, logger, newId: () => 'id-1', now: () => new Date() });
+    const fulfillmentAnomaly = vi.fn(async () => {});
+    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: vi.fn(async () => {}), fulfillmentAnomaly }, logger, newId: () => 'id-1', now: () => new Date() });
     await handle(paid);
     expect(logger.error).toHaveBeenCalledWith('fulfillment_recovered', expect.objectContaining({ orderId: 'id-1', ref: 'pf_A' }));
+    // Ya se avisó un fallo: la tienda debe saber que NO hay que crearlo a mano.
+    expect(fulfillmentAnomaly).toHaveBeenCalledWith(expect.objectContaining({ id: 'id-1' }), 'recovered', ['pf_A']);
   });
 
   it('dos producciones reales ⇒ error de producción doble con las dos refs', async () => {
     const orders = new InMemoryOrderRepository();
     vi.spyOn(orders, 'completeFulfillment').mockResolvedValue({ kind: 'double', existingRef: 'pf_B' });
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger, newId: () => 'id-1', now: () => new Date() });
+    const fulfillmentAnomaly = vi.fn(async () => {});
+    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf_A' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly }, logger, newId: () => 'id-1', now: () => new Date() });
     await handle(paid);
     expect(logger.error).toHaveBeenCalledWith('fulfillment_double', expect.objectContaining({ orderId: 'id-1', refs: ['pf_B', 'pf_A'] }));
+    expect(fulfillmentAnomaly).toHaveBeenCalledWith(expect.objectContaining({ id: 'id-1' }), 'double', ['pf_B', 'pf_A']);
   });
 
   it('repositorio en memoria: un created tardío gana a un failed y un failed nunca pisa created', async () => {

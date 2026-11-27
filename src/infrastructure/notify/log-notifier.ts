@@ -10,4 +10,7 @@ export class LogNotifier implements Notifier {
   async fulfillmentFailed(order: Parameters<Notifier['fulfillmentFailed']>[0], reason: string) {
     this.logger.error('Crear pedido en Printify a mano', { orderId: order.id, reason });
   }
+  async fulfillmentAnomaly(...[order, kind, refs]: Parameters<Notifier['fulfillmentAnomaly']>) {
+    this.logger.error('fulfillment_anomaly', { orderId: order.id, kind, refs: [...refs] });
+  }
 }

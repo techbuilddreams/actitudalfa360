@@ -1,7 +1,7 @@
 import { safeError } from '@/lib/safe-error.mjs';
 import type { Logger } from '@/application/ports/logger';
 import type { Mailer } from '@/application/ports/mailer';
-import type { Notifier } from '@/application/ports/notifier';
+import type { FulfillmentAnomaly, Notifier } from '@/application/ports/notifier';
 import type { Order } from '@/domain/order';
 import { newSaleEmail, orderConfirmationEmail } from '../email/order-email';
 
@@ -27,6 +27,15 @@ export class EmailNotifier implements Notifier {
   async fulfillmentFailed(order: Order, reason: string) {
     if (!this.ownerEmail) return;
     await this.safeSend(newSaleEmail(order, this.ownerEmail, `⚠️ Printify falló (${reason}). Crear el pedido a mano.`), 'owner_fulfillment_failed', order);
+  }
+
+  /** Solo a la tienda: el cliente no tiene nada que hacer con esto. */
+  async fulfillmentAnomaly(order: Order, kind: FulfillmentAnomaly, refs: readonly string[]) {
+    if (!this.ownerEmail) return;
+    const note = kind === 'recovered'
+      ? `✅ Recuperado: Printify SÍ creó el pedido (${refs.join(', ')}) después del aviso de fallo. NO crear el pedido a mano.`
+      : `⚠️ Producción doble en Printify: ${refs.join(' y ')}. Se conserva ${refs[0]}; cancelar ${refs.slice(1).join(', ')} en Printify.`;
+    await this.safeSend(newSaleEmail(order, this.ownerEmail, note), `owner_fulfillment_${kind}`, order);
   }
 
   private async safeSend(msg: Parameters<Mailer['send']>[0], kind: string, order: Order) {

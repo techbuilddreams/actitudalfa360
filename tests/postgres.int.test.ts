@@ -19,6 +19,7 @@ const url = process.env.TEST_DATABASE_URL;
 const noop = { info: () => {}, warn: () => {}, error: () => {} };
 const journal = JSON.parse(readFileSync(path.resolve(__dirname, '../drizzle/meta/_journal.json'), 'utf8')) as { entries: unknown[] };
 const TTL = 5 * 60_000;
+const ROUNDS = Number(process.env.R11_ROUNDS ?? 200);
 
 const newOrder = (over: Partial<Order> = {}): Order => ({
   id: randomUUID(), paymentRef: `cs_test_${randomUUID()}`, number: null, status: 'fulfillment_pending',
@@ -55,7 +56,10 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     await admin.unsafe('DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
     await admin.unsafe(SUPABASE_LIKE_ROLES);
     // El statement_timeout del rol sobrevive al DROP SCHEMA: se limpia para que el test lo vea venir de la migración.
-    await admin.unsafe(`DO $$ BEGIN EXECUTE format('ALTER ROLE %I IN DATABASE %I RESET statement_timeout', current_user, current_database()); END $$;`);
+    await admin.unsafe(`DO $$ BEGIN
+      EXECUTE format('ALTER ROLE %I IN DATABASE %I RESET statement_timeout', current_user, current_database());
+      EXECUTE format('ALTER ROLE %I IN DATABASE %I RESET idle_in_transaction_session_timeout', current_user, current_database());
+    END $$;`);
     // Dos builds de Vercel migrando la MISMA base a la vez, sobre una base vacía.
     concurrent = await Promise.all([runMigrate({ DATABASE_MIGRATION_URL: url }), runMigrate({ DATABASE_MIGRATION_URL: url })]);
   }, 60_000);
@@ -83,7 +87,7 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     const createDraftOrder = vi.fn(async () => { await new Promise((r) => setTimeout(r, 30)); return 'pf_1'; });
     const handle = makeHandlePayment({
       orders: repo(), catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
-      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger: noop,
+      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noop,
       newId: randomUUID, now: () => new Date(),
     });
     const paid = paidOf();
@@ -139,7 +143,7 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       const createDraftOrder = vi.fn(async () => { await new Promise((res) => setTimeout(res, 200)); return `pf_${randomUUID().slice(0, 8)}`; });
       const mk = (skewMs: number) => makeHandlePayment({
         orders: repo(), catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
-        notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger: noop,
+        notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noop,
         newId: randomUUID, now: () => new Date(Date.now() + skewMs),
       });
       const paid = paidOf();
@@ -204,6 +208,37 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       expect(await r.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfB' });
     });
 
+    it('R11 tortura: A tardío ‖ C reclama ‖ B cierra ⇒ toda ref producida queda en la base o se reporta double, y "previous" es verdad', async () => {
+      const r = repo();
+      const tick = () => new Promise((x) => setTimeout(x, 3));
+      const problems: string[] = [];
+      for (let i = 0; i < ROUNDS; i++) {
+        const { order } = await r.createIfAbsent(newOrder());
+        const a = (await r.claimForFulfillment(order.id, 300_000))!;
+        await tick();
+        const b = (await r.claimForFulfillment(order.id, 1))!;
+        await tick();
+        const bResult = i % 2 ? ({ status: 'fulfillment_created', ref: 'pfB' } as const) : ({ status: 'fulfillment_failed' } as const);
+        const [oa, c, ob] = await Promise.all([
+          r.completeFulfillment(order.id, a, { status: 'fulfillment_created', ref: 'pfA' }),
+          r.claimForFulfillment(order.id, 1),
+          r.completeFulfillment(order.id, b, bResult),
+        ]);
+        const oc = c ? await r.completeFulfillment(order.id, c, { status: 'fulfillment_created', ref: 'pfC' }) : undefined;
+        const [row] = await admin`SELECT status, fulfillment_ref FROM orders WHERE id = ${order.id}`;
+        const produced: [string, { kind: string }][] = [['pfA', oa]];
+        if (i % 2) produced.push(['pfB', ob]);
+        if (oc) produced.push(['pfC', oc]);
+        for (const [ref, o] of produced) if (row.fulfillment_ref !== ref && o.kind !== 'double') problems.push(`${i}: ${ref} perdida (${o.kind})`);
+        if (row.status === 'fulfillment_processing') problems.push(`${i}: atascado en processing`);
+        // Si B cerró su fallo (y se avisó) y A registró después, A tiene que saber que recupera un fallo.
+        if (bResult.status === 'fulfillment_failed' && ob.kind === 'closed' && oa.kind === 'recorded' && oa.previous !== 'fulfillment_failed') {
+          problems.push(`${i}: A dice previous=${oa.previous} pero B ya había cerrado failed (aviso de recuperado perdido)`);
+        }
+      }
+      expect(problems).toEqual([]);
+    }, 60_000);
+
     it('processing sin claimed_at es imposible (si no, quedaría atascado para siempre)', async () => {
       const { order } = await repo().createIfAbsent(newOrder());
       await expect(admin`UPDATE orders SET status = 'fulfillment_processing', claimed_at = NULL WHERE id = ${order.id}`).rejects.toThrow(/orders_processing_claim_ck/);
@@ -228,7 +263,7 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     const handle = makeHandlePayment({
       orders: repo(), catalog: staticCatalog, fulfillment: null,
-      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger, newId: randomUUID, now: () => new Date(),
+      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger, newId: randomUUID, now: () => new Date(),
     });
     const long = paidOf({ email: `${'a'.repeat(388)}@example.com` });
     expect(long.email).toHaveLength(400);
@@ -320,6 +355,12 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
     const { sql: q } = await import('drizzle-orm');
     const rows = await db.execute<{ statement_timeout: string }>(q`SHOW statement_timeout`);
     expect(rows[0]?.statement_timeout).toBe('15s');
+  });
+
+  it('el pool de la app tiene idle_in_transaction_session_timeout (un proceso congelado en el FOR UPDATE suelta el lock)', async () => {
+    const { sql: q } = await import('drizzle-orm');
+    const rows = await getDb(url!, 10).execute<{ idle_in_transaction_session_timeout: string }>(q`SHOW idle_in_transaction_session_timeout`);
+    expect(rows[0]?.idle_in_transaction_session_timeout).toBe('15s');
   });
 
   it('volver a migrar con filas representativas (incluido un pedido en processing) sale con 0', async () => {

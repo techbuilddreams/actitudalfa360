@@ -59,6 +59,7 @@ describe('scripts/migrate.mjs (sin base de datos)', () => {
   it('una contraseña con # que parece puerto (postgres:5999#Zx@host) se rechaza sin filtrarla', async () => {
     const r = await runMigrate({ DATABASE_MIGRATION_URL: 'postgres://postgres:5999#Zx@host/db' });
     expect(r.code).not.toBe(0);
+    expect(r.stderr).toContain('tiene un #'); // rechazada por la validación, no porque la conexión falle
     expect(r.stdout + r.stderr).not.toContain('Zx');
   });
 });
