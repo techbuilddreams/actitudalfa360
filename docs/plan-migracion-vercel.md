@@ -26,8 +26,9 @@
   con A apex `216.150.1.1` + `216.150.16.1`, CNAME `www` → `497175f17830eef8.vercel-dns-016.com` (los que recomienda Vercel,
   **sin proxy**) y el TXT de Google Search Console copiado. NS cambiados en hPanel a `venkat`/`vera.ns.cloudflare.com`
   (Luis inició sesión, el CTO hizo el cambio por Chrome). Regla de correo `hola@` → `actitudalfa360@gmail.com` (verificado).
-  **Pendiente:** que el registro `.com` muestre los NS nuevos → zona activa → activar Email Routing (pone MX/SPF) →
-  comprobar en Vercel que el dominio deja de estar "misconfigured" y emite el certificado.
+  **HECHO 2026-11-27:** zona activa; Email Routing activo (MX `route1-3.mx.cloudflare.net`, SPF, DKIM `cf2024-1`);
+  Vercel ya no marca el dominio como misconfigured; HTTPS con certificado válido en apex y `www`. Ambos dan 404 hasta el
+  primer deploy de producción desde `main` (esperado). Falta comprobar el 308 `www` → apex cuando haya deploy.
 - La rama por defecto en GitHub es `develop`; la de producción en Vercel es `main` (ya fijada).
 
 ## Decisiones tomadas
@@ -101,7 +102,10 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      - Comprobar que `DATABASE_URL` y `DATABASE_MIGRATION_URL` apuntan al mismo proyecto Supabase.
      - Verificar si Printify rechaza un `external_id` repetido (proceso que muere tras el OK de Printify ⇒ el reclamo
        vence y otro proceso podría crear una segunda producción; hoy solo queda el log `fulfillment_claim_lost`).
-   - **Falta (Luis):** crear el proyecto Supabase (staging; producción aparte, ver Decisiones abiertas) y poner en
+   - **Proyecto de staging:** `actitudalfa360-staging` (ref `jsusmetqafmechlkbjyu`, us-east-1, Postgres 17, plan gratis,
+     org `actitudalfa360` con la cuenta `actitudalfa360@gmail.com`). Ya existía vacío (0 tablas); se renombró el 2026-11-27.
+     Host de los poolers: `aws-2-us-east-1.pooler.supabase.com`, usuario `postgres.jsusmetqafmechlkbjyu`, base `postgres`.
+   - **Falta (Luis):** contraseña de la base (o "Reset database password") y poner en
      Vercel por entorno `DATABASE_URL` (pooler transacción, 6543) y `DATABASE_MIGRATION_URL` (pooler sesión, 5432).
      Sin `DATABASE_MIGRATION_URL` la build de Vercel falla a propósito. Las ramas de feature NO migran
      (sus previews pueden ver `schema: behind` en `/api/health`).
@@ -115,8 +119,7 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - Nuevo adaptador del puerto `application/ports/mailer.ts`; borrar `smtp-mailer.ts`.
    - Verificar el dominio `actitudalfa360.com` en Resend (DKIM/SPF).
 4. **DNS del dominio** (Luis + CTO) — puede ir en paralelo con 1–3
-   - Hecho: zona en Cloudflare, registros a Vercel, NS cambiados en Hostinger, regla `hola@`. Detalle y pendientes en "Dónde estamos".
-   - Comprobar la propagación: `dig +short NS actitudalfa360.com @a.gtld-servers.net` (el registro, no el caché local).
+   - **HECHO** (2026-11-27). Detalle en "Dónde estamos".
 5. **Primer deploy de staging + smoke** (CTO): compra de prueba con Stripe en modo test, de punta a punta (pago → pedido → correo → Printify en espera).
 6. **Membresía** (trabajo nuevo, otra sesión, plan propio): usuarios, niveles, campus, Bunny. Ver `vision-membresia.md`. Antes: fase 1 en Skool para validar.
 
@@ -128,6 +131,13 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 - **Versión:** el proyecto ya está en `1.0.0` pero sin tags. La primera promoción a `main` lleva bump + tag `vX.Y.Z` y la versión visible en `/api/health`.
 
 ## Trampas conocidas
+
+- **SPF único:** el dominio ya tiene `v=spf1 include:_spf.mx.cloudflare.net ~all` (Email Routing). Al verificar Resend
+  (paso 3) se **edita ese mismo registro** añadiendo su `include:`; dos registros SPF = SPF inválido y correos a spam.
+- **Comprobar NS en el registro:** `dig NS <dominio> @a.gtld-servers.net +noall +authority`. Con `+short` sale vacío
+  (la delegación viene en la sección authority) y un vigilante que lo use nunca detecta el cambio.
+- **`npm run check | grep …` esconde el código de salida:** el 2026-11-26 un commit salió con el check en rojo así.
+  Comprobar el exit code (`; echo $?`) antes de commitear.
 
 - `AGENTS.md`: este Next.js 16 **no** es el de la memoria del modelo; leer `node_modules/next/dist/docs/` antes de escribir código.
 - `npm run check` necesita `npm ci` primero (el 2026-11-26 `node_modules` no existía y el check falló sin que el commit se detuviera).
