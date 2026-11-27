@@ -45,6 +45,23 @@ Las maquetas cargan el logo desde `file:///Users/luisramos/Desktop/...`: se ven 
 3. ¿Precio de fundador real para los primeros 100 miembros?
 4. Volver a fotografiar las piezas sobre fondo oscuro o papel (las fotos actuales tienen fondo blanco puro).
 
+### Decididas el 2026-11-27
+
+1. **Sí, disciplina** en títulos y H1. "Alfa" queda solo en la marca, el sello y el lema.
+2. **Carácter · Cumple** es el cuarto pilar. Hay que corregir "palabra" en `docs/vision-membresia.md` y en
+   `seo/competencia-y-arquitectura.md` (`/pilares/palabra` pasa a `/pilares/caracter`).
+3. **Sin precio de fundador** por ahora: ningún cupo ni contador en el sitio.
+4. **Se vuelven a fotografiar** las piezas sobre papel (`--paper`), con luz dura desde la izquierda y en formato 4:5. Hasta entonces, las
+   fotos de `public/img/stage/` sirven de puente.
+
+### Abiertas (salieron al armar la maqueta)
+
+- **Reglas del reto**: los mínimos Base/Estándar por pilar de la maqueta son un borrador del CTO. Luis los valida.
+- **Fallar un día**: recomendación del CTO, **sin reinicio**; cuenta la puntuación, no la racha. La alternativa
+  es el reinicio estilo 75 Hard.
+- **Descuento de miembro en la tienda**: el porcentaje está sin decidir, así que la maqueta no muestra ninguno.
+- **Copy del fundador** (3 líneas en primera persona) y **foto real de Luis**: las escribe y las pone Luis.
+
 ## Deuda técnica que salió (no es diseño)
 
 - `layout.tsx:53-54`: `await connection()` por la CSP con nonce ⇒ todas las páginas son dinámicas (cada visita se
@@ -57,6 +74,7 @@ Las maquetas cargan el logo desde `file:///Users/luisramos/Desktop/...`: se ven 
 
 ## Siguiente paso
 
-Una maqueta unificada (home + `/reto-30-dias` + ficha de producto) con las resoluciones de arriba y la arquitectura
-SEO, para que Luis la apruebe. Después: QA (contraste, 390 px, LCP) y un rompedor (¿dónde se pierde la compra?),
+**Maqueta unificada lista para aprobar:** [`diseno/maqueta-unificada.html`](diseno/maqueta-unificada.html)
+(home + `/reto-30-dias` + ficha de la taza, con notas de decisión que se pueden ocultar). Las imágenes van con rutas
+`img/…`: se ve completa en el artifact publicado, no abriendo el archivo local. Después: QA (contraste, 390 px, LCP) y un rompedor (¿dónde se pierde la compra?),
 y recién entonces código, con TDD, en una rama propia.

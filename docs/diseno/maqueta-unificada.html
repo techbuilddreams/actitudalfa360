@@ -1,0 +1,917 @@
+<title>Maqueta unificada Alfa 360</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Maqueta unificada de Actitud Alfa 360 para aprobar: home, /reto-30-dias y ficha de producto, con las resoluciones del CTO y las cuatro decisiones de Luis.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap">
+<style>
+/* Layout: una sola columna en 390 px, retícula de 12 en escritorio; una idea por bloque, aire como lujo, CTA del reto siempre arriba. */
+:root{
+  color-scheme: dark;
+  --ink:#0B0B0A;      /* fondo único */
+  --ink-2:#121211;    /* bandas: membresía, pie */
+  --bone:#EDE8DE;     /* texto y botón primario */
+  --stone:#9C968B;    /* texto secundario, ~7:1 */
+  --hair:rgba(237,232,222,.12);
+  --hair-2:rgba(237,232,222,.22);
+  --gold:#A99060;     /* mate, < 3 %: numerales, foco, un filete */
+  --paper:#E9E3D7;    /* escenario de producto */
+  --ok:#9DB89A;
+  --note:#8FB0CF;     /* solo anotaciones de maqueta, no es del sitio */
+  --note-bg:rgba(143,176,207,.08);
+  --serif:"Cormorant Garamond","Iowan Old Style","Times New Roman",serif;
+  --sans:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif;
+  --meta:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --g:max(16px, env(safe-area-inset-left, 0px));
+  --gr:max(16px, env(safe-area-inset-right, 0px));
+  --sec:80px;
+}
+@media (min-width:900px){:root{--g:max(64px, env(safe-area-inset-left, 0px));--gr:max(64px, env(safe-area-inset-right, 0px));--sec:128px}}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;overflow-x:clip;scroll-padding-top:72px}
+body{margin:0;background:var(--ink);color:var(--bone);font:400 16px/1.7 var(--sans);-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--ink)}
+a{color:inherit}
+img{display:block;max-width:100%;height:auto}
+.wrap{max-width:1328px;margin:0 auto;padding-left:var(--g);padding-right:var(--gr)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* ---------- Tipografía (escala 1,333; nada por encima de 500 en titulares) ---------- */
+h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;text-wrap:balance;color:var(--bone)}
+.display{font-size:clamp(34px,6.2vw,80px);line-height:1.02;letter-spacing:-.02em}
+h2,.h2{font-size:clamp(32px,4.6vw,56px);line-height:1.05;letter-spacing:-.015em}
+h3,.h3{font-size:clamp(24px,2.6vw,32px);line-height:1.15;letter-spacing:-.005em}
+.eyebrow{margin:0;font:500 11px/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:var(--stone)}
+.lede{margin:0;color:var(--stone);font-size:17px;max-width:52ch}
+p{margin:0}
+.prose{display:grid;gap:16px;max-width:60ch}
+.prose p{color:var(--stone)}
+.italic{font-family:var(--serif);font-style:italic;font-weight:500}
+.num{font-variant-numeric:tabular-nums lining-nums}
+
+/* ---------- Botones: frase normal 16 px, ≥ 52 px (decisión CTO: conversión) ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:1px solid var(--bone);background:var(--bone);color:var(--ink);font:500 16px/1 var(--sans);text-decoration:none;cursor:pointer;border-radius:2px;transition:background .3s,color .3s,border-color .3s;white-space:nowrap}
+.btn:hover{background:#fff}
+.btn.ghost{background:transparent;color:var(--bone);border-color:var(--hair-2)}
+.btn.ghost:hover{border-color:var(--bone)}
+.btn.sm{min-height:44px;padding:0 16px;font-size:15px}
+.btn.block{width:100%}
+.link{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:500;text-decoration:underline;text-underline-offset:6px;text-decoration-color:var(--hair-2);transition:text-decoration-color .3s}
+.link:hover{text-decoration-color:var(--bone)}
+
+/* ---------- Barra de maqueta (no es del sitio) ---------- */
+.mock{background:#16191C;border-bottom:1px solid rgba(143,176,207,.25);color:var(--note);font:500 12px/1.4 var(--meta)}
+.mock .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding-block:8px}
+.mock nav{display:flex;gap:6px;flex-wrap:wrap}
+.mock a,.mock button{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid rgba(143,176,207,.3);background:transparent;color:var(--note);font:inherit;text-decoration:none;cursor:pointer;border-radius:2px}
+.mock a[aria-current="page"]{background:rgba(143,176,207,.16);color:#D6E4F0;border-color:rgba(143,176,207,.6)}
+.decisiones{background:#121416;border-bottom:1px solid rgba(143,176,207,.15);color:var(--note);font:400 12px/1.6 var(--meta)}
+.decisiones .wrap{padding-block:10px;display:flex;flex-wrap:wrap;gap:4px 20px}
+.decisiones b{font-weight:600;color:#D6E4F0}
+.nota{margin:0;padding:8px 12px;border-left:2px dashed var(--note);background:var(--note-bg);color:var(--note);font:400 12px/1.55 var(--meta);max-width:68ch}
+.nota b{color:#D6E4F0;font-weight:600}
+body.sin-notas .nota,body.sin-notas .decisiones,body.sin-notas .seo{display:none!important}
+.seo{border:1px dashed rgba(143,176,207,.4);background:var(--note-bg);color:var(--note);font:400 12px/1.6 var(--meta);padding:12px 14px;display:grid;gap:2px;overflow-x:auto}
+.seo dt{color:#D6E4F0;font-weight:600}
+.seo dd{margin:0 0 6px}
+
+/* ---------- Header del sitio ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(11,11,10,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:500 11px/1 var(--sans);letter-spacing:.32em;text-transform:uppercase;white-space:nowrap}
+.brand img{width:28px;height:28px}
+.nav{display:none;gap:32px;font-size:15px}
+.nav a{text-decoration:none;color:var(--stone);padding:12px 0;transition:color .3s}
+.nav a:hover,.nav a[aria-current="page"]{color:var(--bone)}
+.nav a[aria-current="page"]{box-shadow:inset 0 -1px 0 var(--gold)}
+.top-actions{display:flex;align-items:center;gap:8px}
+.menu-btn{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid var(--hair-2);background:transparent;color:var(--bone);font:500 14px/1 var(--sans);cursor:pointer;border-radius:2px;padding:0 12px}
+.mobile-nav{border-top:1px solid var(--hair)}
+.mobile-nav ul{list-style:none;margin:0;padding:8px 0 16px;display:grid}
+.mobile-nav a{display:flex;min-height:48px;align-items:center;text-decoration:none;font:500 22px/1 var(--serif)}
+@media (min-width:980px){.nav{display:flex}.menu-btn,.mobile-nav{display:none!important}}
+@media (max-width:420px){.brand .brand-name{display:none}}
+
+/* ---------- Secciones ---------- */
+.sec{padding-block:var(--sec);border-top:1px solid var(--hair)}
+.sec.band{background:var(--ink-2)}
+.sec-head{display:grid;gap:16px;margin-bottom:48px;max-width:720px}
+.stack{display:grid;gap:24px}
+.crumbs{font-size:13px;color:var(--stone);padding-block:16px 0}
+.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.crumbs li+li::before{content:"/";margin-right:8px;color:var(--hair-2)}
+.crumbs a{text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+
+/* ---------- Formulario de correo: un solo campo ---------- */
+.capture{display:grid;gap:10px;max-width:520px}
+.capture-row{display:grid;gap:10px}
+@media (min-width:560px){.capture-row{grid-template-columns:1fr auto}}
+.capture label{font-size:14px;color:var(--stone)}
+.capture input{width:100%;min-height:52px;padding:0 16px;border:1px solid var(--hair-2);background:transparent;color:var(--bone);font:400 16px/1 var(--sans);border-radius:2px}
+.capture input::placeholder{color:#77726A}
+.capture input:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-color:var(--bone)}
+.capture input[aria-invalid="true"]{border-color:#C98A7A}
+.micro{font-size:13px;color:var(--stone)}
+.capture .err{font-size:14px;color:#E0A898}
+.capture-ok{display:grid;gap:6px;padding:16px;border:1px solid var(--hair-2);border-left:2px solid var(--ok);max-width:520px}
+.capture-ok strong{font-weight:500}
+
+/* ---------- Home: hero ---------- */
+.hero{padding-block:24px 56px}
+.hero-grid{display:grid;gap:20px;align-items:center}
+.hero-seal{width:88px;height:88px;order:-1}
+.hero-copy{display:grid;gap:18px}
+@media (min-width:900px){
+  .hero{padding-block:96px 128px}
+  .hero-grid{grid-template-columns:7fr 5fr;gap:64px}
+  .hero-seal{order:0;width:min(360px,100%);height:auto;justify-self:center;margin-top:-24px}
+  .hero-copy{gap:28px}
+}
+
+/* Pilares */
+.pillars{display:grid;grid-template-columns:1fr;border-top:1px solid var(--hair)}
+.pillar{display:grid;grid-template-columns:48px 1fr auto;align-items:baseline;gap:4px 16px;padding:24px 0;border-bottom:1px solid var(--hair);text-decoration:none}
+.pillar .rn{font:500 22px/1 var(--serif);color:var(--gold)}
+.pillar .pname{font:500 28px/1.1 var(--serif)}
+.pillar .verb{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.pillar .pdesc{grid-column:2/4;color:var(--stone);font-size:15px}
+.pillar:hover .pname{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1px}
+@media (min-width:900px){
+  .pillars{grid-template-columns:repeat(4,1fr);border-top:0}
+  .pillar{grid-template-columns:1fr;border-bottom:0;border-left:1px solid var(--hair);padding:8px 28px 8px;gap:12px;align-content:start}
+  .pillar:first-child{border-left:0;padding-left:0}
+  .pillar .pdesc{grid-column:auto}
+}
+
+/* Pasos */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:32px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:40px 1fr;gap:16px;counter-increment:s}
+.steps li::before{content:counter(s);font:500 28px/1 var(--serif);color:var(--gold)}
+.steps h3{font-size:24px;margin-bottom:6px}
+.steps p{color:var(--stone)}
+@media (min-width:900px){.steps{grid-template-columns:repeat(3,1fr);gap:48px}}
+
+/* Registro 360 (ejemplo) */
+.split{display:grid;gap:48px;align-items:start}
+@media (min-width:900px){.split{grid-template-columns:5fr 6fr;gap:96px}}
+.registro{border:1px solid var(--hair-2);background:var(--ink-2);padding:24px;display:grid;gap:16px;max-width:460px;width:100%}
+.registro-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.registro-top .q{font:500 28px/1.1 var(--serif)}
+.registro ul{list-style:none;margin:0;padding:0;display:grid}
+.registro li{border-top:1px solid var(--hair)}
+.registro label{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:12px;min-height:56px;cursor:pointer}
+.registro input{appearance:none;-webkit-appearance:none;width:22px;height:22px;margin:0;border:1px solid var(--hair-2);border-radius:2px;display:grid;place-content:center;cursor:pointer}
+.registro input:checked{background:var(--bone);border-color:var(--bone)}
+.registro input:checked::after{content:"";width:10px;height:6px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg) translate(1px,-1px)}
+.registro .r-verb{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone)}
+.registro .r-task{display:block;font-size:14px;color:var(--stone)}
+.score{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--hair);font-size:14px;color:var(--stone)}
+.score b{color:var(--bone);font-weight:500}
+.tag{display:inline-block;font:400 11px/1 var(--meta);letter-spacing:.06em;color:var(--note);border:1px dashed rgba(143,176,207,.5);padding:4px 6px}
+
+/* Manifiesto corto */
+.manif{display:grid;gap:24px;max-width:860px}
+.manif .h2{font-style:italic}
+
+/* Membresía */
+.member{display:grid;gap:32px;border:1px solid var(--hair-2);padding:28px;max-width:880px}
+@media (min-width:900px){.member{grid-template-columns:1fr 1fr;padding:48px;gap:64px}}
+.member-name{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.price{font:400 17px/1 var(--sans);letter-spacing:.02em;font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}
+.price small{font-size:14px;color:var(--stone)}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.checks li{display:grid;grid-template-columns:18px 1fr;gap:12px;color:var(--stone)}
+.checks li::before{content:"";width:8px;height:8px;margin-top:9px;border:1px solid var(--gold);transform:rotate(45deg)}
+
+/* Tienda */
+.shop{display:grid;gap:40px}
+@media (min-width:760px){.shop{grid-template-columns:repeat(3,1fr);gap:32px}}
+.card{display:grid;gap:16px;text-decoration:none;align-content:start}
+.stage{background:var(--paper);aspect-ratio:4/5;display:grid;place-items:center;overflow:hidden;position:relative;max-width:100%}
+.stage img{width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;transition:transform .3s}
+.card:hover .stage img{transform:scale(1.02)}
+.stage .shot{position:absolute;left:8px;bottom:8px;right:8px;background:rgba(11,11,10,.86);color:var(--note);font:400 11px/1.45 var(--meta);padding:6px 8px;border-left:2px dashed var(--note)}
+body.sin-notas .stage .shot{display:none}
+.kit-stage{display:grid;grid-template-columns:1fr 1fr}
+.kit-stage img{height:100%;object-fit:cover}
+.card-meta{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.card-name{font:500 24px/1.15 var(--serif)}
+.card-line{color:var(--stone);font-size:15px}
+
+/* Fundador */
+.founder{display:grid;gap:32px;align-items:center}
+@media (min-width:900px){.founder{grid-template-columns:4fr 7fr;gap:96px}}
+.placeholder{aspect-ratio:4/5;border:1px dashed rgba(143,176,207,.45);display:grid;place-items:center;text-align:center;padding:24px;color:var(--note);font:400 12px/1.5 var(--meta);max-width:100%;background:repeating-linear-gradient(135deg,transparent 0 12px,rgba(143,176,207,.04) 12px 13px)}
+
+/* Garantías */
+.trust{display:grid;gap:24px}
+@media (min-width:760px){.trust{grid-template-columns:repeat(3,1fr);gap:48px}}
+.trust div{display:grid;gap:6px;padding-top:16px;border-top:1px solid var(--hair)}
+.trust b{font-weight:500}
+.trust span{color:var(--stone);font-size:15px}
+
+/* FAQ */
+.faq{display:grid;border-top:1px solid var(--hair);max-width:860px}
+.faq details{border-bottom:1px solid var(--hair)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;align-items:center;min-height:64px;padding-block:12px;font:500 22px/1.25 var(--serif)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font:400 22px/1 var(--sans);color:var(--stone);flex:none}
+.faq details[open] summary::after{content:"−"}
+.faq details p{padding-bottom:20px;color:var(--stone);max-width:62ch}
+
+/* Cierre */
+.closing{display:grid;gap:24px;justify-items:start;max-width:720px}
+
+/* Pie */
+.foot{background:var(--ink-2);border-top:1px solid var(--hair);padding-block:64px calc(48px + env(safe-area-inset-bottom,0px));font-size:14px;color:var(--stone)}
+.foot-grid{display:grid;gap:32px;grid-template-columns:1fr 1fr}
+@media (min-width:900px){.foot-grid{grid-template-columns:2fr repeat(4,1fr)}}
+.foot h4{margin:0 0 12px;font:500 11px/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:var(--bone)}
+.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.foot a{text-decoration:none;display:inline-flex;min-height:36px;align-items:center}
+.foot a:hover{color:var(--bone)}
+.foot-brand{grid-column:1/-1;display:grid;gap:12px}
+@media (min-width:900px){.foot-brand{grid-column:auto}}
+.legal{margin-top:48px;padding-top:24px;border-top:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px}
+
+/* ---------- Reto ---------- */
+.reto-hero{padding-block:24px 64px;display:grid;gap:20px}
+@media (min-width:900px){.reto-hero{padding-block:72px 112px;grid-template-columns:7fr 5fr;gap:64px;align-items:end}}
+.reto-hero .hero-copy{gap:18px}
+.facts{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:8px 32px;padding-top:8px}
+.facts div{display:grid;gap:2px}
+.facts b{font:500 28px/1 var(--serif)}
+.facts span{font-size:13px;color:var(--stone)}
+.rules{width:100%;border-collapse:collapse}
+.rules th,.rules td{text-align:left;vertical-align:top;padding:20px 16px 20px 0;border-bottom:1px solid var(--hair)}
+.rules thead th{font:500 11px/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:var(--stone);padding-top:0}
+.rules tbody th{width:28%}
+.rules .rn{display:block;font:500 18px/1 var(--serif);color:var(--gold);margin-bottom:6px}
+.rules .pn{font:500 24px/1.15 var(--serif)}
+.rules .pv{display:block;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone);margin-top:4px}
+.rules td{color:var(--stone)}
+.rules td b{color:var(--bone);font-weight:500}
+@media (max-width:719px){
+  .rules thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .rules,.rules tbody,.rules tr,.rules th,.rules td{display:block;width:100%}
+  .rules tr{padding:20px 0;border-bottom:1px solid var(--hair)}
+  .rules th,.rules td{border:0;padding:0}
+  .rules tbody th{width:100%;margin-bottom:12px}
+  .rules td{padding-top:8px}
+  .rules td::before{content:attr(data-label);display:block;font:500 11px/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:var(--stone);margin-bottom:2px}
+}
+.callout{border-left:1px solid var(--gold);padding:4px 0 4px 20px;display:grid;gap:8px;max-width:62ch}
+.callout p{color:var(--stone)}
+.health{font-size:14px;color:var(--stone);max-width:72ch;border-top:1px solid var(--hair);padding-top:24px}
+.pill-links{display:flex;flex-wrap:wrap;gap:8px 24px}
+
+/* ---------- Ficha ---------- */
+.pdp{display:grid;gap:24px;padding-block:16px 64px}
+@media (min-width:900px){.pdp{grid-template-columns:7fr 5fr;gap:64px;padding-block:32px 96px;align-items:start}.buy{position:sticky;top:88px}}
+.gallery{display:grid;gap:12px;min-width:0}
+.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;gap:0}
+.slides::-webkit-scrollbar{display:none}
+.slides .stage{flex:0 0 100%;scroll-snap-align:start;aspect-ratio:1/1}
+@media (min-width:900px){
+  .slides{display:grid;grid-template-columns:1fr;gap:12px;overflow:visible}
+  .slides .stage{aspect-ratio:4/5}
+  .dots{display:none!important}
+}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots button{width:44px;height:24px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;padding:0}
+.dots button::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--hair-2)}
+.dots button[aria-current="true"]::before{background:var(--bone)}
+.buy{display:grid;gap:20px;min-width:0}
+.pdp-title{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.pdp-title h1{font-size:clamp(30px,3.4vw,40px);line-height:1.08}
+.pdp-title h1 .frase{display:block;font-style:italic;font-size:.62em;line-height:1.25;color:var(--stone);margin-top:8px;letter-spacing:0}
+.pdp-title .price{font-size:18px;padding-top:8px}
+.qty-row{display:grid;grid-template-columns:auto 1fr;gap:10px}
+.stepper{display:inline-grid;grid-template-columns:44px 40px 44px;align-items:center;border:1px solid var(--hair-2);border-radius:2px;min-height:52px}
+.stepper button{height:50px;border:0;background:transparent;color:var(--bone);font:400 20px/1 var(--sans);cursor:pointer}
+.stepper button:disabled{color:#55524C;cursor:not-allowed}
+.stepper output{text-align:center;font-variant-numeric:tabular-nums}
+.paywith{font-size:13px;color:var(--stone)}
+.arrive{display:grid;gap:4px;padding:16px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);font-size:15px}
+.arrive b{font-weight:500}
+.arrive span{color:var(--stone);font-size:14px}
+.kit{display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:center;padding:16px;border:1px solid var(--hair-2)}
+.kit .stage{aspect-ratio:1/1}
+.kit p{font-size:15px}
+.kit .kit-price{color:var(--stone);font-size:14px}
+.kit .btn{grid-column:1/-1}
+.bullets{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bullets li{display:grid;grid-template-columns:110px 1fr;gap:12px;font-size:15px;color:var(--stone)}
+.bullets li b{color:var(--bone);font-weight:500}
+.member-line{font-size:14px;color:var(--stone)}
+.inuse{display:grid;gap:24px}
+@media (min-width:760px){.inuse{grid-template-columns:1fr 1fr}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:60;background:#16191C;color:#D6E4F0;border:1px solid rgba(143,176,207,.5);font:400 13px/1.4 var(--meta);padding:10px 14px;max-width:calc(100vw - 32px)}
+
+/* Barra de compra fija: solo ficha, hueso, sin dorado */
+.buybar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bone);color:var(--ink);padding:10px var(--gr) calc(10px + env(safe-area-inset-bottom,0px)) var(--g);display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;box-shadow:0 -1px 0 rgba(0,0,0,.2);transform:translateY(110%);transition:transform .3s cubic-bezier(.2,.7,.1,1)}
+.buybar.show{transform:none}
+.buybar .bb-img{width:44px;height:44px;background:var(--paper)}
+.buybar .bb-img img{width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply}
+.buybar .bb-name{font:500 15px/1.2 var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.buybar .bb-price{font-size:14px;color:#4A4741}
+.buybar .btn{background:var(--ink);color:var(--bone);border-color:var(--ink);min-height:48px}
+.buybar>div{min-width:0}
+@media (min-width:900px){.buybar{display:none}}
+
+/* Movimiento: un solo gesto, aparecer, al cargar */
+@media (prefers-reduced-motion:no-preference){
+  .appear{animation:appear .7s cubic-bezier(.2,.7,.1,1) both}
+  .appear.d2{animation-delay:.12s}
+  @keyframes appear{from{opacity:.001;transform:translateY(8px)}to{opacity:1;transform:none}}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<!-- ================= Barra de maqueta ================= -->
+<div class="mock" role="region" aria-label="Controles de la maqueta">
+  <div class="wrap">
+    <nav aria-label="Páginas de la maqueta">
+      <a href="#home" data-view-link="home">/ home</a>
+      <a href="#reto" data-view-link="reto">/reto-30-dias</a>
+      <a href="#ficha" data-view-link="ficha">/productos/taza-negra-15oz</a>
+    </nav>
+    <button type="button" id="toggle-notas" aria-pressed="true">Notas: visibles</button>
+  </div>
+</div>
+<div class="decisiones" role="note">
+  <div class="wrap">
+    <span><b>Decisiones de Luis aplicadas:</b></span>
+    <span>1 · títulos y H1 con «disciplina»</span>
+    <span>2 · cuarto pilar = Carácter</span>
+    <span>3 · sin precio de fundador</span>
+    <span>4 · fotos nuevas (marcos de papel; las tomas pendientes van rotuladas)</span>
+  </div>
+</div>
+
+<!-- ================= Header del sitio ================= -->
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home"><img src="img/sello-68.webp" alt="" width="28" height="28"><span class="brand-name">Actitud Alfa 360</span><span class="sr">Actitud Alfa 360, inicio</span></a>
+    <nav class="nav" aria-label="Principal">
+      <a href="#reto" data-nav="reto">Reto</a>
+      <a href="#home" data-nav="pilares">Pilares</a>
+      <a href="#home" data-nav="guias">Guías</a>
+      <a href="#ficha" data-nav="tienda">Tienda</a>
+      <a href="#home" data-nav="membresia">Membresía</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="#reto" id="top-cta">Reto gratis</a>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" id="menu-btn">Menú</button>
+    </div>
+  </div>
+  <div class="mobile-nav" id="mobile-nav" hidden>
+    <div class="wrap">
+      <ul>
+        <li><a href="#reto">Reto de 30 días</a></li>
+        <li><a href="#home">Pilares</a></li>
+        <li><a href="#home">Guías</a></li>
+        <li><a href="#ficha">Tienda</a></li>
+        <li><a href="#home">Membresía</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- =====================================================================
+     HOME
+     ===================================================================== -->
+<section data-view="home">
+  <div class="wrap hero">
+    <div class="hero-grid">
+      <div class="hero-copy appear">
+        <p class="eyebrow">Reto de 30 días · Gratis</p>
+        <h1 class="display">Disciplina diaria en cuerpo, mente, dinero y carácter.</h1>
+        <p class="lede">Un reto gratis de 30 días. Cada noche marcas si cumpliste en los cuatro pilares; te toma 30 segundos.</p>
+        <form class="capture js-capture" novalidate>
+          <label for="email-hero">Tu correo para el registro diario</label>
+          <div class="capture-row">
+            <input id="email-hero" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required>
+            <button class="btn" type="submit">Empiezo el reto</button>
+          </div>
+          <p class="err" role="alert" hidden></p>
+          <p class="micro">Gratis y sin tarjeta. Te das de baja con un clic.</p>
+        </form>
+      </div>
+      <img class="hero-seal appear d2" src="img/sello-320.webp" srcset="img/sello-320.webp 320w, img/sello.webp 640w" sizes="(min-width:900px) 360px, 88px" width="360" height="360" alt="Sello de Actitud Alfa 360: un ojo dentro de un triángulo">
+    </div>
+    <div style="margin-top:32px;display:grid;gap:12px">
+      <p class="nota"><b>Hero (CTO).</b> Sello de 88 px en 390 px y de 360 px en escritorio. El campo de correo y su botón quedan sobre el pliegue en un iPhone (≈ 600 de 660 px útiles). El botón es hueso: el dorado nunca va en botones.</p>
+      <dl class="seo">
+        <dt>URL</dt><dd>/</dd>
+        <dt>&lt;title&gt; (≤ 60)</dt><dd>Disciplina en 4 pilares: reto de 30 días y tienda | Actitud Alfa 360</dd>
+        <dt>H1</dt><dd>Disciplina diaria en cuerpo, mente, dinero y carácter.</dd>
+        <dt>Schema</dt><dd>Organization + WebSite (ya existen). Quitar el canonical «/» del layout raíz (deuda técnica).</dd>
+      </dl>
+    </div>
+  </div>
+
+  <section class="sec" aria-labelledby="h-pilares">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">El 360</p>
+        <h2 id="h-pilares">Cuatro pilares, cuatro verbos</h2>
+        <p class="lede">Si un área se cae, arrastra a las demás. Por eso se cumplen las cuatro, todos los días, aunque sea un poco.</p>
+      </div>
+      <div class="pillars">
+        <a class="pillar" href="#home"><span class="rn">I</span><span class="pname">Cuerpo</span><span class="verb">Entrena</span><span class="pdesc">Mueves el cuerpo aunque no tengas ganas.</span></a>
+        <a class="pillar" href="#home"><span class="rn">II</span><span class="pname">Mente</span><span class="verb">Lee</span><span class="pdesc">Lees algo que te deje mejor que ayer.</span></a>
+        <a class="pillar" href="#home"><span class="rn">III</span><span class="pname">Dinero</span><span class="verb">Produce</span><span class="pdesc">Le dedicas tiempo a lo tuyo, no solo al jefe.</span></a>
+        <a class="pillar" href="#home"><span class="rn">IV</span><span class="pname">Carácter</span><span class="verb">Cumple</span><span class="pdesc">Haces lo que dijiste que ibas a hacer.</span></a>
+      </div>
+      <p class="nota" style="margin-top:24px"><b>Decisión 2.</b> El cuarto pilar es <b>Carácter · Cumple</b>. Cada pilar enlaza a <b>/pilares/cuerpo</b>, <b>/mente</b>, <b>/dinero</b> y <b>/caracter</b>, que hoy son anclas sin indexar. Hay que cambiar «palabra» por «carácter» en <b>docs/vision-membresia.md</b> y en la arquitectura SEO.</p>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-como">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Cómo funciona</p>
+        <h2 id="h-como">Treinta días, una pregunta cada noche</h2>
+      </div>
+      <ol class="steps">
+        <li><div><h3>Dejas tu correo</h3><p>Te llegan las reglas y la plantilla de 30 días. Empiezas al día siguiente.</p></div></li>
+        <li><div><h3>Cada noche: ¿cumpliste hoy?</h3><p>Cuatro casillas, una por pilar. Treinta segundos.</p></div></li>
+        <li><div><h3>Al día 30, tu puntuación 360</h3><p>Ves en qué pilar cumples y en cuál te caes. Sin adornos.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-registro">
+    <div class="wrap split">
+      <div class="stack">
+        <p class="eyebrow">El registro</p>
+        <h2 id="h-registro">Así se ve cumplir</h2>
+        <p class="lede">No es una app más. Es una pregunta honesta que te llega todos los días a la misma hora.</p>
+        <p class="nota"><b>Conversión §2.4.</b> El diferenciador se muestra en vez de describirse. Las casillas funcionan en la maqueta. En el reto gratis no hay escuadra: la escuadra es de la membresía (visión §Miembro).</p>
+      </div>
+      <div class="registro" aria-label="Ejemplo del registro diario">
+        <div class="registro-top">
+          <span class="q">¿Cumpliste hoy?</span>
+          <span class="tag">Ejemplo · día 12 de 30</span>
+        </div>
+        <ul>
+          <li><label><input type="checkbox" class="js-reg" checked><span><span class="r-verb">Entrena</span><span class="r-task">Cuerpo · 20 minutos de movimiento</span></span><span class="sr">Cuerpo</span></label></li>
+          <li><label><input type="checkbox" class="js-reg" checked><span><span class="r-verb">Lee</span><span class="r-task">Mente · 10 páginas</span></span><span class="sr">Mente</span></label></li>
+          <li><label><input type="checkbox" class="js-reg"><span><span class="r-verb">Produce</span><span class="r-task">Dinero · 30 minutos en lo tuyo</span></span><span class="sr">Dinero</span></label></li>
+          <li><label><input type="checkbox" class="js-reg" checked><span><span class="r-verb">Cumple</span><span class="r-task">Carácter · la promesa de hoy</span></span><span class="sr">Carácter</span></label></li>
+        </ul>
+        <div class="score" aria-live="polite"><span>Hoy <b class="num" id="reg-today">3 de 4</b></span><span>En el reto <b class="num" id="reg-total">41 de 48</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-manif">
+    <div class="wrap manif">
+      <h2 id="h-manif" class="h2">No es dominar a nadie. Es dominarte a ti.</h2>
+      <p class="lede">Nadie viene a salvarte. Lo que tengas dentro de cinco años lo estás construyendo hoy, con lo que haces cuando nadie te está mirando.</p>
+      <a class="link" href="#home">Leer el manifiesto</a>
+      <p class="nota"><b>Decisión 1.</b> «Alfa» se queda en la marca y en este lema, nunca en un H1 ni en un &lt;title&gt;. El manifiesto largo pasa a su propia página.</p>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-member">
+    <div class="wrap">
+      <div class="member">
+        <div class="stack">
+          <p class="eyebrow">Después del reto</p>
+          <div class="member-name"><h2 id="h-member" class="h3">Membresía El 360</h2><span class="price num">$12 <small>al mes</small></span></div>
+          <p class="lede">Para que alguien te pregunte cada día si cumpliste, también después del día 30.</p>
+          <a class="btn ghost" href="#home">Ver la membresía</a>
+          <p class="micro">Cancelas cuando quieras, en un toque y sin llamadas.</p>
+        </div>
+        <ul class="checks">
+          <li>Registro diario de los cuatro pilares</li>
+          <li>Una escuadra de 5 personas que ve tu progreso</li>
+          <li>Un reto nuevo cada mes</li>
+          <li>Descuento en la tienda</li>
+          <li>Una pieza exclusiva de miembro</li>
+        </ul>
+      </div>
+      <p class="nota" style="margin-top:24px"><b>Decisión 3.</b> Sin «precio de fundador» ni cupos. El precio va junto al nombre, en texto de cuerpo (CTO). El botón es secundario porque el CTA principal de la home es el reto. En la fase 1 este botón lleva a Skool.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="tienda" aria-labelledby="h-tienda">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Tienda</p>
+        <h2 id="h-tienda">Para el escritorio, el carro y el gym</h2>
+        <p class="lede">Cada pieza se imprime cuando la pides, en Estados Unidos.</p>
+      </div>
+      <div class="shop">
+        <a class="card" href="#ficha">
+          <div class="stage"><img src="img/taza-frase-800.webp" alt="Taza negra de 15 oz con la frase «Háblame de hacer dinero, no de gente»" width="800" height="800" loading="lazy"><span class="shot">Toma nueva: taza sobre papel, luz dura desde la izquierda, 4:5</span></div>
+          <div class="card-meta"><span class="card-name">Taza negra 15 oz</span><span class="price num">$24.99</span></div>
+          <span class="card-line">Cerámica, apta para microondas.</span>
+        </a>
+        <a class="card" href="#ficha">
+          <div class="stage"><img src="img/tumbler-800.webp" alt="Vaso térmico de acero inoxidable de 20 oz con tapa y popote" width="800" height="800" loading="lazy"><span class="shot">Toma nueva: vaso sobre papel, sombra real, la pieza a un tercio del marco</span></div>
+          <div class="card-meta"><span class="card-name">Vaso térmico 20 oz</span><span class="price num">$34.99</span></div>
+          <span class="card-line">Acero inoxidable, cabe en el portavasos.</span>
+        </a>
+        <a class="card" href="#ficha">
+          <div class="stage kit-stage"><img src="img/taza-logo-800.webp" alt="" width="800" height="800" loading="lazy"><img src="img/tumbler-800.webp" alt="" width="800" height="800" loading="lazy"><span class="shot">Toma nueva: las dos piezas juntas, una sola foto</span></div>
+          <div class="card-meta"><span class="card-name">Kit del día</span><span class="price num">$59.98</span></div>
+          <span class="card-line">Taza + vaso, con un solo envío de $8.99.</span>
+        </a>
+      </div>
+      <p class="nota" style="margin-top:24px"><b>Decisión 4.</b> Los marcos de papel son el sitio final; las fotos de dentro son provisionales (las de <b>public/img/stage</b>). Cada recuadro azul dice qué toma va ahí. <b>Kit:</b> $24.99 + $34.99, sin descuento inventado. Se ahorra el segundo envío porque el envío es fijo por pedido (<b>src/domain/cart.ts:54</b>).</p>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-fundador">
+    <div class="wrap founder">
+      <div class="placeholder">Foto real de Luis<br>(pendiente)<br><br>Blanco y negro, grano de película, en su rutina. Nada de modelos de banco de imágenes.</div>
+      <div class="stack">
+        <p class="eyebrow">Quién está detrás</p>
+        <h2 id="h-fundador" class="h3">Soy Luis. Este reto lo hago yo primero.</h2>
+        <p class="lede">[Tres líneas en primera persona, escritas por Luis: por qué empezó y qué hace cada día. No se escriben por él.]</p>
+        <p class="nota"><b>Conversión §5.</b> Sin reseñas reales, la confianza se apoya en la cara del fundador y en garantías concretas. No mostramos contadores ni testimonios hasta que existan (FTC 2024).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-label="Garantías">
+    <div class="wrap trust">
+      <div><b>Pago seguro</b><span>Stripe, Apple Pay y Google Pay. No guardamos tu tarjeta.</span></div>
+      <div><b>Reemplazo por daño</b><span>Si llega dañado o con defecto, lo reponemos dentro de 30 días.</span></div>
+      <div><b>Envío fijo de $8.99</b><span>A cualquier dirección de Estados Unidos, por pedido.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-faq">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">Preguntas</p><h2 id="h-faq">Antes de empezar</h2></div>
+      <div class="faq">
+        <details open><summary>¿Qué pasa después de los 30 días?</summary><p>Te quedas con tu puntuación y tu plantilla. Si quieres seguir con alguien que te pregunte cada día, la membresía El 360 cuesta $12 al mes y la cancelas cuando quieras.</p></details>
+        <details><summary>¿El reto es gratis de verdad?</summary><p>Sí. No pedimos tarjeta. Solo tu correo, para mandarte las reglas y el registro de cada noche.</p></details>
+        <details><summary>¿Necesito ir al gimnasio?</summary><p>No. El mínimo del pilar Cuerpo son 20 minutos de movimiento. Caminar cuenta.</p></details>
+        <details><summary>¿Por qué se llama Actitud Alfa?</summary><p>Porque el «alfa» es contigo mismo: dominar tus horas, tu dinero y tu palabra. Nada que ver con dominar a otros.</p></details>
+        <details><summary>¿Cuánto tarda un pedido de la tienda?</summary><p>Cada pieza se hace a pedido: de 2 a 5 días hábiles de producción y de 3 a 7 de envío. En la ficha de cada producto ves la fecha estimada.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-cierre">
+    <div class="wrap closing">
+      <h2 id="h-cierre">Empieza mañana. Hoy solo dejas el correo.</h2>
+      <form class="capture js-capture" novalidate>
+        <label for="email-cierre">Tu correo para el registro diario</label>
+        <div class="capture-row">
+          <input id="email-cierre" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required>
+          <button class="btn" type="submit">Empiezo el reto</button>
+        </div>
+        <p class="err" role="alert" hidden></p>
+        <p class="micro">Gratis y sin tarjeta. Te das de baja con un clic.</p>
+      </form>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================================
+     /reto-30-dias
+     ===================================================================== -->
+<section data-view="reto" hidden>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Migas"><ol><li><a href="#home">Inicio</a></li><li aria-current="page">Reto de 30 días</li></ol></nav>
+    <div class="reto-hero">
+      <div class="hero-copy appear">
+        <p class="eyebrow">Gratis · Empiezas cualquier día</p>
+        <h1 class="display">Reto de 30 días de disciplina: cuerpo, mente, dinero y carácter</h1>
+        <p class="lede">Las reglas están completas en esta página, sin registro. El correo es solo para el registro de cada noche.</p>
+        <form class="capture js-capture" novalidate>
+          <label for="email-reto">Tu correo para el registro diario</label>
+          <div class="capture-row">
+            <input id="email-reto" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required>
+            <button class="btn" type="submit">Empiezo el reto</button>
+          </div>
+          <p class="err" role="alert" hidden></p>
+          <p class="micro">Gratis y sin tarjeta. Te das de baja con un clic.</p>
+        </form>
+      </div>
+      <div class="facts appear d2" aria-label="El reto en cifras">
+        <div><b class="num">30</b><span>días</span></div>
+        <div><b class="num">4</b><span>pilares al día</span></div>
+        <div><b class="num">30 s</b><span>para registrar</span></div>
+      </div>
+    </div>
+    <dl class="seo" style="margin-bottom:24px">
+      <dt>URL</dt><dd>/reto-30-dias</dd>
+      <dt>&lt;title&gt; (≤ 60)</dt><dd>Reto de 30 días de disciplina (gratis) | Actitud Alfa 360</dd>
+      <dt>H1</dt><dd>Reto de 30 días de disciplina: cuerpo, mente, dinero y carácter</dd>
+      <dt>Schema</dt><dd>WebPage + BreadcrumbList. FAQPage es inocuo pero no suma (Google lo limita desde 2023). Event/Course no aplican.</dd>
+      <dt>Enlaces internos</dt><dd>A los 4 pilares (en la tabla de reglas) y a /membresia (siguiente paso).</dd>
+    </dl>
+  </div>
+
+  <section class="sec" aria-labelledby="h-reglas">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Las reglas</p>
+        <h2 id="h-reglas">Un mínimo por pilar, cada día</h2>
+        <p class="lede">Eliges un nivel el día 1 y lo mantienes los 30 días. Base es para quien trabaja doble turno; Estándar, para quien ya tiene rutina.</p>
+      </div>
+      <table class="rules">
+        <caption class="sr">Reglas del reto por pilar y nivel</caption>
+        <thead><tr><th scope="col">Pilar</th><th scope="col">Base</th><th scope="col">Estándar</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><span class="rn">I</span><a class="pn" href="#home">Cuerpo</a><span class="pv">Entrena</span></th><td data-label="Base"><b>20 minutos</b> de movimiento. Caminar cuenta.</td><td data-label="Estándar"><b>45 minutos</b> de entrenamiento, uno al aire libre por semana.</td></tr>
+          <tr><th scope="row"><span class="rn">II</span><a class="pn" href="#home">Mente</a><span class="pv">Lee</span></th><td data-label="Base"><b>10 páginas</b> de un libro. Las redes no cuentan.</td><td data-label="Estándar"><b>20 páginas</b> y una idea anotada.</td></tr>
+          <tr><th scope="row"><span class="rn">III</span><a class="pn" href="#home">Dinero</a><span class="pv">Produce</span></th><td data-label="Base"><b>30 minutos</b> en lo tuyo: negocio, habilidad o ahorro.</td><td data-label="Estándar"><b>1 hora</b> en lo tuyo y anotas lo que gastaste.</td></tr>
+          <tr><th scope="row"><span class="rn">IV</span><a class="pn" href="#home">Carácter</a><span class="pv">Cumple</span></th><td data-label="Base">Por la mañana escribes <b>una promesa</b> para hoy, y la cumples.</td><td data-label="Estándar">La promesa, y <b>un día sin quejas</b> ni hablar de otros.</td></tr>
+        </tbody>
+      </table>
+      <p class="nota" style="margin-top:24px"><b>Borrador para que Luis lo valide.</b> Los mínimos son una propuesta del CTO, no reglas ya decididas. Publicarlas completas es el hueco SEO frente a 75 Hard, que esconde las suyas (estrategia SEO §2).</p>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-fallas">
+    <div class="wrap split">
+      <div class="stack">
+        <p class="eyebrow">Si fallas un día</p>
+        <h2 id="h-fallas">No vuelves al día 1</h2>
+      </div>
+      <div class="stack">
+        <div class="callout">
+          <p>Marcas el pilar como no cumplido y sigues. Al día 30 cuenta tu puntuación, no tu racha.</p>
+          <p>Otros retos te obligan a reiniciar. Aquí, quien maneja doce horas y falla un martes no abandona el miércoles.</p>
+        </div>
+        <p class="nota"><b>Decisión pendiente (recomendación del CTO: sin reinicio).</b> Reiniciar castiga justo al público del doble turno, que es el que más abandona. Si Luis prefiere el reinicio estilo 75 Hard, cambian este bloque y la puntuación.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-dia">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">Un día del reto</p><h2 id="h-dia">Lo que pasa cada día</h2></div>
+      <ol class="steps">
+        <li><div><h3>Por la mañana</h3><p>Escribes la promesa del pilar Carácter. Una línea.</p></div></li>
+        <li><div><h3>Durante el día</h3><p>Cumples los cuatro mínimos, en el orden que te deje tu trabajo.</p></div></li>
+        <li><div><h3>Por la noche</h3><p>Te llega «¿Cumpliste hoy?». Marcas cuatro casillas y listo.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-despues">
+    <div class="wrap member">
+      <div class="stack">
+        <p class="eyebrow">Al terminar</p>
+        <div class="member-name"><h2 id="h-despues" class="h3">Sigue con una escuadra</h2><span class="price num">$12 <small>al mes</small></span></div>
+        <p class="lede">La membresía El 360 te pone en una escuadra de 5 personas que ve si cumpliste. Es lo que hace que el día 31 se parezca al día 1.</p>
+      </div>
+      <div class="stack" style="align-content:end">
+        <a class="btn ghost" href="#home">Ver la membresía</a>
+        <p class="micro">Cancelas cuando quieras, en un toque.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-faq-reto">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">Preguntas</p><h2 id="h-faq-reto">Sobre el reto</h2></div>
+      <div class="faq">
+        <details open><summary>¿Qué hacen con mi correo?</summary><p>Te mandamos las reglas, la plantilla y el registro de cada noche. No lo vendemos ni lo compartimos. Te das de baja con un clic en cualquier correo.</p></details>
+        <details><summary>¿Qué cuenta como leer?</summary><p>Un libro, en papel, digital o audio. Redes sociales, noticias y videos cortos no cuentan.</p></details>
+        <details><summary>¿Qué cuenta como «lo tuyo» en el pilar Dinero?</summary><p>Tiempo en algo que te hace crecer fuera del sueldo: tu negocio, aprender una habilidad, ordenar tu presupuesto o ahorrar.</p></details>
+        <details><summary>¿Puedo cambiar de nivel a mitad del reto?</summary><p>Puedes subir de Base a Estándar cuando quieras. Bajar no cuenta para el reto de este mes.</p></details>
+      </div>
+      <p class="health" style="margin-top:40px">Este reto no sustituye el consejo médico. Si tienes una condición de salud o llevas tiempo sin hacer ejercicio, consulta a tu médico antes de empezar.</p>
+    </div>
+  </section>
+
+  <section class="sec band" aria-labelledby="h-cierre-reto">
+    <div class="wrap closing">
+      <h2 id="h-cierre-reto">El día 1 es mañana.</h2>
+      <form class="capture js-capture" novalidate>
+        <label for="email-reto-2">Tu correo para el registro diario</label>
+        <div class="capture-row">
+          <input id="email-reto-2" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required>
+          <button class="btn" type="submit">Empiezo el reto</button>
+        </div>
+        <p class="err" role="alert" hidden></p>
+        <p class="micro">Gratis y sin tarjeta. Te das de baja con un clic.</p>
+      </form>
+      <p class="nota"><b>Depende del paso 3 (Resend)</b> y de una tabla de suscriptores con doble confirmación. Sin eso, este formulario no puede salir a producción.</p>
+    </div>
+  </section>
+</section>
+
+<!-- =====================================================================
+     Ficha de producto
+     ===================================================================== -->
+<section data-view="ficha" hidden>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Migas"><ol><li><a href="#home">Inicio</a></li><li><a href="#home">Tienda</a></li><li aria-current="page">Taza negra 15 oz</li></ol></nav>
+    <div class="pdp">
+      <div class="gallery">
+        <div class="slides" id="slides" tabindex="0" aria-label="Fotos de la taza">
+          <div class="stage"><img src="img/taza-frase.webp" alt="Taza negra de 15 oz con la frase en español «Háblame de hacer dinero, no de gente»" width="1200" height="1200" fetchpriority="high"><span class="shot">Toma 1 nueva: frase de frente, sobre papel, luz dura izquierda</span></div>
+          <div class="stage"><img src="img/taza-logo.webp" alt="Taza negra de 15 oz con el sello Actitud Alfa 360: ojo dentro de un triángulo" width="1200" height="1200" loading="lazy"><span class="shot">Toma 2 nueva: lado del sello, mismo papel y luz</span></div>
+        </div>
+        <div class="dots" role="group" aria-label="Elegir foto">
+          <button type="button" aria-label="Foto 1 de 2" aria-current="true" data-slide="0"></button>
+          <button type="button" aria-label="Foto 2 de 2" aria-current="false" data-slide="1"></button>
+        </div>
+      </div>
+
+      <div class="buy">
+        <div class="pdp-title">
+          <h1>Taza negra 15 oz<span class="frase">Háblame de hacer dinero, no de gente</span></h1>
+          <span class="price num">$24.99</span>
+        </div>
+        <p class="lede" style="font-size:16px">Para el café de las 5 a. m. de alguien que tiene cosas que construir.</p>
+        <div class="qty-row">
+          <div class="stepper" role="group" aria-label="Cantidad">
+            <button type="button" id="qty-minus" aria-label="Quitar una" disabled>−</button>
+            <output id="qty" aria-live="polite">1</output>
+            <button type="button" id="qty-plus" aria-label="Agregar una">+</button>
+          </div>
+          <button class="btn block js-buy" type="button" id="buy-main">Comprar ahora</button>
+        </div>
+        <p class="paywith">Pago seguro con Stripe · Apple Pay · Google Pay</p>
+        <div class="arrive">
+          <b>Pídela hoy y llega entre el <span class="js-eta-from">vie. 4</span> y el <span class="js-eta-to">mar. 15 de dic.</span></b>
+          <span>Envío fijo de $8.99 · Se imprime en EE. UU. cuando la pides</span>
+        </div>
+        <p class="nota"><b>Conversión §3.</b> Precio junto al nombre, en texto de cuerpo (CTO). El botón entra en la primera pantalla de 390 px. La fecha se calcula sumando 5 y 12 días hábiles a hoy. En código será una función pura con la fecha inyectada, y los feriados quedan por decidir.</p>
+        <div class="kit">
+          <div class="stage"><img src="img/tumbler-800.webp" alt="" width="800" height="800" loading="lazy"></div>
+          <div><p>Llévate también el vaso térmico</p><p class="kit-price">Kit $59.98 · un solo envío, ahorras $8.99</p></div>
+          <button class="btn ghost block js-buy" type="button" data-kit>Agregar el kit</button>
+        </div>
+        <ul class="bullets">
+          <li><b>Material</b><span>Cerámica negra, 15 oz. Impresa por los dos lados.</span></li>
+          <li><b>Cuidado</b><span>Microondas y lavavajillas.</span></li>
+          <li><b>Hecha a pedido</b><span>Se produce en 2 a 5 días hábiles.</span></li>
+        </ul>
+        <p class="member-line">Reemplazo si llega dañada, dentro de 30 días. Los miembros de El 360 tienen descuento en la tienda.</p>
+        <p class="nota"><b>Kit:</b> son dos líneas en un solo checkout (solo interfaz: <b>buy-box.tsx:29</b>; el carrito ya acepta hasta 10). <b>Descuento de miembro:</b> el porcentaje está sin decidir, así que no se muestra ninguno.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="sec" aria-labelledby="h-uso">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">En uso</p><h2 id="h-uso">Antes de que el resto se levante</h2></div>
+      <div class="inuse">
+        <div class="placeholder">Toma pendiente: la taza en un escritorio a las 5 a. m., luz de lámpara, manos trabajando. Persona real de la comunidad.</div>
+        <div class="stack">
+          <p class="lede">Por un lado lleva el sello, el ojo dentro del triángulo. Por el otro, la frase que resume la marca. Sus 15 oz alcanzan para un café grande mientras trabajas.</p>
+          <p class="callout" style="color:var(--stone)">Esta frase es del pilar <a class="link" href="#home" style="min-height:0">Dinero</a>. La guía <a class="link" href="#home" style="min-height:0">Cómo ser más disciplinado</a> cuenta por qué.</p>
+          <p class="nota"><b>SEO, regla de enlaces 4.</b> El producto enlaza a su pilar y a la guía de su frase; hoy «Completa el equipo» solo enlaza a otros productos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-faq-pdp">
+    <div class="wrap">
+      <div class="sec-head"><p class="eyebrow">Preguntas</p><h2 id="h-faq-pdp">Sobre la taza</h2></div>
+      <div class="faq">
+        <details open><summary>¿Se puede meter al microondas y al lavavajillas?</summary><p>Sí. Es de cerámica y está pensada para el uso diario, desde el café de la mañana hasta el té de la noche.</p></details>
+        <details><summary>¿Qué dice la taza?</summary><p>Por un lado lleva el sello de Actitud Alfa 360. Por el otro, «Háblame de hacer dinero, no de gente».</p></details>
+        <details><summary>¿Puedo devolverla?</summary><p>Como se fabrica cuando la pides, la reponemos si llega dañada o con un defecto, dentro de 30 días desde la entrega, con una foto del problema.</p></details>
+      </div>
+      <dl class="seo" style="margin-top:40px">
+        <dt>URL</dt><dd>/productos/taza-negra-15oz (ya existe)</dd>
+        <dt>&lt;title&gt;</dt><dd>Taza negra 15 oz con frase en español | Actitud Alfa 360 (sin cambios)</dd>
+        <dt>Schema</dt><dd>Product + Offer + envío + devolución (ya). Reseñas solo cuando sean reales.</dd>
+        <dt>Migas</dt><dd>Inicio / Tienda / Taza: «Tienda» necesita su URL /tienda (hoy es /#tienda).</dd>
+      </dl>
+    </div>
+  </section>
+
+  <div class="buybar" id="buybar" aria-hidden="true">
+    <div class="bb-img"><img src="img/taza-frase-800.webp" alt="" width="44" height="44"></div>
+    <div><div class="bb-name">Taza negra 15 oz</div><div class="bb-price num">$24.99</div></div>
+    <button class="btn sm js-buy" type="button" tabindex="-1">Comprar</button>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#home"><img src="img/sello-68.webp" alt="" width="28" height="28">Actitud Alfa 360</a>
+        <p>Háblame de hacer dinero, no de gente.</p>
+      </div>
+      <div><h4>Reto</h4><ul><li><a href="#reto">Reto de 30 días</a></li><li><a href="#home">Membresía</a></li></ul></div>
+      <div><h4>Pilares</h4><ul><li><a href="#home">Cuerpo</a></li><li><a href="#home">Mente</a></li><li><a href="#home">Dinero</a></li><li><a href="#home">Carácter</a></li></ul></div>
+      <div><h4>Guías</h4><ul><li><a href="#home">Cómo ser más disciplinado</a></li><li><a href="#home">Hábitos de éxito</a></li><li><a href="#home">Rutina para el doble turno</a></li></ul></div>
+      <div><h4>Tienda</h4><ul><li><a href="#ficha">Taza negra 15 oz</a></li><li><a href="#ficha">Vaso térmico 20 oz</a></li><li><a href="#home">Envíos y devoluciones</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Tech Build Dreams LLC</span><span>hola@actitudalfa360.com</span><a href="#home">Privacidad</a></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+  var views = ['home','reto','ficha'];
+  var buybar = document.getElementById('buybar');
+  var toastEl = document.getElementById('toast'); var toastT;
+  function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.hidden = true; }, 2600); }
+
+  /* ---- Vistas por hash ---- */
+  function show(){
+    var v = (location.hash || '#home').slice(1);
+    if (views.indexOf(v) === -1) v = 'home';
+    document.querySelectorAll('[data-view]').forEach(function(s){ s.hidden = s.getAttribute('data-view') !== v; });
+    document.querySelectorAll('[data-view-link]').forEach(function(a){ a.setAttribute('aria-current', a.getAttribute('data-view-link') === v ? 'page' : 'false'); });
+    var map = {reto:'reto', ficha:'tienda'};
+    document.querySelectorAll('.nav a').forEach(function(a){ a.setAttribute('aria-current', a.getAttribute('data-nav') === map[v] ? 'page' : 'false'); });
+    document.getElementById('top-cta').hidden = (v === 'reto');
+    buybar.classList.remove('show');
+    closeMenu();
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange', show);
+
+  /* ---- Notas ---- */
+  var tBtn = document.getElementById('toggle-notas');
+  function setNotas(on){ document.body.classList.toggle('sin-notas', !on); tBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); tBtn.textContent = on ? 'Notas: visibles' : 'Notas: ocultas'; try{ localStorage.setItem('aa360-notas', on ? '1' : '0'); }catch(e){} }
+  var saved = null; try{ saved = localStorage.getItem('aa360-notas'); }catch(e){}
+  setNotas(saved !== '0');
+  tBtn.addEventListener('click', function(){ setNotas(document.body.classList.contains('sin-notas')); });
+
+  /* ---- Menú móvil ---- */
+  var mBtn = document.getElementById('menu-btn'), mNav = document.getElementById('mobile-nav');
+  function closeMenu(){ mNav.hidden = true; mBtn.setAttribute('aria-expanded','false'); }
+  mBtn.addEventListener('click', function(){ var open = mNav.hidden; mNav.hidden = !open; mBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+
+  /* ---- Captura de correo (maqueta: no envía nada) ---- */
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  document.querySelectorAll('.js-capture').forEach(function(f){
+    f.addEventListener('submit', function(e){
+      e.preventDefault();
+      var input = f.querySelector('input'), err = f.querySelector('.err'), val = input.value.trim();
+      if (!EMAIL.test(val)) {
+        input.setAttribute('aria-invalid','true');
+        err.textContent = val ? 'Ese correo no parece completo. Revisa que tenga @ y un dominio, por ejemplo tu@correo.com.' : 'Escribe tu correo para recibir el registro de cada noche.';
+        err.hidden = false; input.focus(); return;
+      }
+      var ok = document.createElement('div'); ok.className = 'capture-ok'; ok.setAttribute('role','status');
+      ok.innerHTML = '<strong>Listo. Revisa tu correo.</strong><span class="micro"></span>';
+      ok.querySelector('.micro').textContent = 'Te mandamos un enlace a ' + val + ' para confirmar. El día 1 empieza mañana.';
+      f.replaceWith(ok);
+    });
+    f.querySelector('input').addEventListener('input', function(){ this.removeAttribute('aria-invalid'); f.querySelector('.err').hidden = true; });
+  });
+
+  /* ---- Registro de ejemplo ---- */
+  var regs = document.querySelectorAll('.js-reg');
+  function score(){ var n = 0; regs.forEach(function(r){ if (r.checked) n++; }); document.getElementById('reg-today').textContent = n + ' de 4'; document.getElementById('reg-total').textContent = (38 + n) + ' de 48'; }
+  regs.forEach(function(r){ r.addEventListener('change', score); });
+
+  /* ---- Fecha estimada: hoy + 5 y + 12 días hábiles ---- */
+  function addBusinessDays(d, n){ var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); while (n > 0) { x.setDate(x.getDate() + 1); var w = x.getDay(); if (w !== 0 && w !== 6) n--; } return x; }
+  function fmt(d, withMonth){
+    var wd = new Intl.DateTimeFormat('es-US',{weekday:'short'}).format(d).replace(/\.$/,'') + '.';
+    return wd + ' ' + d.getDate() + (withMonth ? ' de ' + new Intl.DateTimeFormat('es-US',{month:'short'}).format(d).replace(/\.$/,'') + '.' : '');
+  }
+  var today = new Date(), a = addBusinessDays(today, 5), b = addBusinessDays(today, 12);
+  document.querySelector('.js-eta-from').textContent = fmt(a, a.getMonth() !== b.getMonth());
+  document.querySelector('.js-eta-to').textContent = fmt(b, true);
+
+  /* ---- Cantidad ---- */
+  var q = 1, qOut = document.getElementById('qty'), qm = document.getElementById('qty-minus'), qp = document.getElementById('qty-plus');
+  function setQ(n){ q = Math.max(1, Math.min(10, n)); qOut.textContent = q; qm.disabled = q <= 1; qp.disabled = q >= 10; }
+  qm.addEventListener('click', function(){ setQ(q - 1); }); qp.addEventListener('click', function(){ setQ(q + 1); });
+
+  document.querySelectorAll('.js-buy').forEach(function(b){ b.addEventListener('click', function(){ toast(b.hasAttribute('data-kit') ? 'Maqueta: aquí se abriría Stripe Checkout con taza + vaso y un solo envío.' : 'Maqueta: aquí se abriría Stripe Checkout (' + q + ' × $24.99 + $8.99).'); }); });
+
+  /* ---- Galería: puntos ---- */
+  var slides = document.getElementById('slides'), dots = document.querySelectorAll('.dots button');
+  dots.forEach(function(d){ d.addEventListener('click', function(){ slides.scrollTo({left: slides.clientWidth * +d.getAttribute('data-slide'), behavior:'smooth'}); }); });
+  slides.addEventListener('scroll', function(){ var i = Math.round(slides.scrollLeft / Math.max(1, slides.clientWidth)); dots.forEach(function(d, k){ d.setAttribute('aria-current', k === i ? 'true' : 'false'); }); }, {passive:true});
+
+  /* ---- Barra de compra fija: aparece cuando el botón principal sale de pantalla ---- */
+  if ('IntersectionObserver' in window) {
+    var buyMain = document.getElementById('buy-main');
+    new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        var onFicha = !document.querySelector('[data-view="ficha"]').hidden;
+        var below = e.boundingClientRect.top < 0;
+        var vis = onFicha && !e.isIntersecting && below;
+        buybar.classList.toggle('show', vis);
+        buybar.setAttribute('aria-hidden', vis ? 'false' : 'true');
+        buybar.querySelector('button').tabIndex = vis ? 0 : -1;
+      });
+    }).observe(buyMain);
+  }
+
+  show();
+})();
+</script>
