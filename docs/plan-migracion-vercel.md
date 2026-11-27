@@ -5,16 +5,17 @@
 
 ## Dónde estamos (2026-11-26)
 
-- Rama `develop`, empujada. `npm run check` en verde: 34 tests, 3 saltados (los de MySQL real).
+- Rama `develop`, empujada. `npm run check` en verde: 38 tests, 3 saltados (los de MySQL real).
+- **Paso 1 HECHO** (2026-11-26). Siguiente: paso 2 (Postgres) o paso 4 (DNS), en paralelo.
 - **Hostinger ya no existe** (plan cancelado y reembolsado el 2026-11-10). Nada de este proyecto está en vivo.
-- El código **todavía** está conectado a Hostinger: MySQL, SMTP y migraciones al arrancar.
+- El código **todavía** usa MySQL, SMTP y migraciones al arrancar (pasos 2 y 3).
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
 - **Un solo repo:** `techbuilddreams/actitudalfa360` (antes `actitudalfa360-site`, renombrado 2026-11-26).
   La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. Carpeta local: `~/repos/actitudalfa360` (renombrada el mismo día; la memoria de Claude se copió a la ruta nueva).
-- En Vercel existe un proyecto VIEJO `actitudalfa360` (Nuxt, `prj_cYMTPQkvTcOK7zArmDejQ0TcuEl9`) que tiene los dominios
-  `actitudalfa360.com` y `www`. No se toca hasta el paso 4: ahí se mueven los dominios al proyecto nuevo.
-- La rama por defecto en GitHub es `develop`: al crear el proyecto en Vercel, la de producción hay que fijarla en `main`
-  ANTES de cargar variables de producción.
+- En Vercel hay un proyecto VIEJO, renombrado `actitud-alfa-360-nuxt-archivo` (`prj_cYMTPQkvTcOK7zArmDejQ0TcuEl9`), que
+  todavía tiene los dominios `actitudalfa360.com` y `www`. Plan (propuesto a Luis, sin OK aún): mover los dominios al
+  proyecto nuevo → Luis revoca las llaves OpenAI/Firebase de la app vieja → borrar el proyecto (irreversible, pide OK).
+- La rama por defecto en GitHub es `develop`; la de producción en Vercel es `main` (ya fijada).
 
 ## Decisiones tomadas
 
@@ -48,6 +49,9 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - Rama de producción = `main` (Settings → Environments → Production). **Candado extra:** *Ignored Build Step* del
      proyecto salta cualquier build de producción que no venga de `main` (el 2026-11-26 un push a `develop` salió
      como producción; se canceló antes de terminar).
+   - **Smoke 2026-11-26 (preview `a4aa99a`):** sin sesión → 302 al login de Vercel; con el bypass → 500 porque
+     `assertDeployable` exige DATABASE_URL + Stripe en staging. Es lo esperado: falla cerrado hasta los pasos 2/3/5.
+   - `engines.node` fijado a `22.x` (con `>=20.9` Vercel ignoraba el ajuste y usaba Node 26).
    - Alias de staging hasta el paso 4: `actitudalfa360-git-develop-techbuilddreams.vercel.app`.
      Hecho: variables Production (`APP_ENV`/`NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://actitudalfa360.com`)
      y el primer push a `develop` → preview → verificar 401 sin sesión.
