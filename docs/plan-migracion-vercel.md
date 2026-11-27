@@ -40,6 +40,14 @@ Cada paso: el test que falla primero → el código mínimo → limpiar. Los pas
 del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 
 1. **Conectar a Vercel y quitar Hostinger** (CTO)
+   - **Hecho 2026-11-26:** proyecto Vercel `actitudalfa360` (`prj_WXVtjCJ2aZb8n2wbqFkZAov7hiRa`), Next.js, Node 22,
+     Vercel Authentication en previews + URLs de producción (`prod_deployment_urls_and_all_previews`).
+     Variables Preview: `APP_ENV`/`NEXT_PUBLIC_APP_ENV=staging`, `NEXT_PUBLIC_SITE_URL` = alias `git-develop`.
+     Secreto de *Protection Bypass for Automation* generado (se expone como `VERCEL_AUTOMATION_BYPASS_SECRET`;
+     verlo en Settings → Deployment Protection, nunca en el repo) para el webhook de Stripe en el paso 5.
+   - **Pendiente (Luis, en el dashboard):** rama de producción = `main` (la API del MCP no lo expone).
+     Después: variables Production (`APP_ENV`/`NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://actitudalfa360.com`)
+     y el primer push a `develop` → preview → verificar 401 sin sesión.
    - Crear el proyecto en Vercel (equipo `techbuilddreams`), conectar GitHub: `main` = producción, `develop` = preview/staging.
    - Quitar `STAGING_BASIC_AUTH` de `proxy.ts` y usar Deployment Protection.
    - `TRUSTED_PROXY_HOPS` y el rate limit en memoria: en serverless cada instancia tiene su propia memoria. Revisar `src/infrastructure/security/` y decidir (ver Decisiones abiertas).
