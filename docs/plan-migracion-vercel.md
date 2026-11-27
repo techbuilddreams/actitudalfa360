@@ -13,8 +13,15 @@
 - **Un solo repo:** `techbuilddreams/actitudalfa360` (antes `actitudalfa360-site`, renombrado 2026-11-26).
   La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. Carpeta local: `~/repos/actitudalfa360` (renombrada el mismo día; la memoria de Claude se copió a la ruta nueva).
 - En Vercel hay un proyecto VIEJO, renombrado `actitud-alfa-360-nuxt-archivo` (`prj_cYMTPQkvTcOK7zArmDejQ0TcuEl9`), que
-  todavía tiene los dominios `actitudalfa360.com` y `www`. Plan (propuesto a Luis, sin OK aún): mover los dominios al
-  proyecto nuevo → Luis revoca las llaves OpenAI/Firebase de la app vieja → borrar el proyecto (irreversible, pide OK).
+  todavía tiene los dominios `actitudalfa360.com` y `www`. El MCP de Vercel NO puede quitar un dominio de un proyecto
+  (409 `domain_already_in_use` al agregarlo al nuevo). Opciones dadas a Luis: **A (recomendada)** borrar el proyecto viejo
+  (libera dominios; espera su "bórralo") o **B** quitar los dominios a mano en su Settings → Domains. Luego: agregarlos al nuevo.
+- **Llaves a revocar (Luis, en sus consolas)**, guardadas en el proyecto viejo: `OPENAI_API_KEY` (platform.openai.com → API keys)
+  y la cuenta de servicio de Firebase (`FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`: Firebase → Configuración → Cuentas de
+  servicio → borrar esa clave en Google Cloud IAM). El resto (`FIREBASE_API_KEY`, `APP_ID`…) es config web pública: no urge.
+- **DNS (paso 4): el dominio NO está en Cloudflare.** dig 2026-11-26: NS `dns-parking.com` (Hostinger), A 2.57.91.91 (parking),
+  sin MX; registrador Hostinger (el registro sobrevive al reembolso). En la migración de lotoman se dejó fuera a propósito.
+  Cambiar NS en hPanel lo hace Luis a mano (el clasificador bloquea ese clic).
 - La rama por defecto en GitHub es `develop`; la de producción en Vercel es `main` (ya fijada).
 
 ## Decisiones tomadas
