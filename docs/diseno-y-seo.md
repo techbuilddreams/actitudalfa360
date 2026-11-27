@@ -75,7 +75,8 @@ Las maquetas cargan el logo desde `file:///Users/luisramos/Desktop/...`: se ven 
 
 ## Siguiente paso
 
-**Maqueta unificada lista para aprobar:** [`diseno/maqueta-unificada.html`](diseno/maqueta-unificada.html)
-(home + `/reto-30-dias` + ficha de la taza, con notas de decisión que se pueden ocultar). Las imágenes van con rutas
-`img/…`: se ve completa en el artifact publicado, no abriendo el archivo local. Después: QA (contraste, 390 px, LCP) y un rompedor (¿dónde se pierde la compra?),
-y recién entonces código, con TDD, en una rama propia.
+QA y Rompedor ya revisaron la maqueta: [`diseno/revision-maqueta.md`](diseno/revision-maqueta.md).
+1. **Luis** decide los 6 puntos de "Decisiones que necesita Luis" (cada uno trae recomendación del CTO).
+2. **CTO** aplica decisiones y correcciones a la maqueta y la republica.
+3. Código con TDD en una rama propia, empezando por el dominio del reto (día por calendario, ventana de registro,
+   puntuación) y el límite de cantidad único.
