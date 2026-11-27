@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { char, check, index, integer, jsonb, pgEnum, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { char, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 import type { OrderItem, OrderStatus, ShippingAddress } from '@/domain/order';
 
 const STATUSES = ['paid', 'fulfillment_pending', 'fulfillment_processing', 'fulfillment_created', 'fulfillment_failed'] as const satisfies readonly OrderStatus[];
@@ -27,11 +27,15 @@ export const orders = pgTable(
     shippingCents: integer('shipping_cents').notNull().default(0),
     taxCents: integer('tax_cents').notNull().default(0),
     currency: char('currency', { length: 3 }).notNull(),
-    email: varchar('email', { length: 320 }),
+    // text: Stripe admite correos de hasta 512 caracteres; un límite aquí perdería un pago cobrado.
+    email: text('email'),
     phone: varchar('phone', { length: 40 }),
     shipping: jsonb('shipping').$type<ShippingAddress | null>(),
     fulfillmentRef: varchar('fulfillment_ref', { length: 64 }),
+    // Hora del reclamo según el reloj de la BASE (now()), nunca el de la app.
     claimedAt: timestamp('claimed_at', tz),
+    // Token de turno: lo genera la base en cada reclamo; solo quien lo tiene puede cerrar el pedido.
+    claimToken: uuid('claim_token'),
     createdAt: timestamp('created_at', tz).notNull(),
     updatedAt: timestamp('updated_at', tz).notNull().defaultNow(),
   },
@@ -51,8 +55,11 @@ export const orders = pgTable(
     check('orders_currency_ck', sql`${t.currency} = 'usd'`),
     // CASE y no AND: Postgres no garantiza el orden de evaluación y jsonb_array_length falla con un objeto.
     check('orders_lines_ck', sql`CASE WHEN jsonb_typeof(${t.lines}) = 'array' THEN jsonb_array_length(${t.lines}) > 0 ELSE false END`),
-    // El dinero cuadra: subtotal + envío + impuesto = total + descuento. subtotal = 0 solo en filas sin desglose.
+    // El dinero cuadra: subtotal + envío + impuesto = total + descuento. Sin desglose ⇒ TODO el desglose en 0.
     // bigint: la suma de varios integer no puede desbordar dentro del CHECK.
-    check('orders_amounts_ck', sql`${t.subtotalCents} = 0 OR ${t.subtotalCents}::bigint + ${t.shippingCents} + ${t.taxCents} = ${t.totalCents}::bigint + ${t.discountCents}`),
+    check('orders_amounts_ck', sql`(${t.subtotalCents} = 0 AND ${t.discountCents} = 0 AND ${t.shippingCents} = 0 AND ${t.taxCents} = 0) OR ${t.subtotalCents}::bigint + ${t.shippingCents} + ${t.taxCents} = ${t.totalCents}::bigint + ${t.discountCents}`),
+    // processing ⇒ hay reclamo con hora y token. Hace imposible el estado "atascado para siempre"
+    // (processing sin hora nunca vence) en vez de tolerarlo en cada consulta.
+    check('orders_processing_claim_ck', sql`${t.status} <> 'fulfillment_processing' OR (${t.claimedAt} IS NOT NULL AND ${t.claimToken} IS NOT NULL)`),
   ],
 );

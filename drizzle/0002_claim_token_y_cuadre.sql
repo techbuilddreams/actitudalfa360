@@ -1,0 +1,5 @@
+ALTER TABLE "orders" DROP CONSTRAINT "orders_amounts_ck";--> statement-breakpoint
+ALTER TABLE "orders" ALTER COLUMN "email" SET DATA TYPE text;--> statement-breakpoint
+ALTER TABLE "orders" ADD COLUMN "claim_token" uuid;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_processing_claim_ck" CHECK ("orders"."status" <> 'fulfillment_processing' OR ("orders"."claimed_at" IS NOT NULL AND "orders"."claim_token" IS NOT NULL));--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_amounts_ck" CHECK (("orders"."subtotal_cents" = 0 AND "orders"."discount_cents" = 0 AND "orders"."shipping_cents" = 0 AND "orders"."tax_cents" = 0) OR "orders"."subtotal_cents"::bigint + "orders"."shipping_cents" + "orders"."tax_cents" = "orders"."total_cents"::bigint + "orders"."discount_cents");

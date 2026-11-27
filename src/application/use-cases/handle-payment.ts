@@ -20,6 +20,9 @@ export interface HandlePaymentDeps {
 
 export type HandlePaymentResult = 'created' | 'duplicate';
 
+/** Línea centinela para un pago cobrado cuyas líneas se perdieron: se guarda y se revisa a mano en Stripe. */
+const UNKNOWN_LINE: OrderItem = { sku: 'DESCONOCIDO', quantity: 1, name: 'Líneas perdidas: revisar el pago en Stripe', unitCents: 0 };
+
 /**
  * Caso de uso: registrar un pago confirmado exactamente una vez
  * y (opcionalmente) crear el pedido de producción en espera.
@@ -53,12 +56,16 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
   };
 
   return async (paid: PaidCheckout): Promise<HandlePaymentResult> => {
+    // Sin líneas (metadata perdida y nada que reconstruir): el pago se guarda igual, con una línea centinela,
+    // y queda para revisión manual (no se manda a producción algo que no sabemos qué es).
+    const linesMissing = paid.lines.length === 0;
+    if (linesMissing) deps.logger.error('order_lines_missing', { paymentRef: paid.paymentRef });
     const draft: Order = {
       id: deps.newId(),
       number: null,
       paymentRef: paid.paymentRef,
-      status: deps.fulfillment ? 'fulfillment_pending' : 'paid',
-      lines: snapshot(paid.lines),
+      status: deps.fulfillment && !linesMissing ? 'fulfillment_pending' : 'paid',
+      lines: linesMissing ? [UNKNOWN_LINE] : snapshot(paid.lines),
       total: paid.total,
       amounts: reconcile(paid),
       email: paid.email,
@@ -74,17 +81,26 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
     else deps.logger.info('Pago ya registrado', { paymentRef: paid.paymentRef });
 
     // 2) Producción: solo el proceso que gana el reclamo atómico la ejecuta.
-    if (deps.fulfillment) {
-      const now = deps.now();
-      const staleBefore = new Date(now.getTime() - FULFILLMENT_CLAIM_TTL_MS);
-      if (await deps.orders.claimForFulfillment(order.id, now, staleBefore)) {
+    if (deps.fulfillment && order.status !== 'paid') {
+      // La hora del reclamo la pone la base: aquí solo se dice cuánto dura.
+      const token = await deps.orders.claimForFulfillment(order.id, FULFILLMENT_CLAIM_TTL_MS);
+      if (token) {
+        let ref: string | undefined;
+        let reason = '';
         try {
-          const ref = await deps.fulfillment.createDraftOrder(order);
-          await deps.orders.completeFulfillment(order.id, { status: 'fulfillment_created', ref });
+          ref = await deps.fulfillment.createDraftOrder(order);
         } catch (err) {
-          const reason = err instanceof Error ? err.message : 'desconocido';
+          reason = err instanceof Error ? err.message : 'desconocido';
           deps.logger.error('No se pudo crear el pedido de producción', { orderId: order.id, reason });
-          await deps.orders.completeFulfillment(order.id, { status: 'fulfillment_failed' });
+        }
+        const closed = await deps.orders.completeFulfillment(order.id, token, ref ? { status: 'fulfillment_created', ref } : { status: 'fulfillment_failed' });
+        if (ref && !closed) {
+          // Producción creada, pero el turno ya era de otro (tardamos más que el TTL): posible doble producción.
+          deps.logger.error('fulfillment_claim_lost', { orderId: order.id, ref, status: 'fulfillment_created' });
+        } else if (!ref && !closed) {
+          // Nuestro fallo llegó tarde: el pedido es de otro proceso; no avisamos un fallo que no es suyo.
+          deps.logger.warn('fulfillment_claim_lost', { orderId: order.id, status: 'fulfillment_failed' });
+        } else if (!ref) {
           await deps.notifier.fulfillmentFailed(order, reason);
         }
       } else {

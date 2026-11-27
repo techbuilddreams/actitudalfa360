@@ -6,7 +6,16 @@ import { z } from 'zod';
  * Los secretos son opcionales al compilar (el build no los necesita);
  * cada adaptador exige los suyos con `requireEnv` al usarse.
  */
-const postgresUrl = z.string().regex(/^postgres(ql)?:\/\//, 'debe empezar por postgres:// o postgresql://');
+/** URL Postgres parseable. Nunca devuelve ni registra el valor: lleva la contraseña. */
+const isPostgresUrl = (v: string) => {
+  try {
+    const u = new URL(v);
+    return u.protocol === 'postgres:' || u.protocol === 'postgresql:';
+  } catch {
+    return false;
+  }
+};
+const postgresUrl = z.string().refine(isPostgresUrl, 'debe ser una URL postgres:// o postgresql:// válida (¿# sin codificar?)');
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

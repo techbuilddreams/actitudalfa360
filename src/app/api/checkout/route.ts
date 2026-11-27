@@ -1,3 +1,4 @@
+import { safeError } from '@/lib/safe-error.mjs';
 import { z } from 'zod';
 import { DomainError } from '@/domain/errors';
 import { MAX_LINES, MAX_QTY_PER_LINE } from '@/domain/cart';
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     return json(200, { url });
   } catch (err) {
     if (err instanceof DomainError) return json(400, { error: err.message });
-    logger.error('checkout_failed', { reason: err instanceof Error ? err.message : 'unknown' });
+    logger.error('checkout_failed', safeError(err));
     return json(502, { error: 'No se pudo iniciar el pago.' });
   }
 }

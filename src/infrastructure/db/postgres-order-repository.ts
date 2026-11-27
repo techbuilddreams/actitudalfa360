@@ -2,7 +2,8 @@ import 'server-only';
 import { and, eq, lt, or, sql } from 'drizzle-orm';
 import { usd } from '@/domain/money';
 import type { Order, OrderItem, OrderStatus } from '@/domain/order';
-import type { OrderRepository } from '@/application/ports/order-repository';
+import type { FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
+import type { Logger } from '@/application/ports/logger';
 import type { Db } from './client';
 import { orders } from './schema';
 
@@ -13,12 +14,27 @@ const toItem = (l: Partial<OrderItem> & { sku: string; quantity: number }): Orde
   sku: l.sku, quantity: l.quantity, name: l.name ?? l.sku, unitCents: l.unitCents ?? 0,
 });
 
-const toDomain = (r: Row): Order => ({
+type RawLine = Partial<OrderItem> & { sku: string; quantity: number };
+const isLine = (l: unknown): l is RawLine =>
+  typeof l === 'object' && l !== null && typeof (l as RawLine).sku === 'string' && Number.isInteger((l as RawLine).quantity);
+
+/**
+ * Nunca lanza por una fila mal formada: un `findByPaymentRef` que lanzara haría que el webhook de ese pago
+ * fallara para siempre. Las líneas inválidas se descartan y se registran.
+ */
+const toDomain = (r: Row, logger?: Logger): Order => {
+  const raw: unknown[] = Array.isArray(r.lines) ? r.lines : [];
+  const valid = raw.filter(isLine);
+  if (valid.length !== raw.length || !Array.isArray(r.lines)) logger?.error('order_lines_invalid', { orderId: r.id, dropped: raw.length - valid.length });
+  return mapRow(r, valid.map(toItem));
+};
+
+const mapRow = (r: Row, lines: OrderItem[]): Order => ({
   id: r.id,
   number: r.orderNumber,
   paymentRef: r.paymentRef,
   status: r.status as OrderStatus,
-  lines: r.lines.map(toItem),
+  lines,
   total: usd(r.totalCents),
   amounts: { subtotal: usd(r.subtotalCents), discount: usd(r.discountCents), shipping: usd(r.shippingCents), tax: usd(r.taxCents) },
   email: r.email,
@@ -29,7 +45,7 @@ const toDomain = (r: Row): Order => ({
 });
 
 export class PostgresOrderRepository implements OrderRepository {
-  constructor(private readonly db: Db) {}
+  constructor(private readonly db: Db, private readonly logger?: Logger) {}
 
   async createIfAbsent(order: Order) {
     // Camino rápido para reintentos de Stripe (el caso común): no intenta INSERT, así no consume números
@@ -69,29 +85,35 @@ export class PostgresOrderRepository implements OrderRepository {
     return { created: false, order: existing };
   }
 
-  /** UPDATE condicional (compare-and-set): gana solo quien cambia 1 fila. */
-  async claimForFulfillment(id: string, now: Date, staleBefore: Date) {
+  /**
+   * UPDATE condicional (compare-and-set): gana solo quien cambia 1 fila.
+   * Hora y token los pone la BASE (now(), gen_random_uuid()): un solo reloj para todas las instancias.
+   */
+  async claimForFulfillment(id: string, ttlMs: number) {
     const won = await this.db
       .update(orders)
-      .set({ status: 'fulfillment_processing', claimedAt: now })
+      .set({ status: 'fulfillment_processing', claimedAt: sql`now()`, claimToken: sql`gen_random_uuid()` })
       .where(
         and(
           eq(orders.id, id),
           or(
             eq(orders.status, 'fulfillment_pending'),
-            and(eq(orders.status, 'fulfillment_processing'), lt(orders.claimedAt, staleBefore)),
+            and(eq(orders.status, 'fulfillment_processing'), lt(orders.claimedAt, sql`now() - (${Math.trunc(ttlMs)}::integer * interval '1 millisecond')`)),
           ),
         ),
       )
-      .returning({ id: orders.id });
-    return won.length === 1;
+      .returning({ token: orders.claimToken });
+    return won[0]?.token ?? null;
   }
 
-  async completeFulfillment(id: string, result: { status: 'fulfillment_created'; ref: string } | { status: 'fulfillment_failed' }) {
-    await this.db
+  /** Solo el dueño del turno vigente cierra. false ⇒ no cerró nada (el turno era de otro, o ya estaba cerrado). */
+  async completeFulfillment(id: string, token: string, result: FulfillmentResult) {
+    const closed = await this.db
       .update(orders)
       .set({ status: result.status, ...(result.status === 'fulfillment_created' ? { fulfillmentRef: result.ref } : {}) })
-      .where(and(eq(orders.id, id), eq(orders.status, 'fulfillment_processing')));
+      .where(and(eq(orders.id, id), eq(orders.status, 'fulfillment_processing'), eq(orders.claimToken, token)))
+      .returning({ id: orders.id });
+    return closed.length === 1;
   }
 
   async ping() {
@@ -100,6 +122,6 @@ export class PostgresOrderRepository implements OrderRepository {
 
   async findByPaymentRef(paymentRef: string) {
     const rows = await this.db.select().from(orders).where(eq(orders.paymentRef, paymentRef)).limit(1);
-    return rows[0] ? toDomain(rows[0]) : undefined;
+    return rows[0] ? toDomain(rows[0], this.logger) : undefined;
   }
 }

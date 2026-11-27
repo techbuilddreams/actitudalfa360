@@ -78,4 +78,41 @@ describe('handlePayment', () => {
     await handle(paid);
     expect((await orders.findByPaymentRef('cs_test_123'))?.status).toBe('paid');
   });
+
+  it('lines vacío (metadata perdida): el pago SE GUARDA con línea centinela, sin producción automática, y se avisa', async () => {
+    const createDraftOrder = vi.fn(async () => 'pf_1');
+    const orders = new InMemoryOrderRepository();
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
+    const handle = makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder }, notifier, logger, newId: () => 'id-1', now: () => new Date() });
+    expect(await handle(paidCheckout({ lines: [] }))).toBe('created');
+    const o = await orders.findByPaymentRef('cs_test_123');
+    expect(o?.status).toBe('paid');
+    expect(o?.lines).toEqual([expect.objectContaining({ sku: 'DESCONOCIDO', quantity: 1, unitCents: 0 })]);
+    expect(createDraftOrder).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith('order_lines_missing', expect.objectContaining({ paymentRef: 'cs_test_123' }));
+    expect(notifier.orderPaid).toHaveBeenCalledOnce();
+  });
+
+  it('el caso de uso no calcula la hora del reclamo: pasa el TTL y la base decide', async () => {
+    const orders = new InMemoryOrderRepository();
+    const claim = vi.spyOn(orders, 'claimForFulfillment');
+    const { handle } = { handle: makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder: async () => 'pf' }, notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {} }, logger: noopLogger, newId: () => 'id-1', now: () => new Date() }) };
+    await handle(paid);
+    expect(claim).toHaveBeenCalledWith('id-1', 5 * 60_000);
+  });
+
+  it('si el reclamo se perdió antes de cerrar (otro proceso lo tomó), lo registra y no avisa un fallo que no es suyo', async () => {
+    const orders = new InMemoryOrderRepository();
+    vi.spyOn(orders, 'completeFulfillment').mockResolvedValue(false);
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const notifier = { orderPaid: vi.fn(async () => {}), fulfillmentFailed: vi.fn(async () => {}) };
+    let n = 0;
+    const mk = (createDraftOrder: () => Promise<string>) => makeHandlePayment({ orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder }, notifier, logger, newId: () => `id-${++n}`, now: () => new Date() });
+    await mk(async () => 'pf_A')(paid);
+    expect(logger.error).toHaveBeenCalledWith('fulfillment_claim_lost', expect.objectContaining({ orderId: 'id-1', ref: 'pf_A' }));
+    await mk(async () => { throw new Error('HTTP 500'); })(paidCheckout({ paymentRef: 'cs_test_456' }));
+    expect(logger.warn).toHaveBeenCalledWith('fulfillment_claim_lost', expect.objectContaining({ status: 'fulfillment_failed' }));
+    expect(notifier.fulfillmentFailed).not.toHaveBeenCalled();
+  });
 });

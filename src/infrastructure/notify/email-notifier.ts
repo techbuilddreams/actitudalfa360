@@ -1,3 +1,4 @@
+import { safeError } from '@/lib/safe-error.mjs';
 import type { Logger } from '@/application/ports/logger';
 import type { Mailer } from '@/application/ports/mailer';
 import type { Notifier } from '@/application/ports/notifier';
@@ -33,7 +34,7 @@ export class EmailNotifier implements Notifier {
       await this.mailer.send(msg);
       this.logger.info('email_sent', { kind, orderId: order.id });
     } catch (err) {
-      this.logger.error('email_failed', { kind, orderId: order.id, reason: err instanceof Error ? err.message : 'unknown' });
+      this.logger.error('email_failed', { kind, orderId: order.id, ...safeError(err) });
     }
   }
 }

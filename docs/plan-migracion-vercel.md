@@ -69,9 +69,23 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      limpia `drizzle/0000_init.sql` + `0001_rls_trigger.sql` (trigger `updated_at`, RLS sin políticas, REVOKE a
      anon/authenticated si existen), `PostgresOrderRepository` (`ON CONFLICT DO NOTHING RETURNING`), `scripts/migrate.mjs`
      con lock, `vercel-build`, `DATABASE_MIGRATION_URL`, Postgres en CI. `tests/postgres.int.test.ts` corre en CI.
+   - **Ronda 2 (tras QA + Rompedor), misma rama:** el reclamo usa el reloj de la BASE (`now()`) y un token de turno
+     (`claim_token`, `gen_random_uuid()`); `completeFulfillment` exige el token y devuelve false si el turno era de
+     otro (se registra `fulfillment_claim_lost`). CHECK `processing ⇒ claimed_at y claim_token`. `email` a `text`;
+     `lines` vacío se guarda con línea centinela `DESCONOCIDO` en estado `paid` + `order_lines_missing`. Logs sin PII ni
+     credenciales (`src/lib/safe-error.mjs`). `migrate.mjs`: valida la URL sin filtrarla, rechaza 6543, `lock_timeout`
+     5 s tras el lock, en Vercel solo migran `main`/`develop`. `/api/health` reporta `schema` (ok/behind/ahead).
+     CHECK de cuadre sin hueco con subtotal 0. `toDomain` descarta líneas corruptas. Test de REVOKE con roles tipo
+     Supabase. 6 mutantes matados (guardia de token, guardia de estado, REVOKE, CHECKs >= 0, reloj de app, CHECK processing).
+   - **Deuda anotada (no se hizo en esta ronda):**
+     - Rol de app con mínimo privilegio (hoy la app conecta como el dueño de la tabla).
+     - Comprobar que `DATABASE_URL` y `DATABASE_MIGRATION_URL` apuntan al mismo proyecto Supabase.
+     - Verificar si Printify rechaza un `external_id` repetido (proceso que muere tras el OK de Printify ⇒ el reclamo
+       vence y otro proceso podría crear una segunda producción; hoy solo queda el log `fulfillment_claim_lost`).
    - **Falta (Luis):** crear el proyecto Supabase (staging; producción aparte, ver Decisiones abiertas) y poner en
      Vercel por entorno `DATABASE_URL` (pooler transacción, 6543) y `DATABASE_MIGRATION_URL` (pooler sesión, 5432).
-     Sin `DATABASE_MIGRATION_URL` la build de Vercel falla a propósito.
+     Sin `DATABASE_MIGRATION_URL` la build de Vercel falla a propósito. Las ramas de feature NO migran
+     (sus previews pueden ver `schema: behind` en `/api/health`).
    - Reescribir `src/infrastructure/db/schema.ts` con `pg-core`: ENUM nativo, `CHECK` de montos y moneda, `order_number` como identity desde 10001, índice único en `payment_ref`, índices `(status, created_at)`, `created_at`, `email`.
    - Reescribir `mysql-order-repository.ts` → repositorio Postgres. Mantener el compare-and-set (`UPDATE … WHERE status = …`) y el vencimiento del reclamo a 5 min.
    - Conexión por el **pooler de Supabase en modo transacción** (puerto 6543), no directa.
@@ -111,6 +125,13 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 - Homebrew `postgresql@18` en esta Mac quedó sin enlazar (choca con `libpq`): `initdb` fallaba buscando
   `share/postgresql@18` y `lib/postgresql@18`. Se arregló con dos symlinks en `/opt/homebrew/{share,lib}/postgresql@18`
   → `Cellar/postgresql@18/18.7/...`. Usar `/opt/homebrew/Cellar/postgresql@18/18.7/bin/{initdb,pg_ctl}`.
+- Un CHECK que falla junto con otro reporta el primero **por nombre** (orden alfabético): un test de "columna
+  negativa" con una fila que no cuadra ve `orders_amounts_ck`, no el suyo, y pasa aunque falte su CHECK. Los tests
+  usan filas que cuadran y exigen el nombre de la restricción.
+- `new URL()` / postgres.js con una contraseña con `#` sin codificar lanzan un `TypeError` cuyo `input` es la URL
+  entera: validar con try/catch sin propagar el error. `DrizzleQueryError.message` trae TODOS los parámetros
+  (correo, dirección): loguear solo con `safeError`.
+- Comparar `claimed_at` en JS pierde los microsegundos de `now()`: por eso el token de turno es un uuid y no la hora.
 - `tests/postgres.int.test.ts` BORRA el esquema `public`: se niega a correr si el nombre de la base no contiene `test`.
 - Un push a `develop` que suba commits viejos sin subir arrastra más de lo esperado: revisar `git log @{u}..` antes de empujar.
 

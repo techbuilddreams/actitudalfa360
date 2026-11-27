@@ -1,10 +1,14 @@
-import type { OrderRepository } from '@/application/ports/order-repository';
+import { randomUUID } from 'node:crypto';
+import type { FulfillmentResult, OrderRepository } from '@/application/ports/order-repository';
 import type { Order } from '@/domain/order';
 
-type Row = Order & { claimedAt: Date | null };
+type Row = Order & { claimedAt: Date | null; claimToken: string | null };
 
 /** Para pruebas y desarrollo local. Mismas garantías que Postgres (JS es de un solo hilo). */
 export class InMemoryOrderRepository implements OrderRepository {
+  /** `clock` = el reloj del almacenamiento (en Postgres, now() de la base). */
+  constructor(private readonly clock: () => Date = () => new Date()) {}
+
   private readonly rows = new Map<string, Row>(); // key: paymentRef
   private seq = 10000;
 
@@ -12,24 +16,27 @@ export class InMemoryOrderRepository implements OrderRepository {
     const existing = this.rows.get(order.paymentRef);
     if (existing) return { created: false, order: strip(existing) };
     const saved = { ...order, number: ++this.seq };
-    this.rows.set(order.paymentRef, { ...saved, claimedAt: null });
+    this.rows.set(order.paymentRef, { ...saved, claimedAt: null, claimToken: null });
     return { created: true, order: saved };
   }
 
-  async claimForFulfillment(id: string, now: Date, staleBefore: Date) {
+  async claimForFulfillment(id: string, ttlMs: number) {
     const row = this.byId(id);
-    if (!row) return false;
+    if (!row) return null;
+    const now = this.clock();
     const claimable = row.status === 'fulfillment_pending'
-      || (row.status === 'fulfillment_processing' && row.claimedAt !== null && row.claimedAt < staleBefore);
-    if (!claimable) return false;
-    this.rows.set(row.paymentRef, { ...row, status: 'fulfillment_processing', claimedAt: now });
-    return true;
+      || (row.status === 'fulfillment_processing' && row.claimedAt !== null && row.claimedAt.getTime() < now.getTime() - ttlMs);
+    if (!claimable) return null;
+    const token = randomUUID();
+    this.rows.set(row.paymentRef, { ...row, status: 'fulfillment_processing', claimedAt: now, claimToken: token });
+    return token;
   }
 
-  async completeFulfillment(id: string, result: { status: 'fulfillment_created'; ref: string } | { status: 'fulfillment_failed' }) {
+  async completeFulfillment(id: string, token: string, result: FulfillmentResult) {
     const row = this.byId(id);
-    if (!row || row.status !== 'fulfillment_processing') return;
+    if (!row || row.status !== 'fulfillment_processing' || row.claimToken !== token) return false;
     this.rows.set(row.paymentRef, { ...row, status: result.status, fulfillmentRef: 'ref' in result ? result.ref : row.fulfillmentRef });
+    return true;
   }
 
   async findByPaymentRef(paymentRef: string) {
@@ -48,5 +55,6 @@ export class InMemoryOrderRepository implements OrderRepository {
 function strip(row: Row): Order {
   const copy: Partial<Row> = { ...row };
   delete copy.claimedAt;
+  delete copy.claimToken;
   return copy as Order;
 }

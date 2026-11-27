@@ -11,6 +11,7 @@ import { staticCatalog } from './catalog/static-catalog';
 import { StripeGateway } from './stripe/stripe-gateway';
 import { PrintifyFulfillment } from './printify/printify-fulfillment';
 import { getDb } from './db/client';
+import { checkSchema, type SchemaStatus } from './db/schema-status';
 import { PostgresOrderRepository } from './db/postgres-order-repository';
 import { InMemoryOrderRepository } from './memory/in-memory-order-repository';
 import { consoleLogger } from './notify/console-logger';
@@ -47,10 +48,16 @@ export function paymentGateway(): StripeGateway {
   return payments;
 }
 
+/** ¿La base tiene las migraciones que espera este código? (para /api/health). Sin base: 'unknown'. */
+export async function schemaStatus(): Promise<SchemaStatus> {
+  const url = env().DATABASE_URL;
+  return url ? checkSchema(getDb(url, env().DB_POOL_SIZE)) : 'unknown';
+}
+
 export function orderRepository(): OrderRepository {
   if (orders) return orders;
   const url = env().DATABASE_URL;
-  if (url) orders = new PostgresOrderRepository(getDb(url, env().DB_POOL_SIZE));
+  if (url) orders = new PostgresOrderRepository(getDb(url, env().DB_POOL_SIZE), logger);
   else if (isProduction()) throw new Error('DATABASE_URL es obligatoria en producción');
   else {
     logger.warn('Sin DATABASE_URL: pedidos en memoria (solo local)');

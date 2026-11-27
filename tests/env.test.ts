@@ -43,4 +43,9 @@ describe('URLs de base de datos (Postgres)', () => {
     expect(ok({ DATABASE_MIGRATION_URL: 'postgresql://u:p@h:5432/db' })).toBe(true);
     expect(ok({ DATABASE_MIGRATION_URL: 'mysql://u:p@h:3306/db' })).toBe(false);
   });
+  it('una URL malformada (# sin codificar) se rechaza sin filtrar la contraseña', () => {
+    const r = parseEnv({ DATABASE_URL: 'postgres://u:SEC#RETO@h:5432/d' });
+    expect(r.success).toBe(false);
+    expect(JSON.stringify(r.error)).not.toContain('SEC');
+  });
 });
