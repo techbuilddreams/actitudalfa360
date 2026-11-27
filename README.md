@@ -25,7 +25,7 @@ src/
 
 | Rama | Entorno | Dominio | Stripe | Indexable |
 |---|---|---|---|---|
-| `develop` | Staging (Preview de Vercel) | staging.actitudalfa360.com (Deployment Protection) | `rk_test_` | No (noindex) |
+| `develop` | Staging (Preview de Vercel) | `actitudalfa360-git-develop-techbuilddreams.vercel.app` (URL fija que da Vercel; Deployment Protection) | `rk_test_` | No (noindex) |
 | `main` | Producción (Vercel) | actitudalfa360.com | `rk_live_` | Sí |
 
 Flujo: rama de trabajo → PR a `develop` → revisar en staging → PR `develop` → `main`. CI (lint, typecheck, tests, build, escaneo de llaves) corre en cada push/PR.

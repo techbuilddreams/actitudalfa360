@@ -12,13 +12,11 @@
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
 - **Un solo repo:** `techbuilddreams/actitudalfa360` (antes `actitudalfa360-site`, renombrado 2026-11-26).
   La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. Carpeta local: `~/repos/actitudalfa360` (renombrada el mismo día; la memoria de Claude se copió a la ruta nueva).
-- En Vercel hay un proyecto VIEJO, renombrado `actitud-alfa-360-nuxt-archivo` (`prj_cYMTPQkvTcOK7zArmDejQ0TcuEl9`), que
-  todavía tiene los dominios `actitudalfa360.com` y `www`. El MCP de Vercel NO puede quitar un dominio de un proyecto
-  (409 `domain_already_in_use` al agregarlo al nuevo). Opciones dadas a Luis: **A (recomendada)** borrar el proyecto viejo
-  (libera dominios; espera su "bórralo") o **B** quitar los dominios a mano en su Settings → Domains. Luego: agregarlos al nuevo.
-- **Llaves a revocar (Luis, en sus consolas)**, guardadas en el proyecto viejo: `OPENAI_API_KEY` (platform.openai.com → API keys)
-  y la cuenta de servicio de Firebase (`FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`: Firebase → Configuración → Cuentas de
-  servicio → borrar esa clave en Google Cloud IAM). El resto (`FIREBASE_API_KEY`, `APP_ID`…) es config web pública: no urge.
+- Proyecto viejo de Vercel (Nuxt) **BORRADO** por Luis el 2026-11-26. Dominios `actitudalfa360.com` y `www` (308 → apex)
+  ya están en el proyecto nuevo, verificados; falta que el DNS apunte a Vercel (paso 4).
+- **Staging = la URL fija que da Vercel** (`actitudalfa360-git-develop-techbuilddreams.vercel.app`). Sin dominio `staging.`
+  propio (decisión de Luis: un registro DNS menos). Si aún aparece `staging.actitudalfa360.com` en Settings → Domains, quitarlo.
+- Llaves de la app vieja (OpenAI, cuenta de servicio de Firebase): Luis dice que ya están cerradas (2026-11-26).
 - **DNS (paso 4): el dominio NO está en Cloudflare.** dig 2026-11-26: NS `dns-parking.com` (Hostinger), A 2.57.91.91 (parking),
   sin MX; registrador Hostinger (el registro sobrevive al reembolso). En la migración de lotoman se dejó fuera a propósito.
   Cambiar NS en hPanel lo hace Luis a mano (el clasificador bloquea ese clic).
@@ -59,7 +57,7 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - **Smoke 2026-11-26 (preview `a4aa99a`):** sin sesión → 302 al login de Vercel; con el bypass → 500 porque
      `assertDeployable` exige DATABASE_URL + Stripe en staging. Es lo esperado: falla cerrado hasta los pasos 2/3/5.
    - `engines.node` fijado a `22.x` (con `>=20.9` Vercel ignoraba el ajuste y usaba Node 26).
-   - Alias de staging hasta el paso 4: `actitudalfa360-git-develop-techbuilddreams.vercel.app`.
+   - Staging: `actitudalfa360-git-develop-techbuilddreams.vercel.app` (definitivo).
      Hecho: variables Production (`APP_ENV`/`NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://actitudalfa360.com`)
      y el primer push a `develop` → preview → verificar 401 sin sesión.
    - Crear el proyecto en Vercel (equipo `techbuilddreams`), conectar GitHub: `main` = producción, `develop` = preview/staging.
