@@ -6,6 +6,16 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Postgres real para los tests de integración (concurrencia, CHECKs, trigger, lock de migración).
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: aa360_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aa360_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,6 +27,11 @@ jobs:
           if git grep -nE '(sk|rk)_(live|test)_[A-Za-z0-9]{10,}|whsec_[A-Za-z0-9]{10,}' -- . ':!*.md' ':!.env.example'; then echo "Llave en el código"; exit 1; fi
       - run: npm run lint
       - run: npm run typecheck
+      - name: Migración real contra Postgres (el mismo script que la build de Vercel)
+        run: node scripts/migrate.mjs
+        env: { DATABASE_MIGRATION_URL: postgresql://postgres:postgres@localhost:5432/aa360_test }
       - run: npm test
+      - name: Los tests de integración corrieron (no se saltaron)
+        run: npx vitest run tests/postgres.int.test.ts --reporter=verbose 2>&1 | tee /tmp/int.log && ! grep -qE '↓|skipped' /tmp/int.log
       - run: npm run build
         env: { NEXT_PUBLIC_SITE_URL: https://actitudalfa360.com, APP_ENV: production }

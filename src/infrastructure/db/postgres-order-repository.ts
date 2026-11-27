@@ -28,22 +28,20 @@ const toDomain = (r: Row): Order => ({
   createdAt: r.createdAt,
 });
 
-function isDuplicateKey(e: unknown, depth = 0): boolean {
-  if (typeof e !== 'object' || e === null || depth > 3) return false;
-  if ((e as { code?: string }).code === 'ER_DUP_ENTRY') return true;
-  return isDuplicateKey((e as { cause?: unknown }).cause, depth + 1);
-}
-
-export class MySqlOrderRepository implements OrderRepository {
+export class PostgresOrderRepository implements OrderRepository {
   constructor(private readonly db: Db) {}
 
   async createIfAbsent(order: Order) {
-    // Camino rápido para reintentos de Stripe (el caso común): no intenta INSERT,
-    // así no consume números de pedido. La carrera real la sigue resolviendo el índice único.
+    // Camino rápido para reintentos de Stripe (el caso común): no intenta INSERT, así no consume números
+    // de la secuencia. NO decide nada: la carrera real la resuelve ON CONFLICT sobre el índice único.
     const already = await this.findByPaymentRef(order.paymentRef);
     if (already) return { created: false, order: already };
-    try {
-      const [res] = await this.db.insert(orders).values({
+
+    // Atómico: si otro webhook ya insertó (o está insertando) este pago, Postgres espera a que confirme y
+    // no inserta nada; RETURNING vacío ⇒ no somos los creadores. El número sale de RETURNING de ESTA fila.
+    const inserted = await this.db
+      .insert(orders)
+      .values({
         id: order.id,
         paymentRef: order.paymentRef,
         status: order.status,
@@ -59,20 +57,21 @@ export class MySqlOrderRepository implements OrderRepository {
         shipping: order.shipping,
         fulfillmentRef: order.fulfillmentRef,
         createdAt: order.createdAt,
-      });
-      // insertId = valor AUTO_INCREMENT generado en ESTA conexión (order_number): sin carreras ni consulta extra.
-      return { created: true, order: { ...order, number: Number(res.insertId) } };
-    } catch (e) {
-      if (!isDuplicateKey(e)) throw e;
-      const existing = await this.findByPaymentRef(order.paymentRef);
-      if (!existing) throw e;
-      return { created: false, order: existing };
-    }
+      })
+      .onConflictDoNothing({ target: orders.paymentRef })
+      .returning({ orderNumber: orders.orderNumber });
+
+    if (inserted[0]) return { created: true, order: { ...order, number: inserted[0].orderNumber } };
+
+    // Perdimos la carrera: la fila ganadora ya está confirmada (ON CONFLICT esperó por ella) y la vemos.
+    const existing = await this.findByPaymentRef(order.paymentRef);
+    if (!existing) throw new Error(`createIfAbsent: conflicto en payment_ref sin fila visible (${order.paymentRef})`);
+    return { created: false, order: existing };
   }
 
   /** UPDATE condicional (compare-and-set): gana solo quien cambia 1 fila. */
   async claimForFulfillment(id: string, now: Date, staleBefore: Date) {
-    const [res] = await this.db
+    const won = await this.db
       .update(orders)
       .set({ status: 'fulfillment_processing', claimedAt: now })
       .where(
@@ -83,8 +82,9 @@ export class MySqlOrderRepository implements OrderRepository {
             and(eq(orders.status, 'fulfillment_processing'), lt(orders.claimedAt, staleBefore)),
           ),
         ),
-      );
-    return res.affectedRows === 1;
+      )
+      .returning({ id: orders.id });
+    return won.length === 1;
   }
 
   async completeFulfillment(id: string, result: { status: 'fulfillment_created'; ref: string } | { status: 'fulfillment_failed' }) {

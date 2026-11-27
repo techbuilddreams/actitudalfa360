@@ -3,7 +3,7 @@ import type { Order } from '@/domain/order';
 
 type Row = Order & { claimedAt: Date | null };
 
-/** Para pruebas y desarrollo local. Mismas garantías que MySQL (JS es de un solo hilo). */
+/** Para pruebas y desarrollo local. Mismas garantías que Postgres (JS es de un solo hilo). */
 export class InMemoryOrderRepository implements OrderRepository {
   private readonly rows = new Map<string, Row>(); // key: paymentRef
   private seq = 10000;

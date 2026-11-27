@@ -1,19 +1,19 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1790154911300,
+      "version": "7",
+      "when": 1795749834560,
       "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
-      "version": "5",
-      "when": 1790184694422,
-      "tag": "0001_order_number_amounts",
+      "version": "7",
+      "when": 1795749835045,
+      "tag": "0001_rls_trigger",
       "breakpoints": true
     }
   ]

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { deploymentProblems, type ServerEnv } from '@/config/env';
+import { deploymentProblems, parseEnv, type ServerEnv } from '@/config/env';
 
 const base: ServerEnv = {
   NODE_ENV: 'production', APP_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com',
   STRIPE_SECRET_KEY: 'rk_live_x', STRIPE_WEBHOOK_SECRET: 'whsec_x', STRIPE_AUTOMATIC_TAX: false,
-  DATABASE_URL: 'mysql://u:p@localhost:3306/db', DB_POOL_SIZE: 5,
+  DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres', DATABASE_MIGRATION_URL: undefined, DB_POOL_SIZE: 5,
   PRINTIFY_AUTO_ORDER: false, PRINTIFY_API_TOKEN: undefined, PRINTIFY_SHOP_ID: undefined,
   SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: 465, SMTP_USER: undefined, SMTP_PASSWORD: undefined,
   MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined,
@@ -29,4 +29,18 @@ describe('configuración de despliegue', () => {
     expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
   });
   it('local no exige nada', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', DATABASE_URL: undefined })).toEqual([]));
+});
+
+describe('URLs de base de datos (Postgres)', () => {
+  const ok = (raw: Record<string, string>) => parseEnv(raw).success;
+  it('acepta postgres:// y postgresql://', () => {
+    expect(ok({ DATABASE_URL: 'postgres://u:p@h:6543/db' })).toBe(true);
+    expect(ok({ DATABASE_URL: 'postgresql://u:p@h:6543/db' })).toBe(true);
+  });
+  it('rechaza mysql:// (la base vieja)', () => expect(ok({ DATABASE_URL: 'mysql://u:p@h:3306/db' })).toBe(false));
+  it('DATABASE_MIGRATION_URL opcional, y si viene debe ser Postgres', () => {
+    expect(ok({})).toBe(true);
+    expect(ok({ DATABASE_MIGRATION_URL: 'postgresql://u:p@h:5432/db' })).toBe(true);
+    expect(ok({ DATABASE_MIGRATION_URL: 'mysql://u:p@h:3306/db' })).toBe(false);
+  });
 });

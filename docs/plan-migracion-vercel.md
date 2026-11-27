@@ -32,7 +32,7 @@
 | Correo | SMTP de Hostinger | **Resend** | Como DR Factory; el SMTP murió con el plan |
 | Videos (membresía) | — | **Bunny Stream** con enlaces firmados | El más barato; Vercel no sirve para video |
 | Staging | `STAGING_BASIC_AUTH` en `proxy.ts` | **Deployment Protection** de Vercel en previews | Lo da la plataforma; menos código propio |
-| Migraciones | Al arrancar (`instrumentation.ts` + `GET_LOCK`) | **Paso de deploy** (`drizzle-kit migrate` en CI/build) | Serverless no tiene un "arranque" único |
+| Migraciones | Al arrancar (`instrumentation.ts` + `GET_LOCK`) | **Paso de build** (`vercel-build` → `scripts/migrate.mjs` con `pg_advisory_lock`) | Serverless no tiene un "arranque" único |
 
 **Costo:** $0 mientras construimos. Al lanzar, ~$25/mes por Supabase Pro (el plan gratis pausa
 el proyecto tras una semana sin uso). Vercel ya está pagado.
@@ -65,6 +65,13 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - `TRUSTED_PROXY_HOPS` y el rate limit en memoria: en serverless cada instancia tiene su propia memoria. Revisar `src/infrastructure/security/` y decidir (ver Decisiones abiertas).
    - Actualizar `README.md`, `.env.example`, `src/config/env.ts` (y `tests/env.test.ts`).
 2. **MySQL → Supabase Postgres** (Especialista en Postgres/concurrencia → QA → Rompedor)
+   - **Hecho en rama `paso-2-postgres` (2026-11-26), pendiente de QA y Rompedor:** esquema `pg-core`, migración
+     limpia `drizzle/0000_init.sql` + `0001_rls_trigger.sql` (trigger `updated_at`, RLS sin políticas, REVOKE a
+     anon/authenticated si existen), `PostgresOrderRepository` (`ON CONFLICT DO NOTHING RETURNING`), `scripts/migrate.mjs`
+     con lock, `vercel-build`, `DATABASE_MIGRATION_URL`, Postgres en CI. `tests/postgres.int.test.ts` corre en CI.
+   - **Falta (Luis):** crear el proyecto Supabase (staging; producción aparte, ver Decisiones abiertas) y poner en
+     Vercel por entorno `DATABASE_URL` (pooler transacción, 6543) y `DATABASE_MIGRATION_URL` (pooler sesión, 5432).
+     Sin `DATABASE_MIGRATION_URL` la build de Vercel falla a propósito.
    - Reescribir `src/infrastructure/db/schema.ts` con `pg-core`: ENUM nativo, `CHECK` de montos y moneda, `order_number` como identity desde 10001, índice único en `payment_ref`, índices `(status, created_at)`, `created_at`, `email`.
    - Reescribir `mysql-order-repository.ts` → repositorio Postgres. Mantener el compare-and-set (`UPDATE … WHERE status = …`) y el vencimiento del reclamo a 5 min.
    - Conexión por el **pooler de Supabase en modo transacción** (puerto 6543), no directa.
@@ -92,6 +99,19 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 
 - `AGENTS.md`: este Next.js 16 **no** es el de la memoria del modelo; leer `node_modules/next/dist/docs/` antes de escribir código.
 - `npm run check` necesita `npm ci` primero (el 2026-11-26 `node_modules` no existía y el check falló sin que el commit se detuviera).
+- **Supabase pooler: transacción (6543) vs sesión (5432).** La app usa el 6543 ⇒ `prepare: false` obligatorio
+  (los prepared statements viven en una conexión y el pooler cambia de conexión por transacción). Los locks de
+  sesión (`pg_advisory_lock`) NO funcionan por el 6543: la migración va por el 5432. La conexión directa
+  (`db.<ref>.supabase.co`) es solo IPv6 y las builds de Vercel pueden no tenerlo.
+- El migrador de Drizzle (pg) no toma ningún lock: dos builds a la vez sobre una base vacía fallan con
+  `CREATE SCHEMA drizzle` (probado quitando el lock: 3/3 rojo). El lock está en `scripts/migrate.mjs`.
+- `postgres.js` + un **string** a una columna `jsonb` (SQL a mano, `sql(row)`) guarda un escalar string, no la
+  lista: usar `sql.json(valor)`. Drizzle lo hace bien solo. El CHECK `orders_lines_ck` lo atrapa.
+- `postgres` se fija en `^3.4.9`: la 4.x salió en 2026-10-29 y `drizzle-orm` 0.45 está hecho contra la 3.
+- Homebrew `postgresql@18` en esta Mac quedó sin enlazar (choca con `libpq`): `initdb` fallaba buscando
+  `share/postgresql@18` y `lib/postgresql@18`. Se arregló con dos symlinks en `/opt/homebrew/{share,lib}/postgresql@18`
+  → `Cellar/postgresql@18/18.7/...`. Usar `/opt/homebrew/Cellar/postgresql@18/18.7/bin/{initdb,pg_ctl}`.
+- `tests/postgres.int.test.ts` BORRA el esquema `public`: se niega a correr si el nombre de la base no contiene `test`.
 - Un push a `develop` que suba commits viejos sin subir arrastra más de lo esperado: revisar `git log @{u}..` antes de empujar.
 
 ## Lo que NO se hace (a propósito)

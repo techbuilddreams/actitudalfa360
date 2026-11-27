@@ -1,6 +1,6 @@
 # actitudalfa360.com
 
-Tienda y sitio de **Actitud Alfa 360**. Next.js 16 (App Router) + TypeScript estricto, Stripe Checkout, MySQL (Drizzle), Printify.
+Tienda y sitio de **Actitud Alfa 360**. Next.js 16 (App Router) + TypeScript estricto, Stripe Checkout, Supabase Postgres (Drizzle), Printify.
 
 ## Arquitectura (limpia / hexagonal)
 
@@ -10,7 +10,7 @@ src/
 ├── application/
 │   ├── ports/         Interfaces: PaymentGateway, OrderRepository, FulfillmentProvider, CatalogRepository, Notifier, Logger
 │   └── use-cases/     createCheckout, handlePayment (idempotente)
-├── infrastructure/    Adaptadores: Stripe, Printify, MySQL/Drizzle, memoria, seguridad
+├── infrastructure/    Adaptadores: Stripe, Printify, Postgres/Drizzle, memoria, seguridad
 │   └── container.ts   Composition root: el único lugar que conecta todo
 ├── app/               Next.js: páginas + route handlers (delgados: validan y llaman casos de uso)
 ├── components/        UI
@@ -42,11 +42,12 @@ Hosting: **Vercel Pro**, equipo `techbuilddreams`. Plan de la migración desde H
 npm run dev          # local
 npm run check        # lint + typecheck + tests
 npm run build        # build de producción
-npm start            # arranca: valida la configuración y aplica migraciones (src/instrumentation.ts)
+npm start            # arranca: valida la configuración (src/instrumentation.ts); NO migra
+npm run db:migrate   # aplica drizzle/ con lock (DATABASE_MIGRATION_URL); en Vercel corre en vercel-build
 npm run db:generate  # nueva migración tras cambiar src/infrastructure/db/schema.ts
 ```
 
-Test de integración MySQL: `TEST_DATABASE_URL=mysql://… npm test`.
+Test de integración Postgres: `TEST_DATABASE_URL=postgresql://…/aa360_test npm test` (BORRA el esquema: el nombre de la base debe contener `test`). Migrar a mano: `DATABASE_MIGRATION_URL=… npm run db:migrate`; en Vercel lo hace `vercel-build`.
 
 ## Base de datos y concurrencia
 
@@ -56,9 +57,9 @@ Test de integración MySQL: `TEST_DATABASE_URL=mysql://… npm test`.
 - **Número de pedido:** `order_number` AUTO_INCREMENT único desde 10001 (se muestra como `AA-10001`) en correo y página de gracias.
 - **Restricciones en la base:** `status` es ENUM, montos `UNSIGNED`, `CHECK` de moneda, de líneas no vacías y de que los montos cuadren (subtotal + envío + impuesto = total + descuento).
 - **Índices:** compuesto `(status, created_at)` para listados/reintentos, `created_at` para reportes y `email` para soporte.
-- **Migraciones:** SQL versionado en `drizzle/` (equivalente a Liquibase/Flyway). Se aplican al arrancar con `GET_LOCK` (seguro con varias instancias). Probadas contra MariaDB 10.11, el motor de Hostinger.
+- **Migraciones:** SQL versionado en `drizzle/` (equivalente a Liquibase/Flyway). Se aplican como paso de build (`vercel-build` → `scripts/migrate.mjs`) bajo `pg_advisory_lock` (seguro con varias builds a la vez). Probadas contra Postgres 17 (CI) y 18 (local).
 - **Pool:** `DB_POOL_SIZE` (5 por defecto) con cola acotada, suficiente para hosting compartido sin agotar conexiones.
-- Probado con 20 webhooks simultáneos contra MySQL real (`tests/mysql.int.test.ts`).
+- Probado con 20 webhooks simultáneos contra Postgres real (`tests/postgres.int.test.ts`, también en CI).
 
 ## Seguridad
 
@@ -70,7 +71,7 @@ Test de integración MySQL: `TEST_DATABASE_URL=mysql://… npm test`.
 - Página de gracias: correo enmascarado, límite de consultas por IP.
 - Precios siempre del servidor; el cliente solo envía `sku` y `quantity` (validado con Zod).
 - Checkout: verificación de origen, rate limit 10/min por IP (la IP que escribe Vercel en `x-vercel-forwarded-for`; el límite es por instancia, el global va en el Firewall de Vercel), cuerpo máximo 4 KB leído en streaming.
-- Webhook: firma de Stripe verificada con el SDK (firma inválida ⇒ 400; error de configuración ⇒ 500 con causa real); cuerpo máximo 512 KB; idempotencia por índice único en MySQL; 500 ⇒ Stripe reintenta.
+- Webhook: firma de Stripe verificada con el SDK (firma inválida ⇒ 400; error de configuración ⇒ 500 con causa real); cuerpo máximo 512 KB; idempotencia por índice único en Postgres (`ON CONFLICT DO NOTHING`); 500 ⇒ Stripe reintenta.
 - Llave de Stripe restringida (solo Checkout Sessions, Products, Prices, Shipping Rates).
 - Pedidos de Printify se crean **en espera**: nada se produce sin aprobación.
 - Dependabot semanal sobre `develop`.

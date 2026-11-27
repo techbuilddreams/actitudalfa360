@@ -6,6 +6,8 @@ import { z } from 'zod';
  * Los secretos son opcionales al compilar (el build no los necesita);
  * cada adaptador exige los suyos con `requireEnv` al usarse.
  */
+const postgresUrl = z.string().regex(/^postgres(ql)?:\/\//, 'debe empezar por postgres:// o postgresql://');
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
@@ -15,7 +17,10 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   STRIPE_AUTOMATIC_TAX: z.stringbool().default(false),
 
-  DATABASE_URL: z.string().startsWith('mysql://').optional(),
+  // Runtime: pooler de Supabase en modo TRANSACCIÓN (puerto 6543).
+  DATABASE_URL: postgresUrl.optional(),
+  // Solo la build (scripts/migrate.mjs): pooler en modo SESIÓN (puerto 5432). La app no la usa.
+  DATABASE_MIGRATION_URL: postgresUrl.optional(),
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(20).default(5),
 
   PRINTIFY_AUTO_ORDER: z.stringbool().default(false),
@@ -67,11 +72,14 @@ export function assertDeployable(raw: NodeJS.ProcessEnv = process.env): void {
   if (problems.length) throw new Error(`Configuración inválida: ${problems.join('; ')}`);
 }
 
+/** Valida variables sin tocar la caché ni lanzar (para tests y diagnósticos). */
+export const parseEnv = (raw: Record<string, string | undefined>) => schema.safeParse(raw);
+
 let cached: ServerEnv | undefined;
 
 export function env(): ServerEnv {
   if (!cached) {
-    const parsed = schema.safeParse(process.env);
+    const parsed = parseEnv(process.env);
     if (!parsed.success) {
       // Nunca imprimimos valores, solo qué variable falló.
       const fields = parsed.error.issues.map((i) => i.path.join('.')).join(', ');
