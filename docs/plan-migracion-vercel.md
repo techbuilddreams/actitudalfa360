@@ -45,8 +45,11 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      Variables Preview: `APP_ENV`/`NEXT_PUBLIC_APP_ENV=staging`, `NEXT_PUBLIC_SITE_URL` = alias `git-develop`.
      Secreto de *Protection Bypass for Automation* generado (se expone como `VERCEL_AUTOMATION_BYPASS_SECRET`;
      verlo en Settings → Deployment Protection, nunca en el repo) para el webhook de Stripe en el paso 5.
-   - **Pendiente (Luis, en el dashboard):** rama de producción = `main` (la API del MCP no lo expone).
-     Después: variables Production (`APP_ENV`/`NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://actitudalfa360.com`)
+   - Rama de producción = `main` (Settings → Environments → Production). **Candado extra:** *Ignored Build Step* del
+     proyecto salta cualquier build de producción que no venga de `main` (el 2026-11-26 un push a `develop` salió
+     como producción; se canceló antes de terminar).
+   - Alias de staging hasta el paso 4: `actitudalfa360-git-develop-techbuilddreams.vercel.app`.
+     Hecho: variables Production (`APP_ENV`/`NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://actitudalfa360.com`)
      y el primer push a `develop` → preview → verificar 401 sin sesión.
    - Crear el proyecto en Vercel (equipo `techbuilddreams`), conectar GitHub: `main` = producción, `develop` = preview/staging.
    - Quitar `STAGING_BASIC_AUTH` de `proxy.ts` y usar Deployment Protection.
