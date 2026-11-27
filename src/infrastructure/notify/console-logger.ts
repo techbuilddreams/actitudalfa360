@@ -1,6 +1,6 @@
 import type { Logger } from '@/application/ports/logger';
 
-/** Logs JSON de una línea (visibles en "Runtime logs" de Hostinger). Nunca registrar secretos ni datos de tarjeta. */
+/** Logs JSON de una línea (visibles en "Logs" del proyecto en Vercel). Nunca registrar secretos ni datos de tarjeta. */
 const write = (level: string, msg: string, meta?: Record<string, unknown>) =>
   console[level === 'error' ? 'error' : 'log'](JSON.stringify({ level, msg, ...meta, ts: new Date().toISOString() }));
 

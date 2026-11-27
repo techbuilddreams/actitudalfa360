@@ -25,14 +25,16 @@ src/
 
 | Rama | Entorno | Dominio | Stripe | Indexable |
 |---|---|---|---|---|
-| `develop` | Staging | staging.actitudalfa360.com (con contraseña) | `rk_test_` | No (noindex) |
-| `main` | Producción | actitudalfa360.com | `rk_live_` | Sí |
+| `develop` | Staging (Preview de Vercel) | staging.actitudalfa360.com (Deployment Protection) | `rk_test_` | No (noindex) |
+| `main` | Producción (Vercel) | actitudalfa360.com | `rk_live_` | Sí |
 
 Flujo: rama de trabajo → PR a `develop` → revisar en staging → PR `develop` → `main`. CI (lint, typecheck, tests, build, escaneo de llaves) corre en cada push/PR.
 
 ## Variables de entorno
 
-Ver `.env.example`. Se configuran en Hostinger (Web App → Environment variables). **Nunca** en el repo.
+Ver `.env.example`. Se configuran en Vercel (Settings → Environment Variables), con alcance Production o Preview. **Nunca** en el repo.
+
+Hosting: **Vercel Pro**, equipo `techbuilddreams`. Plan de la migración desde Hostinger: [`docs/plan-migracion-vercel.md`](docs/plan-migracion-vercel.md).
 
 ## Comandos
 
@@ -62,11 +64,12 @@ Test de integración MySQL: `TEST_DATABASE_URL=mysql://… npm test`.
 
 - **Arranque a prueba de errores:** en staging/producción el servidor NO arranca si falta la base de datos, las llaves de Stripe, si producción usa una llave de prueba (o staging una live), o si Printify automático no tiene token. Mejor un deploy fallido visible que pedidos perdidos.
 - CSP estricta con nonce por petición (`src/proxy.ts`), HSTS, X-Frame-Options DENY, sin `X-Powered-By`.
-- Staging con contraseña (falla cerrado: sin `STAGING_BASIC_AUTH` responde 503, nunca queda público).
+- Staging cerrado por **Deployment Protection** de Vercel (Vercel Authentication en todos los previews). El webhook de Stripe en staging entra con el secreto de *Protection Bypass for Automation*.
+- El servidor no arranca si `APP_ENV` no cuadra con `VERCEL_ENV` (un preview nunca corre como producción).
 - `/api/health` verifica la base de verdad (503 si cae). En producción solo responde `{ok}`.
 - Página de gracias: correo enmascarado, límite de consultas por IP.
 - Precios siempre del servidor; el cliente solo envía `sku` y `quantity` (validado con Zod).
-- Checkout: verificación de origen, rate limit 10/min por IP (IP del proxy de confianza, `TRUSTED_PROXY_HOPS`), cuerpo máximo 4 KB leído en streaming.
+- Checkout: verificación de origen, rate limit 10/min por IP (la IP que escribe Vercel en `x-vercel-forwarded-for`; el límite es por instancia, el global va en el Firewall de Vercel), cuerpo máximo 4 KB leído en streaming.
 - Webhook: firma de Stripe verificada con el SDK (firma inválida ⇒ 400; error de configuración ⇒ 500 con causa real); cuerpo máximo 512 KB; idempotencia por índice único en MySQL; 500 ⇒ Stripe reintenta.
 - Llave de Stripe restringida (solo Checkout Sessions, Products, Prices, Shipping Rates).
 - Pedidos de Printify se crean **en espera**: nada se produce sin aprobación.

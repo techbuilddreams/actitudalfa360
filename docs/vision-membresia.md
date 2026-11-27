@@ -48,3 +48,19 @@ La **puntuación 360 diaria con escuadras**: cumplir en los 4 pilares, visible a
 - Plataforma de la fase 1 (recomendación: Skool, por retos + ranking + cursos nativos).
 - Cómo se selecciona, se valida y se le paga a un embajador (reparto de ingresos por campus vs. pago fijo).
 - Nombre definitivo de los niveles.
+
+## Herencia del repo viejo `actitud-alfa-360` (revisado 2026-11-26)
+
+Repo privado `techbuilddreams/actitud-alfa-360`: PWA en Nuxt 3 + Firebase + OpenAI ("El Círculo de los
+Poetas Alfa"), último push 2025-11-27. **No se reutiliza el código** (otro stack; este sitio es Next + Supabase).
+Lo que sí vale para el futuro — *propuesta del CTO, pendiente de aprobación*:
+
+- **El pilar "palabra" ya tiene contenido diseñado.** Vocabulario con contexto de liderazgo + poema diario con
+  "interpretación alfa" + **desafío diario** encaja directo como el registro diario del pilar *palabra* (cuerpo,
+  mente, dinero, palabra). El desafío del poema = la tarea de hoy que la escuadra ve cumplida o no.
+- **Candidato a primer "campus"** cuando lleguen los embajadores: Comunicación / Palabra.
+- **Misión, reescrita al tono actual.** La vieja ("mentalidad alfa a través del dominio del lenguaje") se acerca,
+  pero choca con *"No es dominar a nadie, es dominarte a ti."* Rescatar la idea, no la palabra "dominio" sobre otros.
+- **Lo que NO se trae:** generar poemas con GPT-4 cada día (costo recurrente y precisión no medida: si vuelve,
+  va con evals), la paleta oro/púrpura (el sitio ya tiene su diseño), Firebase.
+- Antes de archivar ese repo: confirmar que no quedan llaves reales en su historial (Firebase Admin, OpenAI).

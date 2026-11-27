@@ -33,28 +33,18 @@ describe('metadata de líneas', () => {
   });
 });
 
-import { isAuthorized, safeEqual } from '@/infrastructure/security/basic-auth';
-
-describe('staging basic auth', () => {
-  it('acepta solo las credenciales correctas', () => {
-    expect(isAuthorized(`Basic ${btoa('luis:secreto')}`, 'luis:secreto')).toBe(true);
-    expect(isAuthorized(`Basic ${btoa('luis:otra')}`, 'luis:secreto')).toBe(false);
-    expect(isAuthorized(null, 'luis:secreto')).toBe(false);
-    expect(isAuthorized('Basic !!!', 'luis:secreto')).toBe(false);
-    expect(safeEqual('abc', 'abcd')).toBe(false);
-  });
-});
-
 import { clientIp } from '@/infrastructure/security/request-guards';
 import { BodyTooLargeError, readTextLimited } from '@/lib/http';
 
-describe('clientIp', () => {
-  it('ignora lo que el cliente inventa al inicio de X-Forwarded-For', () => {
-    const h = new Headers({ 'x-forwarded-for': '6.6.6.6, 203.0.113.9' });
-    expect(clientIp(h, 1)).toBe('203.0.113.9');
-    expect(clientIp(h, 2)).toBe('6.6.6.6');
-    expect(clientIp(new Headers({ 'x-real-ip': '1.2.3.4' }))).toBe('1.2.3.4');
+describe('clientIp (Vercel)', () => {
+  it('usa la IP que escribe Vercel, no X-Forwarded-For (un proxy delante puede reescribirlo)', () => {
+    const h = new Headers({ 'x-forwarded-for': '6.6.6.6', 'x-vercel-forwarded-for': '203.0.113.9', 'x-real-ip': '198.51.100.1' });
+    expect(clientIp(h)).toBe('203.0.113.9');
   });
+  it('si falta, usa x-real-ip (también la escribe Vercel)', () =>
+    expect(clientIp(new Headers({ 'x-real-ip': '1.2.3.4', 'x-forwarded-for': '6.6.6.6' }))).toBe('1.2.3.4'));
+  it('nunca confía en X-Forwarded-For solo: lo puede escribir el cliente', () =>
+    expect(clientIp(new Headers({ 'x-forwarded-for': '6.6.6.6' }))).toBe('unknown'));
 });
 
 describe('readTextLimited', () => {

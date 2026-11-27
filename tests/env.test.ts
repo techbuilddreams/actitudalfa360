@@ -7,7 +7,7 @@ const base: ServerEnv = {
   DATABASE_URL: 'mysql://u:p@localhost:3306/db', DB_POOL_SIZE: 5,
   PRINTIFY_AUTO_ORDER: false, PRINTIFY_API_TOKEN: undefined, PRINTIFY_SHOP_ID: undefined,
   SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: 465, SMTP_USER: undefined, SMTP_PASSWORD: undefined,
-  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, TRUSTED_PROXY_HOPS: 1,
+  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined,
 };
 
 describe('configuración de despliegue', () => {
@@ -20,5 +20,13 @@ describe('configuración de despliegue', () => {
     expect(deploymentProblems({ ...base, APP_ENV: 'staging' }).join()).toContain('Staging'));
   it('Printify automático sin token: falla al arrancar, no al cobrar', () =>
     expect(deploymentProblems({ ...base, PRINTIFY_AUTO_ORDER: true }).join()).toContain('PRINTIFY'));
+  it('preview de Vercel con APP_ENV=production: falla (un preview nunca cobra de verdad)', () =>
+    expect(deploymentProblems({ ...base, VERCEL_ENV: 'preview' }).join()).toContain('VERCEL_ENV'));
+  it('producción de Vercel con APP_ENV=staging: falla (variables cruzadas de entorno)', () =>
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'production' }).join()).toContain('VERCEL_ENV'));
+  it('entornos de Vercel bien emparejados: sin problemas', () => {
+    expect(deploymentProblems({ ...base, VERCEL_ENV: 'production' })).toEqual([]);
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
+  });
   it('local no exige nada', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', DATABASE_URL: undefined })).toEqual([]));
 });

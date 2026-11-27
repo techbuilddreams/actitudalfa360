@@ -16,7 +16,7 @@ const Body = z.object({
 export async function POST(req: Request) {
   if (!isSameOrigin(req.headers, env().NEXT_PUBLIC_SITE_URL)) return json(403, { error: 'Origen no permitido.' });
 
-  const rl = checkoutLimiter.hit(clientIp(req.headers, env().TRUSTED_PROXY_HOPS));
+  const rl = checkoutLimiter.hit(clientIp(req.headers));
   if (!rl.allowed) return json(429, { error: 'Demasiados intentos. Espera un minuto.' }, { 'Retry-After': String(rl.retryAfterSec) });
 
   if (!req.headers.get('content-type')?.startsWith('application/json')) return json(415, { error: 'Formato no válido.' });

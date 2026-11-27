@@ -32,8 +32,8 @@ const schema = z.object({
 
   SHIPPING_FLAT_CENTS: z.coerce.number().int().min(0).default(899),
 
-  /** Proxies de confianza delante de Node (Hostinger). La IP real del cliente es la N-ésima desde la derecha en X-Forwarded-For. */
-  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(1).max(5).default(1),
+  /** Lo pone Vercel solo (variable de sistema). Sirve para detectar variables cruzadas entre entornos. */
+  VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
 });
 
 export type ServerEnv = z.infer<typeof schema>;
@@ -52,6 +52,10 @@ export function deploymentProblems(e: ServerEnv): string[] {
   if (e.APP_ENV === 'production' && e.STRIPE_SECRET_KEY && !live) problems.push('Producción requiere una llave de Stripe live');
   if (e.APP_ENV === 'staging' && live) problems.push('Staging no puede usar una llave de Stripe live');
   if (e.PRINTIFY_AUTO_ORDER && (!e.PRINTIFY_API_TOKEN || !e.PRINTIFY_SHOP_ID)) problems.push('PRINTIFY_AUTO_ORDER requiere PRINTIFY_API_TOKEN y PRINTIFY_SHOP_ID');
+  // En Vercel, cada variable tiene un alcance (Production / Preview). Un preview con APP_ENV=production
+  // cobraría con la llave live desde una rama sin revisar; y al revés, producción quedaría en modo prueba.
+  if (e.VERCEL_ENV === 'preview' && e.APP_ENV === 'production') problems.push('VERCEL_ENV=preview no puede correr con APP_ENV=production');
+  if (e.VERCEL_ENV === 'production' && e.APP_ENV !== 'production') problems.push(`VERCEL_ENV=production requiere APP_ENV=production (hay ${e.APP_ENV})`);
   if (Boolean(e.SMTP_USER) !== Boolean(e.SMTP_PASSWORD)) problems.push('SMTP_USER y SMTP_PASSWORD van juntas');
   return problems;
 }

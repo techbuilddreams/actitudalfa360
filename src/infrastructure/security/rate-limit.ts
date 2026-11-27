@@ -1,6 +1,7 @@
 /**
- * Límite por ventana deslizante en memoria (un proceso Node).
- * Si se escala a varias instancias, se cambia por Redis manteniendo esta interfaz.
+ * Límite por ventana deslizante en memoria, POR INSTANCIA de Vercel (Fluid reutiliza instancias, pero no las comparte).
+ * Es la primera línea, gratis y sin red; el límite global va en el Firewall de Vercel.
+ * Si hiciera falta uno exacto, se cambia el adaptador manteniendo esta interfaz.
  */
 export interface RateLimiter {
   hit(key: string): { allowed: boolean; retryAfterSec: number };

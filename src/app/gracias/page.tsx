@@ -19,7 +19,7 @@ const maskEmail = (email: string) => {
 
 async function load(ref: string | undefined) {
   if (!ref) return null;
-  const ip = clientIp(await headers(), env().TRUSTED_PROXY_HOPS);
+  const ip = clientIp(await headers());
   if (!pageLookupLimiter.hit(ip).allowed) return null;
   try {
     return await orderConfirmation(ref);

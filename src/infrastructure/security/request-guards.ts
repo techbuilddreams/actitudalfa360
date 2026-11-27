@@ -13,10 +13,10 @@ export function isSameOrigin(headers: Headers, siteUrl: string): boolean {
 }
 
 /**
- * IP del cliente para limitar abusos. El primer valor de X-Forwarded-For lo escribe el cliente (falsificable);
- * el confiable es el que agregó NUESTRO proxy: el N-ésimo desde la derecha (N = proxies de confianza).
+ * IP del cliente para limitar abusos, tal como la ve Vercel.
+ * `x-vercel-forwarded-for` lo escribe Vercel y no cambia aunque haya un proxy delante (p. ej. Cloudflare);
+ * `x-real-ip` también lo escribe Vercel. X-Forwarded-For solo no vale: fuera de Vercel lo escribe el cliente.
  */
-export function clientIp(headers: Headers, trustedHops = 1): string {
-  const chain = (headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  return chain.at(-trustedHops) ?? chain[0] ?? headers.get('x-real-ip') ?? 'unknown';
+export function clientIp(headers: Headers): string {
+  return headers.get('x-vercel-forwarded-for')?.split(',')[0].trim() || headers.get('x-real-ip')?.trim() || 'unknown';
 }
