@@ -36,6 +36,13 @@ La **puntuación 360 diaria con escuadras**: cumplir en los 4 pilares, visible a
 2. **Fase 2 — plataforma propia:** con ~50–100 miembros que retienen, construir el registro 360, escuadras, campus y niveles en el sitio (Stripe ya integrado; LLC de EE. UU., cobro recurrente con Stripe sin problema).
    El punto de cruce: cuando la comisión de la plataforma cuesta más que mantener la propia.
 
+## Tecnología (decidida 2026-11-26)
+
+- **Login:** Supabase Auth (la misma base Supabase Postgres del sitio).
+- **Videos:** Bunny Stream, reproducidos **dentro** del sitio; enlaces firmados que vencen, emitidos por el servidor solo si el nivel del miembro le da acceso a ese campus.
+- **Acceso:** Stripe Billing → webhook → tabla de membresías (nivel, estado, vence). Se decide en el servidor, nunca en el navegador.
+- Infra y orden de trabajo: [`plan-migracion-vercel.md`](plan-migracion-vercel.md).
+
 ## Decisiones abiertas
 
 - Plataforma de la fase 1 (recomendación: Skool, por retos + ranking + cursos nativos).
