@@ -5,10 +5,15 @@
 
 ## Dónde estamos (2026-11-26)
 
-- Rama `develop`, empujada. `npm run check` en verde: 38 tests, 3 saltados (los de MySQL real).
-- **Paso 1 HECHO** (2026-11-26). Siguiente: paso 2 (Postgres) o paso 4 (DNS), en paralelo.
+- Rama `develop` (`db0d55b` + este commit). `npm run check` en verde: **107 tests** con `TEST_DATABASE_URL`
+  (Postgres real); sin esa variable los de integración se saltan en local, pero en CI corren siempre (service `postgres:17`).
+- **Paso 1 HECHO** (2026-11-26). **Paso 2 HECHO en código** (2026-11-26): 4 rondas especialista → QA → rompedor;
+  QA aprobó, el rompedor no encontró P0/P1 en la última, y el CTO verificó la suite y el mutante sin `FOR UPDATE` (muere 3/3).
+  Falta solo lo de Luis en Supabase (ver paso 2, "Falta"). **Paso 4 en curso** (ver abajo).
+- Mientras no exista `DATABASE_MIGRATION_URL` en Vercel, **la build de `develop` falla a propósito** (`vercel-build` migra
+  antes de compilar). El último deploy bueno sigue sirviendo; no es una caída.
 - **Hostinger ya no existe** (plan cancelado y reembolsado el 2026-11-10). Nada de este proyecto está en vivo.
-- El código **todavía** usa MySQL, SMTP y migraciones al arrancar (pasos 2 y 3).
+- El código **todavía** usa SMTP (paso 3).
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
 - **Un solo repo:** `techbuilddreams/actitudalfa360` (antes `actitudalfa360-site`, renombrado 2026-11-26).
   La app Nuxt vieja quedó archivada como `actitud-alfa-360-nuxt-archivo`. Carpeta local: `~/repos/actitudalfa360` (renombrada el mismo día; la memoria de Claude se copió a la ruta nueva).
@@ -17,9 +22,12 @@
 - **Staging = la URL fija que da Vercel** (`actitudalfa360-git-develop-techbuilddreams.vercel.app`). Sin dominio `staging.`
   propio (decisión de Luis: un registro DNS menos). Si aún aparece `staging.actitudalfa360.com` en Settings → Domains, quitarlo.
 - Llaves de la app vieja (OpenAI, cuenta de servicio de Firebase): Luis dice que ya están cerradas (2026-11-26).
-- **DNS (paso 4): el dominio NO está en Cloudflare.** dig 2026-11-26: NS `dns-parking.com` (Hostinger), A 2.57.91.91 (parking),
-  sin MX; registrador Hostinger (el registro sobrevive al reembolso). En la migración de lotoman se dejó fuera a propósito.
-  Cambiar NS en hPanel lo hace Luis a mano (el clasificador bloquea ese clic).
+- **DNS (paso 4), 2026-11-26:** registrador Hostinger (vence 2027-11-03). Zona creada en Cloudflare (`8e0ee3b8…`, plan gratis)
+  con A apex `216.150.1.1` + `216.150.16.1`, CNAME `www` → `497175f17830eef8.vercel-dns-016.com` (los que recomienda Vercel,
+  **sin proxy**) y el TXT de Google Search Console copiado. NS cambiados en hPanel a `venkat`/`vera.ns.cloudflare.com`
+  (Luis inició sesión, el CTO hizo el cambio por Chrome). Regla de correo `hola@` → `actitudalfa360@gmail.com` (verificado).
+  **Pendiente:** que el registro `.com` muestre los NS nuevos → zona activa → activar Email Routing (pone MX/SPF) →
+  comprobar en Vercel que el dominio deja de estar "misconfigured" y emite el certificado.
 - La rama por defecto en GitHub es `develop`; la de producción en Vercel es `main` (ya fijada).
 
 ## Decisiones tomadas
@@ -107,9 +115,8 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
    - Nuevo adaptador del puerto `application/ports/mailer.ts`; borrar `smtp-mailer.ts`.
    - Verificar el dominio `actitudalfa360.com` en Resend (DKIM/SPF).
 4. **DNS del dominio** (Luis + CTO) — puede ir en paralelo con 1–3
-   - Hoy los NS son `dns-parking.com` (Hostinger) y **no hay MX**: `hola@actitudalfa360.com` no recibe correo.
-   - Mover NS a Cloudflare como los demás dominios, apuntar a Vercel, Email Routing → Gmail para `hola@`.
-   - Confirmar primero **dónde está registrado** el dominio (¿Hostinger?), porque eso decide quién cambia los NS.
+   - Hecho: zona en Cloudflare, registros a Vercel, NS cambiados en Hostinger, regla `hola@`. Detalle y pendientes en "Dónde estamos".
+   - Comprobar la propagación: `dig +short NS actitudalfa360.com @a.gtld-servers.net` (el registro, no el caché local).
 5. **Primer deploy de staging + smoke** (CTO): compra de prueba con Stripe en modo test, de punta a punta (pago → pedido → correo → Printify en espera).
 6. **Membresía** (trabajo nuevo, otra sesión, plan propio): usuarios, niveles, campus, Bunny. Ver `vision-membresia.md`. Antes: fase 1 en Skool para validar.
 

@@ -9,3 +9,6 @@ next-env.d.ts
 !.env.example
 .DS_Store
 *.log
+
+# Worktrees de agentes de Claude Code
+.claude/worktrees/
