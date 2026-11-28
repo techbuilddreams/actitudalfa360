@@ -12,3 +12,4 @@ next-env.d.ts
 
 # Worktrees de agentes de Claude Code
 .claude/worktrees/
+.vercel
