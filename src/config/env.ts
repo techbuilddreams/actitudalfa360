@@ -48,6 +48,9 @@ const schema = z.object({
   // Centavos enteros, de 0 a $100. Un "" o "1e3" ya no valen 0/1000 en silencio.
   SHIPPING_FLAT_CENTS: z.string().regex(/^\d{1,5}$/).default('899').transform(Number).pipe(z.number().int().max(10_000)),
 
+  // Adaptador del alta del reto. 'log' (F2) solo registra y no puede ir a producción; 'resend' es el de F3.
+  RETO_SIGNUP: z.enum(['log', 'resend']).default('log'),
+
   /** Lo pone Vercel solo (variable de sistema). Sirve para detectar variables cruzadas entre entornos. */
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
 });
@@ -73,6 +76,8 @@ export function deploymentProblems(e: ServerEnv): string[] {
   if (e.VERCEL_ENV === 'preview' && e.APP_ENV === 'production') problems.push('VERCEL_ENV=preview no puede correr con APP_ENV=production');
   if (e.VERCEL_ENV === 'production' && e.APP_ENV !== 'production') problems.push(`VERCEL_ENV=production requiere APP_ENV=production (hay ${e.APP_ENV})`);
   if (Boolean(e.SMTP_USER) !== Boolean(e.SMTP_PASSWORD)) problems.push('SMTP_USER y SMTP_PASSWORD van juntas');
+  if (e.APP_ENV === 'production' && e.RETO_SIGNUP === 'log')
+    problems.push('El alta del reto solo registra en el log: falta F3 (Resend + suscriptores). No se puede publicar así');
   return problems;
 }
 

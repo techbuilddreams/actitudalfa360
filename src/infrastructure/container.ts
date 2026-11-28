@@ -20,6 +20,9 @@ import { EmailNotifier } from './notify/email-notifier';
 import { CompositeNotifier } from './notify/composite-notifier';
 import { SmtpMailer } from './email/smtp-mailer';
 import type { Notifier } from '@/application/ports/notifier';
+import { makeRequestRetoSignup } from '@/application/use-cases/request-reto-signup';
+import type { RetoSignup } from '@/application/ports/reto-signup';
+import { LogRetoSignup } from './signup/log-reto-signup';
 import { createRateLimiter } from './security/rate-limit';
 
 /**
@@ -34,6 +37,25 @@ export const catalog = staticCatalog;
 export const logger = consoleLogger;
 export const checkoutLimiter = createRateLimiter(10, 60_000);
 export const pageLookupLimiter = createRateLimiter(30, 60_000); // /gracias consulta a Stripe: evita agotar su cuota
+
+export const signupLimiter = createRateLimiter(5, 60_000);
+
+function retoSignup(): RetoSignup {
+  // F3: aquí entra el adaptador de Resend + suscriptores con doble opt-in.
+  if (env().RETO_SIGNUP === 'resend') throw new Error('RETO_SIGNUP=resend aún no está implementado (F3)');
+  return new LogRetoSignup(logger);
+}
+
+const isValidTimeZone = (zone: string) => {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const requestRetoSignup = () => makeRequestRetoSignup({ signup: retoSignup(), isValidTimeZone });
 
 export function paymentGateway(): StripeGateway {
   payments ??= new StripeGateway({
