@@ -71,4 +71,10 @@ describe('/politicas: qué medimos y por qué', () => {
     expect(text).toMatch(/no usamos anuncios/i);
     expect(text).toMatch(/Google Signals/);
   });
+  it('dice qué recibe Google y qué cookies pone (transparencia UE)', () => {
+    render(<Politicas />);
+    const text = list();
+    expect(text).toMatch(/_ga/);
+    expect(text).toMatch(/dirección IP/);
+  });
 });

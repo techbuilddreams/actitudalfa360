@@ -244,7 +244,7 @@
     "medicion": {
       "h3": "Qué medimos y por qué",
       "items": [
-        "Usamos Google Analytics 4 para saber qué páginas sirven y dónde se traba la gente: las páginas que visitas, los productos que ves, cuándo empiezas a pagar y cuándo te apuntas al reto. Con eso decidimos qué mejorar.",
+        "Usamos Google Analytics 4 para saber qué páginas sirven y dónde se traba la gente: las páginas que visitas, los productos que ves, cuándo empiezas a pagar y cuándo te apuntas al reto. Con eso decidimos qué mejorar. Para contar visitas, Google Analytics pone sus cookies (_ga) y recibe tu dirección IP, tu navegador y tu dispositivo.",
         "Lo que no medimos: no enviamos tu correo, ni las casillas del reto, ni nada de tu salud. Cuando te apuntas al reto, Google solo sabe que alguien se apuntó.",
         "No usamos anuncios: Google Signals y la personalización de anuncios están apagadas, y estos datos no se comparten para publicidad.",
         "Google guarda estos datos 14 meses y después los borra.",
