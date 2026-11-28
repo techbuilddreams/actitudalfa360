@@ -16,6 +16,8 @@ interface Props {
   text: ConsentText;
   analytics?: Analytics;
   load?: (id: string) => void;
+  /** Recarga tras retirar el permiso (inyectable en tests). */
+  reload?: () => void;
 }
 
 function remember(choice: ConsentChoice) {
@@ -27,13 +29,12 @@ function remember(choice: ConsentChoice) {
  * Enciende o apaga la medición. En la UE: banner con Aceptar y Rechazar iguales, y «Preferencias de cookies»
  * en el pie para cambiar de idea. Fuera: nada visible (GPC ya llega resuelto por el servidor).
  */
-export function ConsentManager({ measurementId, decision, text: t, analytics = pageAnalytics, load = loadGtag }: Props) {
+export function ConsentManager({ measurementId, decision, text: t, analytics = pageAnalytics, load = loadGtag, reload = () => window.location.reload() }: Props) {
   const [open, setOpen] = useState(decision.showBanner);
   const loaded = useRef(false);
 
   const start = () => {
     if (!loaded.current) load(measurementId);
-    else window.gtag?.('consent', 'update', { analytics_storage: 'granted' });
     loaded.current = true;
     analytics.enable(gtagEvent);
   };
@@ -50,7 +51,11 @@ export function ConsentManager({ measurementId, decision, text: t, analytics = p
     setOpen(false);
     if (choice === 'granted') return start();
     analytics.disable();
-    if (loaded.current) revokeGtag();
+    if (!loaded.current) return;
+    // gtag.js sigue en memoria y podría mandar pings sin cookies: se avisa a Google, se borra _ga y se recarga.
+    // Al volver, el servidor lee la cookie y no carga nada. Por eso «re-aceptar en la misma página» no existe.
+    revokeGtag();
+    reload();
   };
 
   return (

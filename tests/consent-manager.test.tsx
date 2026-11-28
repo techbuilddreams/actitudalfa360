@@ -51,6 +51,14 @@ describe('loadGtag', () => {
 });
 
 describe('clearGaCookies', () => {
+  it('también en el dominio padre (GA4 la pone en .actitudalfa360.com)', () => {
+    const writes: string[] = [];
+    const doc = { location: { hostname: 'www.actitudalfa360.com' }, get cookie() { return '_ga=GA1; x=1'; }, set cookie(v: string) { writes.push(v); } };
+    clearGaCookies(doc as unknown as Document);
+    expect(writes).toContain('_ga=; Max-Age=0; Path=/; Domain=.actitudalfa360.com');
+    expect(writes).toContain('_ga=; Max-Age=0; Path=/');
+    expect(writes.some((w) => w.startsWith('x='))).toBe(false);
+  });
   it('borra _ga y _ga_* y deja las demás', () => {
     document.cookie = '_ga=GA1.1.1; Path=/';
     document.cookie = '_ga_TEST123=GS1; Path=/';
@@ -61,11 +69,11 @@ describe('clearGaCookies', () => {
 });
 
 describe('ConsentManager', () => {
-  const setup = (d: Partial<ConsentDecision>) => {
-    const analytics = createAnalytics();
+  const setup = (d: Partial<ConsentDecision>, analytics = createAnalytics()) => {
     const load = vi.fn(loadGtag);
-    render(<ConsentManager measurementId={ID} decision={decision(d)} text={text} analytics={analytics} load={load} />);
-    return { analytics, load };
+    const reload = vi.fn();
+    render(<ConsentManager measurementId={ID} decision={decision(d)} text={text} analytics={analytics} load={load} reload={reload} />);
+    return { analytics, load, reload };
   };
 
   it('con permiso: carga gtag y los eventos llegan como gtag("event", …)', () => {
@@ -118,17 +126,33 @@ describe('ConsentManager', () => {
     expect(screen.queryByRole('region', { name: text.label })).toBeNull();
   });
 
-  it('Preferencias reabre el banner; retirar el permiso actualiza Google, borra _ga y corta los eventos', () => {
-    const { analytics } = setup({ analytics: true, showPreferences: true });
+  it('Preferencias reabre el banner; retirar el permiso actualiza Google, borra _ga, corta los eventos y RECARGA (gtag.js fuera de memoria)', () => {
+    const { analytics, reload } = setup({ analytics: true, showPreferences: true });
     document.cookie = '_ga=GA1.1.1; Path=/';
     fireEvent.click(screen.getByRole('button', { name: text.preferences }));
     fireEvent.click(screen.getByRole('button', { name: text.reject }));
     expect(calls()).toContainEqual(['consent', 'update', { analytics_storage: 'denied' }]);
     expect(document.cookie).not.toContain('_ga=');
     expect(document.cookie).toContain('aa_consent=v1.denied');
+    expect(reload).toHaveBeenCalledOnce();
     const before = calls().length;
     analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
     expect(calls()).toHaveLength(before);
+  });
+
+  it('rechazar sin haber cargado gtag no recarga (no hay nada que sacar de memoria)', () => {
+    const { reload } = setup({ showBanner: true, showPreferences: true });
+    fireEvent.click(screen.getByRole('button', { name: text.reject }));
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('rechazo guardado: lo que esperaba en la cola se tira al montar, y no sale aunque luego acepte', () => {
+    const analytics = createAnalytics();
+    analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
+    setup({ analytics: false, showPreferences: true }, analytics);
+    fireEvent.click(screen.getByRole('button', { name: text.preferences }));
+    fireEvent.click(screen.getByRole('button', { name: text.accept }));
+    expect(calls().some((c) => c[0] === 'event')).toBe(false);
   });
 
   it('fuera de la UE no hay enlace de preferencias ni banner', () => {
