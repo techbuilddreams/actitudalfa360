@@ -27,6 +27,33 @@ describe('Kit: la pieza de la ficha va primero, en AMBAS fichas', () => {
   });
 });
 
+describe('Kit honesto', () => {
+  it('si la otra pieza no está disponible, no se ofrece el kit (el servidor lo rechazaría)', () => {
+    const off = { ...vaso, variants: [{ ...vaso.variants[0]!, available: false }] };
+    const { container } = render(<ProductView product={taza} partner={off} shippingCents={899} automaticTax={false} />);
+    expect(container.querySelector('#kit')).toBeNull();
+    expect(screen.queryByRole('button', { name: /el kit$/ })).toBeNull();
+  });
+
+  it('con envío $0 no promete «ahorras»', () => {
+    const { container } = render(<ProductView product={taza} partner={vaso} shippingCents={0} automaticTax={false} />);
+    expect(container.querySelector('#kit')!.textContent).not.toMatch(/ahorras/);
+    expect(container.querySelector('#kit')!.textContent).toContain('$59.98');
+  });
+
+  it('«Comprar el kit» manda 1 + 1 aunque el selector diga 3, y lo dice junto al botón', async () => {
+    const f = pending();
+    vi.stubGlobal('fetch', f);
+    const { container } = render(<ProductView product={taza} partner={vaso} shippingCents={899} automaticTax={false} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar una' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar una' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Comprar el kit' }));
+    await waitFor(() => expect(f).toHaveBeenCalledOnce());
+    expect(bodies(f)[0].items.map((i: { quantity: number }) => i.quantity)).toEqual([1, 1]);
+    expect(container.querySelector('#kit')!.textContent).toMatch(/una de cada/i);
+  });
+});
+
 describe('Un solo checkout por ficha', () => {
   it('con «Comprar ahora» en vuelo, el kit queda deshabilitado y no abre un segundo checkout', async () => {
     const f = pending();

@@ -32,7 +32,7 @@ describe('ProductView (ficha)', () => {
   it('el kit suma los precios del catálogo y ofrece ahorrar el envío del env, sin montos a mano', () => {
     const { container } = render(<ProductView product={taza} partner={vaso} shippingCents={1099} automaticTax={false} />);
     expect(container.querySelector('#kit')!.textContent).toContain('Kit $59.98 · un solo envío, ahorras $10.99');
-    expect(screen.getByRole('button', { name: 'Agregar el kit' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Comprar el kit' })).toBeTruthy();
   });
 
   it('enlaza a las reglas de su pilar (no hay páginas de pilar todavía)', () => {

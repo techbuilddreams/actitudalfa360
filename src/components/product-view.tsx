@@ -34,6 +34,8 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
   const quote = product.h1.slice(name.length).replace(/^\s+—\s+/, '');
   const pillar = copy.pillars.find((p) => p.id === product.pillar);
   const pv = partner ? defaultVariant(partner) : undefined;
+  // El kit solo se ofrece si el servidor puede cobrarlo: las dos piezas disponibles.
+  const kit = partner && pv && pv.available && v.available ? { partner, pv } : undefined;
 
   return (
     <>
@@ -61,17 +63,19 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
               <DeliveryEta shipping={site.shipping} />
               <span>{capitalize(shippingNote(shipping, automaticTax))} · {t.printed}</span>
             </div>
-            {partner && pv && (
+            {kit && (
               <div className="kit" id="kit">
                 <div className="stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={thumb(partner.images[0].src)} alt="" width={800} height={800} sizes="96px" loading="lazy" decoding="async" />
+                  <img src={thumb(kit.partner.images[0].src)} alt="" width={800} height={800} sizes="96px" loading="lazy" decoding="async" />
                 </div>
                 <div>
-                  <p>{t.kitTitle}<Link href={`/productos/${partner.slug}`}>{displayName(partner)}</Link></p>
-                  <p className="kit-price">{t.kitPricePre}{formatMoney(addMoney(v.price, pv.price))}{t.kitPriceMid}{formatMoney(shipping)}</p>
+                  <p>{t.kitTitle}<Link href={`/productos/${kit.partner.slug}`}>{displayName(kit.partner)}</Link></p>
+                  <p className="kit-price">{t.kitPricePre}{formatMoney(addMoney(v.price, kit.pv.price))}{t.kitOneShipping}
+                    {shipping.cents > 0 && <>{t.kitSaves}{formatMoney(shipping)}</>}</p>
+                  <p className="kit-note">{t.kitNote}</p>
                 </div>
-                <KitButton currentSku={v.sku} otherSku={pv.sku} label={t.kitButton} />
+                <KitButton currentSku={v.sku} otherSku={kit.pv.sku} label={t.kitButton} />
               </div>
             )}
             <ul className="bullets">
