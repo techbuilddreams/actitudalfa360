@@ -12,7 +12,9 @@ const XML_ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '
 
 /** Escapa texto/atributo XML y quita los caracteres de control que XML 1.0 prohíbe (ni escapados son válidos). */
 export const escapeXml = (s: string): string =>
-  s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '').replace(/[&<>"']/g, (c) => XML_ENTITIES[c]);
+  s
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '')
+    .replace(/[&<>"']/g, (c) => XML_ENTITIES[c]);
 
 const GOOGLE_CATEGORY_BY_CATALOG_CATEGORY: Record<string, string> = {
   'Tazas': 'Home & Garden > Kitchen & Dining > Tableware > Drinkware > Mugs',
@@ -26,11 +28,17 @@ export function googleCategoryFor(p: Product): string {
   return c;
 }
 
+/** Una ficha = una variante vendible (la página compra la variante 0). Más de una exigiría item_group_id y variantes reales. */
+function soleVariant(p: Product) {
+  if (p.variants.length !== 1) throw new Error(`El feed solo admite productos de una variante (${p.slug} tiene ${p.variants.length} variantes)`);
+  return defaultVariant(p);
+}
+
 const el = (name: string, value: string | number) => `<${name}>${escapeXml(String(value))}</${name}>`;
 const abs = (path: string) => `${site.url}${path}`;
 
 function itemXml(p: Product, shippingCents: number): string {
-  const v = defaultVariant(p);
+  const v = soleVariant(p);
   const { handlingDays: h, transitDays: t } = site.shipping;
   const lines = [
     el('g:id', v.sku),

@@ -35,7 +35,7 @@ export default async function ProductPage({ params }: Params) {
 
   return (
     <>
-      <JsonLd data={graph(productLd(product, pub.SHIPPING_FLAT_CENTS, new Date()), breadcrumbLd(trail), faqLd(product.faq))} />
+      <JsonLd data={graph(productLd(product, pub.SHIPPING_FLAT_CENTS), breadcrumbLd(trail), faqLd(product.faq))} />
       <ProductView product={product} partner={partner} shippingCents={pub.SHIPPING_FLAT_CENTS} automaticTax={pub.STRIPE_AUTOMATIC_TAX} />
     </>
   );

@@ -1,16 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { site } from '@/config/site';
 import { catalog } from '@/infrastructure/container';
 import { copy } from '@/content';
-import { faqLd, organizationLd, parsePostalAddress, priceValidUntil, productLd } from '@/lib/structured-data';
+import { faqLd, organizationLd, productLd } from '@/lib/structured-data';
+import { formatPostalAddress } from '@/domain/postal-address';
 
-const NOW = new Date('2026-11-28T15:00:00Z');
 const taza = catalog.bySlug('taza-negra-15oz')!;
 
 type Offer = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 describe('productLd: lo que ya publicábamos', () => {
-  const ld = productLd(taza, 899, NOW) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const ld = productLd(taza, 899) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   const offer = ld.offers as Offer;
 
   it('Product con sku, marca e imágenes absolutas', () => {
@@ -38,30 +38,27 @@ describe('productLd: lo que ya publicábamos', () => {
   });
 
   it('envío 0 ⇒ "0.00", no vacío', () => {
-    expect((productLd(taza, 0, NOW) as Offer).offers.shippingDetails.shippingRate.value).toBe('0.00');
+    expect((productLd(taza, 0) as Offer).offers.shippingDetails.shippingRate.value).toBe('0.00');
   });
 });
 
 describe('productLd: campos nuevos', () => {
-  it('priceValidUntil: 31 dic del año siguiente, función pura del reloj recibido', () => {
-    expect(priceValidUntil(NOW)).toBe('2027-12-31');
-    expect(priceValidUntil(new Date('2026-01-01T00:00:00Z'))).toBe('2027-12-31');
-    expect(priceValidUntil(new Date('2026-12-31T23:59:59Z'))).toBe('2027-12-31');
-    expect((productLd(taza, 899, NOW) as Offer).offers.priceValidUntil).toBe('2027-12-31');
+  it('NO emite priceValidUntil (choca con «precios pueden cambiar sin aviso»)', () => {
+    expect('priceValidUntil' in (productLd(taza, 899) as Offer).offers).toBe(false);
   });
 
   it('material y color salen del catálogo', () => {
-    const ld = productLd(taza, 899, NOW) as Offer;
+    const ld = productLd(taza, 899) as Offer;
     expect(ld.material).toBe('Cerámica');
     expect(ld.color).toBe('Negro');
-    const vaso = productLd(catalog.bySlug('vaso-termico-20oz')!, 899, NOW) as Offer;
+    const vaso = productLd(catalog.bySlug('vaso-termico-20oz')!, 899) as Offer;
     expect(vaso.material).toBe('Acero inoxidable');
     expect(vaso.color).toBe('Negro');
   });
 
   it('un producto sin material/color no emite las claves', () => {
     const bare = { ...taza, material: undefined, color: undefined };
-    const ld = productLd(bare, 899, NOW) as Offer;
+    const ld = productLd(bare, 899) as Offer;
     expect('material' in ld).toBe(false);
     expect('color' in ld).toBe(false);
   });
@@ -82,9 +79,17 @@ describe('organizationLd', () => {
     });
   });
 
-  it('parsePostalAddress: null o ilegible ⇒ null (se omite, no se inventa)', () => {
-    expect(parsePostalAddress(null)).toBeNull();
-    expect(parsePostalAddress('Miami')).toBeNull();
+  it('sin dirección ⇒ sin address; sin parentOrganization (contradice legalName)', async () => {
+    expect('parentOrganization' in org).toBe(false);
+    vi.resetModules();
+    vi.doMock('@/config/site', async (orig) => ({ site: { ...((await orig()) as { site: object }).site, postalAddress: null } }));
+    const { organizationLd: o2 } = await import('@/lib/structured-data');
+    expect('address' in (o2() as Offer)).toBe(false);
+    vi.doUnmock('@/config/site');
+  });
+
+  it('formatPostalAddress: la cadena del pie no cambia', () => {
+    expect(formatPostalAddress(site.postalAddress!)).toBe('2125 Biscayne Blvd, Ste 204, Miami, FL 33137, United States');
   });
 });
 
@@ -104,5 +109,31 @@ describe('faqLd', () => {
     expect(ld['@type']).toBe('FAQPage');
     expect(ld.mainEntity).toHaveLength(copy.reto.faq.length);
     expect(ld.mainEntity[0]).toMatchObject({ '@type': 'Question', name: copy.reto.faq[0].q });
+  });
+});
+
+describe('productLd: valores exactos que antes sobrevivían a mutantes', () => {
+  const ld = productLd(taza, 899) as Offer;
+  const offer = ld.offers as Offer;
+
+  it('país de envío y de devolución = US; URL de devoluciones; unitCode DAY', () => {
+    expect(offer.shippingDetails.shippingDestination).toEqual({ '@type': 'DefinedRegion', addressCountry: 'US' });
+    expect(offer.hasMerchantReturnPolicy.applicableCountry).toBe('US');
+    expect(offer.hasMerchantReturnPolicy.url).toBe(`${site.url}/politicas#devoluciones`);
+    expect(offer.shippingDetails.deliveryTime.handlingTime.unitCode).toBe('DAY');
+    expect(offer.shippingDetails.deliveryTime.transitTime.unitCode).toBe('DAY');
+  });
+
+  it('seller = @id de la Organization; offers.url = URL del producto; @id del producto', () => {
+    expect(offer.seller).toEqual({ '@id': (organizationLd() as Offer)['@id'] });
+    expect(offer.url).toBe(`${site.url}/productos/taza-negra-15oz`);
+    expect(ld['@id']).toBe(`${site.url}/productos/taza-negra-15oz#product`);
+  });
+});
+
+describe('catálogo: el precio no vive en el texto', () => {
+  it.each(catalog.all().map((p) => [p.slug, p] as const))('%s: seo.description sin «$» ni precio', (_s, p) => {
+    expect(p.seo.description).not.toContain('$');
+    expect(p.seo.description).not.toMatch(/\d+\.\d{2}/);
   });
 });

@@ -1,13 +1,15 @@
 import { copy } from '@/content';
 import { site } from '@/config/site';
 import { formatMoney, usd } from '@/domain/money';
+import { policyPhrases } from '@/lib/policy-facts';
+import { shippingNote } from '@/lib/price-notes';
 import { defaultVariant, displayName, type Product } from '@/domain/product';
 
-const range = (r: { min: number; max: number }) => `${r.min}–${r.max}`;
+const mdText = (s: string) => s.replace(/[[\]]/g, '\\$&');
 
 /** /llms.txt (https://llmstxt.org): resumen en Markdown para que un LLM lea el sitio como hecho. Todo sale del catálogo y de `site`. */
 export function llmsTxt(products: readonly Product[], shippingCents: number): string {
-  const shipping = shippingCents === 0 ? 'envío gratis' : `envío fijo ${formatMoney(usd(shippingCents))}`;
+  const f = policyPhrases();
   const lines = [
     `# ${site.name}`,
     '',
@@ -16,15 +18,15 @@ export function llmsTxt(products: readonly Product[], shippingCents: number): st
     '## Productos',
     ...products.map((p) => {
       const v = defaultVariant(p);
-      return `- [${displayName(p)}](${site.url}/productos/${p.slug}): ${p.subtitle ?? p.shortPitch} ${formatMoney(v.price)}.`;
+      return `- [${mdText(displayName(p))}](${site.url}/productos/${p.slug}): ${p.subtitle ?? p.shortPitch} ${formatMoney(v.price)}.`;
     }),
     '',
     '## Envíos y devoluciones',
-    `- [Políticas](${site.url}/politicas): solo EE. UU., ${shipping}, producción ${range(site.shipping.handlingDays)} días hábiles + entrega ${range(site.shipping.transitDays)} días hábiles.`,
-    `- Todo se fabrica a pedido: no hay devolución por cambio de opinión. Reemplazo o reembolso por daño o defecto dentro de ${site.returns.days} días.`,
+    `- [Políticas](${site.url}/politicas): envíos ${f.onlyUs}, ${shippingNote(usd(shippingCents), false)}, producción ${f.handling} + entrega ${f.transit}.`,
+    `- Todo se fabrica a pedido: ${f.noReturns}. Si llega ${f.defectKinds}, ${f.defectWindow}, reemplazo o reembolso sin costo.`,
     '',
     '## Empresa',
-    `- ${site.legalName}, Florida (EE. UU.). Contacto: ${site.email}`,
+    `- ${site.legalName}, ${site.legalState} (EE. UU.). Contacto: ${site.email}`,
     '',
   ];
   return lines.join('\n');

@@ -6,7 +6,6 @@ import { escapeXml, googleCategoryFor, merchantFeedXml } from '@/lib/merchant-fe
 import type { Product } from '@/domain/product';
 
 const SHIP = 899;
-const NOW = new Date('2026-11-28T00:00:00Z');
 const products = catalog.all();
 const xml = merchantFeedXml(products, SHIP);
 
@@ -99,9 +98,37 @@ describe('merchantFeedXml: escapado y disponibilidad', () => {
   });
 });
 
+describe('merchantFeedXml: valores exactos', () => {
+  it('g:service exacto, país US, sin g:region', () => {
+    expect(xml).toContain('<g:country>US</g:country><g:service>Standard</g:service>');
+    expect(xml).not.toContain('g:region');
+  });
+
+  it('google_product_category exacta por categoría', () => {
+    const cats = Object.fromEntries(products.map((p) => [p.category, googleCategoryFor(p)]));
+    expect(cats['Tazas']).toBe('Home & Garden > Kitchen & Dining > Tableware > Drinkware > Mugs');
+    expect(cats['Vasos térmicos']).toBe('Home & Garden > Kitchen & Dining > Food & Beverage Carriers > Travel Mugs & Tumblers');
+    expect(xml).toContain('<g:google_product_category>Home &amp; Garden &gt; Kitchen &amp; Dining &gt; Tableware &gt; Drinkware &gt; Mugs</g:google_product_category>');
+  });
+
+  it('categoría sin mapa ⇒ error', () => {
+    expect(() => googleCategoryFor({ ...products[0], category: 'Gorras' })).toThrow(/Gorras/);
+  });
+
+  it('más de una variante ⇒ error (la ficha solo vende la variante 0)', () => {
+    const two: Product = { ...products[0], variants: [products[0].variants[0], { ...products[0].variants[0], sku: 'X-2' }] };
+    expect(() => merchantFeedXml([two], SHIP)).toThrow(/variantes/);
+  });
+
+  it('escapeXml elimina surrogates sueltos y conserva pares válidos', () => {
+    expect(escapeXml('a\uD83Db\uDE00c')).toBe('abc');
+    expect(escapeXml('💪')).toBe('💪');
+  });
+});
+
 describe('paridad feed ↔ JSON-LD (una sola verdad de precio, disponibilidad y envío)', () => {
   it.each(products.map((p) => [p.slug, p] as const))('%s', (_slug, p) => {
-    const ld = productLd(p, SHIP, NOW) as { sku: string; offers: { price: string; priceCurrency: string; availability: string; shippingDetails: { shippingRate: { value: string; currency: string }; deliveryTime: { handlingTime: { minValue: number; maxValue: number }; transitTime: { minValue: number; maxValue: number } } } } };
+    const ld = productLd(p, SHIP) as { sku: string; offers: { price: string; priceCurrency: string; availability: string; shippingDetails: { shippingRate: { value: string; currency: string }; deliveryTime: { handlingTime: { minValue: number; maxValue: number }; transitTime: { minValue: number; maxValue: number } } } } };
     const item = items(xml).find((i) => tag(i, 'g:id') === ld.sku)!;
     expect(tag(item, 'g:price')).toBe(`${ld.offers.price} ${ld.offers.priceCurrency}`);
     const inStock = ld.offers.availability === 'https://schema.org/InStock';

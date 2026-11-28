@@ -30,32 +30,8 @@ const shippingDetails = (flatCents: number) => ({
   },
 });
 
-/**
- * «calle, ciudad, ST 12345, país» ⇒ PostalAddress. Ilegible o null ⇒ null: se omite, no se inventa.
- * (`site.postalAddress` es una sola cadena; el pie la muestra tal cual.)
- */
-export function parsePostalAddress(raw: string | null) {
-  if (!raw) return null;
-  const parts = raw.split(',').map((x) => x.trim()).filter(Boolean);
-  if (parts.length < 4) return null;
-  const country = parts[parts.length - 1];
-  const stateZip = /^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/.exec(parts[parts.length - 2]);
-  if (!stateZip) return null;
-  return {
-    '@type': 'PostalAddress',
-    streetAddress: parts.slice(0, -3).join(', '),
-    addressLocality: parts[parts.length - 3],
-    addressRegion: stateZip[1],
-    postalCode: stateZip[2],
-    addressCountry: country === 'United States' ? 'US' : country,
-  };
-}
-
-/** Oferta vigente hasta el 31 de dic del año SIGUIENTE (UTC): siempre ≥ 12 meses de margen. Pura: el reloj entra por parámetro. */
-export const priceValidUntil = (now: Date): string => `${now.getUTCFullYear() + 1}-12-31`;
-
 export const organizationLd = () => {
-  const address = parsePostalAddress(site.postalAddress);
+  const address = site.postalAddress ? { '@type': 'PostalAddress', ...site.postalAddress } : null;
   return {
     '@type': 'Organization',
     '@id': ORG_ID,
@@ -67,14 +43,13 @@ export const organizationLd = () => {
     email: site.email,
     slogan: copy.organization.slogan,
     description: copy.organization.description,
-    parentOrganization: { '@type': 'Organization', name: site.legalName },
     hasMerchantReturnPolicy: returnPolicy,
   };
 };
 
 export const websiteLd = () => ({ '@type': 'WebSite', '@id': abs('/#web'), url: site.url, name: site.name, inLanguage: 'es-US', publisher: { '@id': ORG_ID } });
 
-export const productLd = (p: Product, shippingCents: number, now: Date) => {
+export const productLd = (p: Product, shippingCents: number) => {
   const v = defaultVariant(p);
   return {
     '@type': 'Product',
@@ -92,7 +67,6 @@ export const productLd = (p: Product, shippingCents: number, now: Date) => {
       url: abs(`/productos/${p.slug}`),
       price: toDecimalString(v.price),
       priceCurrency: 'USD',
-      priceValidUntil: priceValidUntil(now),
       availability: v.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: { '@id': ORG_ID },

@@ -7,7 +7,7 @@ const rules = (r = prod()) => [r.rules].flat();
 const rulesFor = (ua: string, r = prod()) => rules(r).filter((x) => [x.userAgent].flat().includes(ua));
 
 describe('robots: producción', () => {
-  it.each(['GPTBot', 'Google-Extended', 'ClaudeBot', 'CCBot', 'Applebot-Extended', 'meta-externalagent', 'Bytespider'])(
+  it.each(['GPTBot', 'Google-Extended', 'ClaudeBot', 'CCBot', 'Applebot-Extended', 'meta-externalagent', 'Bytespider', 'anthropic-ai', 'Claude-Web', 'cohere-training-data-crawler', 'AI2Bot'])(
     'bloquea el bot de entrenamiento %s entero',
     (bot) => {
       expect(AI_TRAINING_BOTS).toContain(bot);
@@ -39,6 +39,8 @@ describe('robots: producción', () => {
     const uas = rules().flatMap((r) => [r.userAgent].flat());
     expect(new Set(uas).size).toBe(uas.length);
     expect(prod().sitemap).toBe(`${SITE}/sitemap.xml`);
+    expect('host' in prod()).toBe(false);
+    for (const mixed of ['Amazonbot', 'Diffbot']) expect(uas).not.toContain(mixed);
   });
 });
 

@@ -3,6 +3,7 @@ import { copy } from '@/content';
 import { site } from '@/config/site';
 import { publicEnv } from '@/config/env';
 import { formatMoney } from '@/domain/money';
+import { policyPhrases } from '@/lib/policy-facts';
 
 export const metadata: Metadata = {
   title: { absolute: copy.politicas.title },
@@ -13,17 +14,17 @@ export const metadata: Metadata = {
 export default function Politicas() {
   const shipCents = publicEnv().SHIPPING_FLAT_CENTS;
   const ship = formatMoney({ cents: shipCents, currency: 'usd' });
-  const { handlingDays: h, transitDays: t } = site.shipping;
+  const f = policyPhrases();
   return (
     <article className="doc">
       <span className="mono">Actualizado: noviembre 2026</span>
       <h1>Políticas</h1>
 
       <h2 id="envios">Envíos</h2>
-      <p>Cada producto se imprime a pedido en EE. UU. La producción toma <strong>{h.min}–{h.max} días hábiles</strong> y la entrega <strong>{t.min}–{t.max} días hábiles</strong> más. {shipCents === 0 ? <>El envío es <strong>gratis</strong>.</> : <>El envío cuesta <strong>{ship}</strong> por pedido y se muestra antes de pagar.</>} Por ahora enviamos solo dentro de Estados Unidos. Cuando tu pedido salga, recibirás el número de rastreo por correo.</p>
+      <p>Cada producto se imprime a pedido en EE. UU. La producción toma <strong>{f.handling}</strong> y la entrega <strong>{f.transit}</strong> más. {shipCents === 0 ? <>El envío es <strong>gratis</strong>.</> : <>El envío cuesta <strong>{ship}</strong> por pedido y se muestra antes de pagar.</>} Por ahora enviamos {f.onlyUs}. Cuando tu pedido salga, recibirás el número de rastreo por correo.</p>
 
       <h2 id="devoluciones">Devoluciones y cambios</h2>
-      <p>Como cada pieza se hace especialmente para ti, no aceptamos devoluciones por cambio de opinión. Si tu producto llega <strong>dañado, defectuoso o equivocado</strong>, escríbenos dentro de los <strong>{site.returns.days} días</strong> siguientes a la entrega con una foto y tu número de pedido, y te enviamos un reemplazo o te devolvemos el dinero sin costo para ti.</p>
+      <p>Como cada pieza se hace especialmente para ti, {f.noReturns}. Si tu producto llega <strong>{f.defectKinds}</strong>, escríbenos <strong>{f.defectWindow}</strong> con una foto y tu número de pedido, y te enviamos un reemplazo o te devolvemos el dinero sin costo para ti.</p>
 
       <h2 id="privacidad">Privacidad</h2>
       <p>Solo pedimos los datos necesarios para procesar y enviar tu pedido: nombre, correo y dirección de envío. Los pagos los procesa <strong>Stripe</strong>; nunca vemos ni guardamos los datos de tu tarjeta. Compartimos tu nombre y dirección únicamente con nuestro socio de impresión y la compañía de envío para entregar tu pedido. No vendemos tus datos. Para pedir que borremos tu información, escríbenos.</p>
