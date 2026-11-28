@@ -48,7 +48,7 @@
 
 ## Dónde estamos (2026-11-27, cierre de la sesión F2)
 
-- **PR #8** `f2-paginas` → `develop`, HEAD `00c2a75`. **321 tests** en verde (37 de Postgres se saltan sin base local; en CI corren).
+- **PR #8 fusionado a `develop`** el 2026-11-28 (fast-forward a `45ec42e`, OK de Luis). **321 tests** en verde (37 de Postgres se saltan sin base local; en CI corren).
   CI verde. El preview de Vercel **falla a propósito** en la build: `deploy_check_failed` por falta de `STRIPE_SECRET_KEY` /
   `STRIPE_WEBHOOK_SECRET` en staging (paso 5). Antes daba 500 en todo; ahora la build falla y queda vivo el deploy anterior.
 - Revisado por QA de UI y tres rondas de Rompedor. Sin P0/P1 abiertos. Mutantes vivos de cada ronda: todos muertos.
@@ -56,7 +56,7 @@
 
 ## Siguiente, en orden
 
-1. **Luis:** OK para fusionar el PR #8 a `develop` (el CTO lo fusiona).
+1. ~~OK para fusionar el PR #8~~ hecho (2026-11-28).
 2. **Luis:** validar el borrador de reglas del reto y el texto de privacidad del reto (`copy.json` → `politicas.retoPrivacy`).
 3. **Luis:** dirección postal para el pie (CAN-SPAM, bloquea F3). Feriados en la fecha de entrega: sí/no.
 4. **CTO, sesión aparte:** el test `postgres.int.test.ts` «20 webhooks simultáneos ⇒ 1 pedido» falló una vez en CI
