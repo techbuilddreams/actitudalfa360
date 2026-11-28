@@ -27,6 +27,10 @@ export default function Politicas() {
       <h2 id="privacidad">Privacidad</h2>
       <p>Solo pedimos los datos necesarios para procesar y enviar tu pedido: nombre, correo y dirección de envío. Los pagos los procesa <strong>Stripe</strong>; nunca vemos ni guardamos los datos de tu tarjeta. Compartimos tu nombre y dirección únicamente con nuestro socio de impresión y la compañía de envío para entregar tu pedido. No vendemos tus datos. Para pedir que borremos tu información, escríbenos.</p>
 
+      {/* BORRADOR para Luis: revisar antes de producción (que sigue bloqueada hasta F3). Texto en copy.json → politicas.retoPrivacy. */}
+      <h3 id="privacidad-reto">{copy.politicas.retoPrivacy.h3}</h3>
+      <ul>{copy.politicas.retoPrivacy.items.map((i) => <li key={i}>{i}</li>)}</ul>
+
       <h2 id="terminos">Términos</h2>
       <p>{site.name} es una marca de {site.legalName} (Nueva York, EE. UU.). Los precios están en dólares estadounidenses y pueden cambiar sin aviso; el precio que pagas es el que ves al confirmar. Los colores pueden variar ligeramente entre la pantalla y el producto impreso. El nombre, el sello y los diseños de {site.name} son propiedad de la marca.</p>
 

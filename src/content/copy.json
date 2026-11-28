@@ -224,7 +224,17 @@
   },
   "politicas": {
     "title": "Envíos, devoluciones y privacidad | Actitud Alfa 360",
-    "description": "Envío fijo de {envio} solo en EE. UU. Producción de {diasProduccion} días hábiles y envío de {diasEnvio}. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días."
+    "description": "Envío fijo de {envio} solo en EE. UU. Producción de {diasProduccion} días hábiles y envío de {diasEnvio}. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días.",
+    "retoPrivacy": {
+      "h3": "La lista del reto",
+      "items": [
+        "Qué guardamos: tu correo, tu zona horaria, si marcaste que te avisemos de la membresía y, cuando el registro diario esté activo, las marcas de cada día.",
+        "Para qué: mandarte el correo diario del reto a tu hora y contarte tu puntuación. Y, solo si lo marcaste, avisarte cuando abra la membresía.",
+        "Quién lo procesa: nuestro proveedor de correo envía los mensajes como encargado del tratamiento, por cuenta nuestra y solo para eso.",
+        "Te das de baja con un clic desde cualquier correo, y dejamos de escribirte.",
+        "No vendemos ni compartimos tu correo ni tus marcas con nadie. Para pedir que borremos tus datos, escríbenos."
+      ]
+    }
   },
   "organization": {
     "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, con sede en Nueva York.",
