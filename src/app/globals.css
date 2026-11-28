@@ -98,6 +98,7 @@ p{margin:0}
 .capture-row{display:grid;gap:10px}
 @media (min-width:560px){.capture-row{grid-template-columns:1fr auto}}
 .capture label{font-size:14px;color:var(--stone)}
+.capture .check.highlight{outline:1px solid var(--gold);outline-offset:6px;border-radius:2px;color:var(--bone)}
 .capture input{width:100%;min-height:52px;padding:0 16px;border:1px solid var(--control);background:transparent;color:var(--bone);font:400 16px/1 var(--sans);border-radius:2px}
 .capture input::placeholder{color:var(--placeholder);opacity:1}
 .capture input:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-color:var(--bone)}

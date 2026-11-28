@@ -27,7 +27,10 @@ interface Props {
   submit?: (p: SignupPayload) => Promise<Response>;
   /** Zona del participante, inyectable (tests). Por defecto, la del navegador. */
   resolveTimeZone?: () => string;
-  /** Si la URL llega con este hash («Avísame cuando abra»), la casilla de la membresía empieza marcada. */
+  /**
+   * Si la URL llega con este hash («Avísame cuando abra»), se lleva a la persona a la casilla de la membresía:
+   * scroll, foco y resaltado. NUNCA se marca sola: una casilla premarcada no es consentimiento (TJUE, Planet49).
+   */
   membershipHash?: string;
 }
 
@@ -39,10 +42,18 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [member, setMember] = useState(false);
+  const [highlight, setHighlight] = useState(false);
+  const memberBox = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!membershipHash) return;
-    const sync = () => { if (window.location.hash === `#${membershipHash}`) setMember(true); };
+    const sync = () => {
+      if (window.location.hash !== `#${membershipHash}`) return;
+      const box = memberBox.current;
+      box?.scrollIntoView?.({ block: 'center' });
+      box?.focus({ preventScroll: true });
+      setHighlight(true);
+    };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
@@ -92,7 +103,9 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
         <button className="btn" type="submit" disabled={busy} aria-busy={busy}>{t.button}</button>
       </div>
       {error && <p className="err" id={errId} role="alert">{error}</p>}
-      <label className="check"><input type="checkbox" name="membresia" checked={member} onChange={(e) => setMember(e.target.checked)} /> {t.membership}</label>
+      <label className={highlight ? 'check highlight' : 'check'}>
+        <input ref={memberBox} type="checkbox" name="membresia" checked={member} onChange={(e) => setMember(e.target.checked)} /> {t.membership}
+      </label>
       <p className="micro">{t.daily}</p>
       <p className="micro">{t.micro} <Link href="/politicas#privacidad">{t.privacy}</Link>.</p>
       <p className="micro health-note">{t.health}</p>

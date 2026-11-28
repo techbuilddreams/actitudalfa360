@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { EmailCapture } from '@/components/email-capture';
 import { copy } from '@/content';
 
@@ -55,14 +55,35 @@ describe('EmailCapture', () => {
     expect(submit).toHaveBeenCalledWith(expect.objectContaining({ membershipInterest: true }));
   });
 
-  it('llegar por «Avísame cuando abra» (#empieza-membresia) deja la casilla marcada', async () => {
+  // Consentimiento: una casilla premarcada no es consentimiento válido (TJUE, Planet49, C-673/17). El hash solo lleva
+  // al formulario, enfoca y resalta la casilla; la marca la persona.
+  it('llegar por «Avísame cuando abra» (#empieza-membresia) NO marca la casilla: la enfoca, la resalta y lleva a ella', async () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
     window.location.hash = '';
+    render(<><EmailCapture source="home" text={t} submit={ok} /><EmailCapture source="home" text={t} submit={ok} membershipHash="empieza-membresia" /></>);
+    const [other, box] = screen.getAllByRole('checkbox', { name: t.membership }) as HTMLInputElement[];
+    expect(box!.closest('label')!.classList.contains('highlight')).toBe(false);
+    window.location.hash = '#empieza-membresia';
+    await act(async () => { window.dispatchEvent(new HashChangeEvent('hashchange')); });
+    await waitFor(() => expect(document.activeElement).toBe(box));
+    expect(box!.checked).toBe(false);
+    expect(other!.checked).toBe(false);
+    expect(box!.closest('label')!.classList.contains('highlight')).toBe(true);
+    expect(other!.closest('label')!.classList.contains('highlight')).toBe(false);
+    expect(scroll).toHaveBeenCalled();
+    fireEvent.click(box!);
+    expect(box!.checked).toBe(true);
+    window.location.hash = '';
+  });
+
+  it('con el hash ya en la URL al cargar: tampoco la marca', async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    window.location.hash = '#empieza-membresia';
     render(<EmailCapture source="home" text={t} submit={ok} membershipHash="empieza-membresia" />);
     const box = screen.getByRole('checkbox', { name: t.membership }) as HTMLInputElement;
+    await waitFor(() => expect(document.activeElement).toBe(box));
     expect(box.checked).toBe(false);
-    window.location.hash = '#empieza-membresia';
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-    await waitFor(() => expect(box.checked).toBe(true));
     window.location.hash = '';
   });
 
