@@ -43,6 +43,14 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
   const cancelStuck = useRef<(() => void) | null>(null);
   // Estado Y ref, siempre juntos: un botón habilitado con la ref en true parece vivo pero no hace nada.
   const release = () => { cancelStuck.current?.(); cancelStuck.current = null; inFlight.current = false; setBusy(false); };
+  // Vence el temporizador: visible = la navegación no ocurrió. Oculta (pestaña en segundo plano) = no se sabe aún:
+  // se vuelve a mirar cuando la pestaña regrese; si la página sigue aquí, la navegación falló. `release` quita el oyente.
+  const checkStuck = () => {
+    if (document.visibilityState === 'visible') return release();
+    const onVisible = () => { if (document.visibilityState === 'visible') release(); };
+    document.addEventListener('visibilitychange', onVisible);
+    cancelStuck.current = () => document.removeEventListener('visibilitychange', onVisible);
+  };
 
   // Al volver de Stripe con "Atrás", el navegador puede restaurar la página congelada.
   useEffect(() => {
@@ -66,7 +74,7 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? t.errorStart);
       window.location.assign(data.url);
-      cancelStuck.current = schedule(() => { if (document.visibilityState === 'visible') release(); }, NAVIGATION_STUCK_MS);
+      cancelStuck.current = schedule(checkStuck, NAVIGATION_STUCK_MS);
     } catch (e) {
       const msg = e instanceof TypeError ? t.errorNetwork : (e as Error).message;
       setError(`${msg} ${t.errorRetry}`);
