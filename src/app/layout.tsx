@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: site.name,
     locale: site.locale,
-    images: [{ url: '/img/og.jpg', width: 1200, height: 630, alt: `${site.name} — ${site.slogan}` }],
+    images: [{ ...site.ogImage, alt: `${site.name} — ${site.slogan}` }],
   },
   twitter: { card: 'summary_large_image' },
   icons: { icon: [{ url: '/favicon.ico', sizes: '32x32' }, { url: '/img/icon-192.png', type: 'image/png', sizes: '192x192' }], apple: '/img/apple-touch-icon.png' },

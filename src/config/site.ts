@@ -15,6 +15,8 @@ export const site = {
     transitDays: { min: 3, max: 7 },
   },
   returns: { days: 30 },
+  /** Imagen para compartir (1200×630). Cada página con openGraph propio la repite: Next no la hereda del layout. */
+  ogImage: { url: '/img/og.jpg', width: 1200, height: 630 },
   /** Duración del reto (días de calendario). */
   challenge: { days: 30 },
   /** Membresía: aún no se vende (decisión 10). El precio se muestra como «próximamente». */

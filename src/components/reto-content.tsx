@@ -24,9 +24,9 @@ export function RetoContent() {
             <p className="lede">{r.lede}</p>
             <EmailCapture source="reto" text={copy.capture} />
           </div>
-          <dl className="facts appear d2" aria-label={r.factsLabel}>
+          <div role="group" aria-label={r.factsLabel}><dl className="facts appear d2">
             {r.facts.map((f) => <div key={f.l}><dt className="num">{f.v}</dt><dd>{f.l}</dd></div>)}
-          </dl>
+          </dl></div>
         </div>
       </div>
 

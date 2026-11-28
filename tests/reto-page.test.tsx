@@ -5,6 +5,21 @@ import { RetoContent } from '@/components/reto-content';
 
 afterEach(cleanup);
 
+describe('/reto-30-dias: metadatos y cifras', () => {
+  it('su openGraph lleva imagen (un openGraph propio reemplaza el del layout, imágenes incluidas)', async () => {
+    const { metadata } = await import('@/app/reto-30-dias/page');
+    const images = [metadata.openGraph?.images].flat().filter(Boolean) as { url: string }[];
+    expect(images[0]?.url).toBe('/img/og.jpg');
+  });
+
+  it('las cifras van en un grupo con nombre; el <dl> no lleva aria-label (no es un rol que lo admita)', () => {
+    render(<RetoContent />);
+    const dl = document.querySelector('dl.facts')!;
+    expect(dl.hasAttribute('aria-label')).toBe(false);
+    expect(screen.getByRole('group', { name: 'El reto en cifras' }).contains(dl)).toBe(true);
+  });
+});
+
 describe('/reto-30-dias', () => {
   it('publica las reglas como tabla: 4 pilares × Base y Estándar, con ancla por pilar', () => {
     render(<RetoContent />);
