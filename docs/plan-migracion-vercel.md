@@ -124,20 +124,20 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
 4. **DNS del dominio** (Luis + CTO) — puede ir en paralelo con 1–3
    - **HECHO** (2026-11-27). Detalle en "Dónde estamos".
 5. **Primer deploy de staging + smoke** (CTO): compra de prueba con Stripe en modo test, de punta a punta (pago → pedido → correo → Printify en espera).
-   - **2026-11-27, en curso.** No hace falta código: el correo se salta sin SMTP y `env.ts` ya acepta `rk_test_`.
-   - Llave encontrada: `STRIPE_SECRET_KEY` (`rk_test_…dnPl`, cuenta `acct_1UImVaGpmK8g…`) en `.env.staging` local
-     (ignorado por git). Probada en solo lectura: lee checkout sessions, products y prices (200); webhooks → 403.
-     Son justo los permisos mínimos. **Se reusa.**
-   - La `whsec_` de ese archivo NO sirve: era el webhook de la URL de Hostinger. Hace falta un endpoint nuevo.
-   - **Falta (Luis, ~3 min, en el dashboard de Stripe con el perfil de Actitud Alfa, modo Sandbox/Test):**
-     1. Webhooks → *Add endpoint* → `https://actitudalfa360-git-develop-techbuilddreams.vercel.app/api/webhooks/stripe?x-vercel-protection-bypass=<secreto de Vercel → Deployment Protection>`,
-        eventos `checkout.session.completed` y `checkout.session.async_payment_succeeded`. Copiar el *Signing secret*.
-     2. Vercel → Environment Variables, **solo Preview**, *Sensitive*: `STRIPE_SECRET_KEY` (el `rk_test_` de `.env.staging`)
-        y `STRIPE_WEBHOOK_SECRET` (el `whsec_` nuevo).
-     3. Avisar al CTO: push a `develop` → comprobar variables (sin valores) → compra con 4242 → webhook 200 →
-        pedido `paid` en Supabase → Printify en espera → `SHOW statement_timeout` por el 6543.
-   - Trampas: el Chrome "Browser 3" no tiene sesión en Stripe. El clasificador bloquea leer el token de la CLI de Vercel
-     (y no hay `vercel` en el PATH): las variables van por el dashboard o el conector MCP.
+   - **HECHO (2026-11-28).** Compra con 4242 en staging (`52de6a7`): webhook firmado aceptado, log `Nueva venta`
+     (3398 ¢, 1 artículo), sin errores. `/api/health` 200: stripe test, webhook, database, schema ok.
+   - Cuenta: sandbox **Actitud Alfa 360 sandbox** (`acct_1UImVaGpmK8g…`), NO la cuenta live (`acct_1UImVS…`) ni
+     Tech Build Dreams. En el selector: Other accounts → Actitud Alfa 360 → Switch to sandbox.
+   - Endpoint: se **editó** el existente `aa360` (`we_1UIsdB…`), no se creó otro. El *signing secret* es del endpoint,
+     no de la URL: al cambiar la URL, el `whsec_` de `.env.staging` siguió valiendo (antes se creía lo contrario).
+     URL = alias `git-develop` + `?x-vercel-protection-bypass=<secreto>`; el secreto lo pegó Luis.
+   - Vercel Preview (todas las ramas, Sensitive): `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`, subidas con
+     `vercel env add <K> --environment preview --sensitive --yes` leyendo stdin desde `.env.staging`.
+   - **Pendiente menor:** ver el pedido en Supabase y `SHOW statement_timeout` por el 6543 (la `DATABASE_URL` de
+     `.env.staging` está vacía; usar el conector de Supabase). En staging `printifyAutoOrder=false`: el pedido queda `paid`.
+   - Trampas: sin `--yes`, `vercel env add` pregunta la rama y se come el valor que llega por stdin. `vercel link`
+     corrido fuera del repo deja `~/.vercel` (borrarlo). `vercel curl <ruta> --deployment <url>` pasa la protección
+     sin manejar el secreto. `npx vercel` (v68) funciona aunque no haya `vercel` en el PATH.
 6. **Membresía** (trabajo nuevo, otra sesión, plan propio): usuarios, niveles, campus, Bunny. Ver `vision-membresia.md`. Antes: fase 1 en Skool para validar.
 
 ## Decisiones abiertas (con recomendación)

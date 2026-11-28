@@ -54,7 +54,7 @@ export interface ShippingAddress {
 
 export interface Order {
   readonly id: string;
-  /** Número visible para el cliente (AA-10001). Lo asigna la base de datos; null hasta guardarse. */
+  /** Número visible para el cliente (AA360-10001). Lo asigna la base de datos; null hasta guardarse. */
   readonly number: number | null;
   readonly paymentRef: string;             // Stripe Checkout Session id (único)
   readonly status: OrderStatus;
@@ -81,4 +81,4 @@ export const decodeLines = (value: string): OrderLine[] =>
 
 /** Número de pedido legible, único y buscable. Respaldo: final del id de pago (antes de guardarse). */
 export const orderLabel = (o: Pick<Order, 'number' | 'paymentRef'>): string =>
-  o.number != null ? `AA-${o.number}` : o.paymentRef.slice(-8).toUpperCase();
+  o.number != null ? `AA360-${o.number}` : o.paymentRef.slice(-8).toUpperCase();

@@ -13,7 +13,7 @@ describe('correo de confirmación', () => {
   it('incluye número de pedido, producto, desglose, total y escapa HTML del cliente', () => {
     const m = orderConfirmationEmail(order)!;
     expect(m.to).toBe('cliente@example.com');
-    expect(m.subject).toContain('AA-10001');
+    expect(m.subject).toContain('AA360-10001');
     expect(m.html).toContain('Taza negra');
     expect(m.html).toContain('$49.98');
     expect(m.html).toContain('$8.99');
@@ -40,7 +40,7 @@ describe('correo de confirmación', () => {
   });
 
   it('aviso de venta al dueño con número de pedido', () => {
-    expect(newSaleEmail(order, 'yo@example.com').subject).toContain('AA-10001');
+    expect(newSaleEmail(order, 'yo@example.com').subject).toContain('AA360-10001');
   });
 
   it('si el SMTP falla, no rompe el flujo del pedido', async () => {

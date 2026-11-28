@@ -16,7 +16,7 @@ export const orders = pgTable(
   'orders',
   {
     id: uuid('id').primaryKey(),
-    // Número visible (AA-10001): lo asigna Postgres (identity) sin carreras; el cliente no puede fijarlo.
+    // Número visible (AA360-10001): lo asigna Postgres (identity) sin carreras; el cliente no puede fijarlo.
     orderNumber: integer('order_number').notNull().generatedAlwaysAsIdentity({ startWith: 10001 }),
     paymentRef: varchar('payment_ref', { length: 255 }).notNull(),
     status: orderStatus('status').notNull(),
