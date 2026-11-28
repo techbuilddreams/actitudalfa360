@@ -27,6 +27,12 @@ describe('createCheckout', () => {
     expect(createCheckout.mock.calls[0]![0].cancelUrl).toBe('https://site.test/productos/taza-negra-15oz');
   });
 
+  it('kit pedido desde la ficha del vaso (vaso primero): cancela de vuelta al vaso, no a la taza', async () => {
+    const { run, createCheckout } = setup();
+    await run([{ sku: VASO, quantity: 1 }, { sku: TAZA, quantity: 1 }]);
+    expect(createCheckout.mock.calls[0]![0].cancelUrl).toBe('https://site.test/productos/vaso-termico-20oz');
+  });
+
   it('el envío sale de la política del servidor', async () => {
     const { run, createCheckout } = setup();
     await run([{ sku: TAZA, quantity: 2 }]);
