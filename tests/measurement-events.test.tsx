@@ -78,6 +78,16 @@ describe('begin_checkout', () => {
   });
 });
 
+describe('begin_checkout: solo cuando el pago se abre', () => {
+  it('409 (sin stock) o error de red: no cuenta', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'Agotado' }), { status: 409 })));
+    ficha();
+    fireEvent.click(screen.getByRole('button', { name: copy.pdp.buy }));
+    await screen.findByText(/Agotado/);
+    expect(names()).not.toContain('begin_checkout');
+  });
+});
+
 describe('sign_up', () => {
   const t = copy.capture;
   const fill = (email: string) => {

@@ -7,6 +7,10 @@ import { consentFromRequest, measurementProps } from '@/lib/consent-request';
 describe('measurementId', () => {
   it('producción con ID válido ⇒ el ID', () =>
     expect(measurementId({ NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF', NEXT_PUBLIC_APP_ENV: 'production' })).toBe('G-AB12CD34EF'));
+  it('solo producción mide (lista blanca): sin entorno, local o Staging no', () => {
+    for (const e of [undefined, 'local', 'Staging', 'preview'])
+      expect(measurementId({ NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF', NEXT_PUBLIC_APP_ENV: e }), String(e)).toBeNull();
+  });
   it('staging nunca mide: ensuciaría los datos reales', () =>
     expect(measurementId({ NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF', NEXT_PUBLIC_APP_ENV: 'staging' })).toBeNull());
   it('sin ID o con ID raro ⇒ no hay medición', () => {
@@ -59,7 +63,7 @@ describe('consentFromRequest', () => {
 describe('measurementProps (lo que el layout pasa al gestor)', () => {
   const env = { NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF', NEXT_PUBLIC_APP_ENV: 'production' };
   it('sin ID ⇒ null: ni banner, ni enlace, ni Google', () =>
-    expect(measurementProps(new Headers({ 'x-vercel-ip-country': 'DE' }), undefined, {})).toBeNull());
+    expect(measurementProps(new Headers({ 'x-vercel-ip-country': 'DE' }), undefined, { NEXT_PUBLIC_APP_ENV: 'production' })).toBeNull());
   it('con ID ⇒ ID + decisión', () =>
     expect(measurementProps(new Headers({ 'x-vercel-ip-country': 'DE' }), undefined, env)).toEqual({
       measurementId: 'G-AB12CD34EF', decision: { analytics: false, showBanner: true, showPreferences: true },

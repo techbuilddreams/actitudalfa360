@@ -7,9 +7,14 @@
 export type ConsentRegion = 'opt-in' | 'opt-out';
 export type ConsentChoice = 'granted' | 'denied';
 
-/** EEE (UE-27 + IS, LI, NO), Reino Unido y Suiza. Grecia llega como GR o EL según la fuente. */
+/**
+ * EEE (UE-27 + IS, LI, NO), Reino Unido y Suiza. Grecia llega como GR o EL según la fuente.
+ * Más los territorios de la UE con código ISO propio (Åland, regiones ultraperiféricas francesas) y Gibraltar y las
+ * dependencias de la Corona, con leyes equivalentes al RGPD.
+ */
 const OPT_IN = new Set(
-  'AT BE BG HR CY CZ DK EE FI FR DE GR EL HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH'.split(' '),
+  ('AT BE BG HR CY CZ DK EE FI FR DE GR EL HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB CH ' +
+    'AX RE GP MQ GF YT MF GI JE GG IM').split(' '),
 );
 
 /** Sin país fiable ⇒ se pide permiso: equivocarse hacia ese lado no cuesta nada. */

@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { CONSENT_COOKIE, CONSENT_MAX_AGE_DAYS, serializeConsentCookie, type ConsentChoice, type ConsentDecision } from '@/domain/consent';
 import { analytics as pageAnalytics, type Analytics } from '@/lib/analytics';
-import { gtagEvent, loadGtag, revokeGtag } from './gtag';
+import { clearGaCookies, gtagEvent, loadGtag, revokeGtag } from './gtag';
 
 /** Textos (copy.json → `consent`). */
 export interface ConsentText { label: string; body: string; policy: string; accept: string; reject: string; preferences: string }
@@ -41,20 +42,31 @@ export function ConsentManager({ measurementId, decision, text: t, analytics = p
 
   useEffect(() => {
     if (decision.analytics) start();
-    else if (!decision.showBanner) analytics.disable();
+    else {
+      // Un _ga de otra visita (otra región, o elección caducada) no se queda sin permiso.
+      clearGaCookies();
+      if (!decision.showBanner) analytics.disable();
+    }
     // Solo al montar: la decisión del servidor es la de esta carga de página.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // page_view propio en cada página (también en la navegación en cliente). Va DESPUÉS del efecto de arriba.
+  const pathname = usePathname();
+  useEffect(() => {
+    analytics.track({ name: 'page_view', location: window.location.href, title: document.title });
+  }, [pathname, analytics]);
 
   const choose = (choice: ConsentChoice) => {
     remember(choice);
     setOpen(false);
     if (choice === 'granted') return start();
     analytics.disable();
+    clearGaCookies();
     if (!loaded.current) return;
     // gtag.js sigue en memoria y podría mandar pings sin cookies: se avisa a Google, se borra _ga y se recarga.
     // Al volver, el servidor lee la cookie y no carga nada. Por eso «re-aceptar en la misma página» no existe.
-    revokeGtag();
+    revokeGtag(measurementId);
     reload();
   };
 

@@ -19,7 +19,8 @@ export function loadGtag(measurementId: string, win: GtagWindow = window, doc: D
   // Sin anuncios: los tres permisos de anuncios quedan negados siempre. Va ANTES de config.
   win.gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted' });
   win.gtag('js', new Date());
-  win.gtag('config', measurementId, { allow_google_signals: false, allow_ad_personalization_signals: false });
+  // send_page_view:false ⇒ el page_view lo mandamos nosotros, con la URL saneada (`safeLocation`).
+  win.gtag('config', measurementId, { allow_google_signals: false, allow_ad_personalization_signals: false, send_page_view: false });
   const s = doc.createElement('script');
   s.async = true;
   s.src = `${GTAG_SRC}?id=${encodeURIComponent(measurementId)}`;
@@ -28,9 +29,10 @@ export function loadGtag(measurementId: string, win: GtagWindow = window, doc: D
 
 export const gtagEvent = (name: string, params: Record<string, unknown>, win: GtagWindow = window) => win.gtag?.('event', name, params);
 
-/** Al retirar el permiso: dice a Google que pare y borra sus cookies del dominio. */
-export function revokeGtag(win: GtagWindow = window): void {
+/** Al retirar el permiso: dice a Google que pare, activa su apagado documentado (`ga-disable-<ID>`) y borra sus cookies. */
+export function revokeGtag(measurementId: string, win: GtagWindow = window): void {
   win.gtag?.('consent', 'update', { analytics_storage: 'denied' });
+  (win as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = true;
   clearGaCookies();
 }
 

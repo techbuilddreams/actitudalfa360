@@ -18,6 +18,9 @@ describe('consentRegion', () => {
     expect(all).toHaveLength(32);
     for (const c of all) expect(consentRegion(c), c).toBe('opt-in');
   });
+  it('territorios de la UE con código ISO propio y dependencias de la Corona: también piden permiso', () => {
+    for (const c of ['AX', 'RE', 'GP', 'MQ', 'GF', 'YT', 'MF', 'GI', 'JE', 'GG', 'IM']) expect(consentRegion(c), c).toBe('opt-in');
+  });
   it('EE. UU., RD, México, Puerto Rico: se mide salvo que digan no', () => {
     for (const c of ['US', 'DO', 'MX', 'PR', 'CA']) expect(consentRegion(c), c).toBe('opt-out');
   });

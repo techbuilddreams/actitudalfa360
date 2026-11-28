@@ -12,6 +12,7 @@ describe('proxy: la CSP sigue a la configuración de medición (cableado, no sol
   });
   it('con ID: Google en connect-src', () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', 'G-AB12CD34EF');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'production');
     expect(csp()).toMatch(/connect-src [^;]*google-analytics\.com/);
   });
   it('staging con ID: cerrado igual', () => {

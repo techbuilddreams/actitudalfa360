@@ -67,8 +67,6 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
   async function start(items: readonly CheckoutItem[], from: CheckoutOrigin) {
     if (inFlight.current) return;
     inFlight.current = true;
-    const measured = checkoutItems(items, prices);
-    if (measured.length) analytics.track({ name: 'begin_checkout', items: measured });
     setBusy(true);
     setOrigin(from);
     setError(null);
@@ -80,6 +78,9 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
       });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? t.errorStart);
+      // Solo cuenta el pago que de verdad se abre: un 409 sin stock o un 429 no es un inicio de pago.
+      const measured = checkoutItems(items, prices);
+      if (measured.length) analytics.track({ name: 'begin_checkout', items: measured });
       window.location.assign(data.url);
       cancelStuck.current = schedule(checkStuck, NAVIGATION_STUCK_MS);
     } catch (e) {

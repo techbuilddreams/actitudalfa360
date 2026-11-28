@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkoutItems, createAnalytics, toGtag, type AnalyticsEvent, type Sink } from '@/lib/analytics';
+import { checkoutItems, createAnalytics, safeLocation, toGtag, type AnalyticsEvent, type Sink } from '@/lib/analytics';
 
 /** Sink falso que RECHAZA lo que GA4 no acepta (lección de Tabla Jaladora: un booleano se pierde en silencio). */
 function strictSink() {
@@ -104,5 +104,33 @@ describe('createAnalytics', () => {
     a.enable(s);
     a.enable(s);
     expect(s).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('safeLocation (lo único de la URL que sale hacia Google)', () => {
+  it('quita la query: el ID de sesión de Stripe en /gracias es una llave', () =>
+    expect(safeLocation('https://actitudalfa360.com/gracias?pedido=cs_live_abc123')).toBe('https://actitudalfa360.com/gracias'));
+  it('conserva solo utm_* (el origen de la visita) y quita el resto, y el hash', () =>
+    expect(safeLocation('https://a.com/p?email=ana%40x.com&utm_source=tiktok&utm_campaign=reto&gclid=1#x'))
+      .toBe('https://a.com/p?utm_source=tiktok&utm_campaign=reto'));
+  it('una URL rota no lanza: devuelve vacío', () => expect(safeLocation('::')).toBe(''));
+});
+
+describe('page_view', () => {
+  it('se manda con la URL ya saneada', () =>
+    expect(toGtag({ name: 'page_view', location: 'https://a.com/gracias?pedido=cs_x', title: 'Gracias' }))
+      .toEqual(['page_view', { page_location: 'https://a.com/gracias', page_title: 'Gracias' }]));
+});
+
+describe('cola: solo la página en la que se acepta', () => {
+  it('lo que esperaba de páginas anteriores no sale al aceptar (no se midió antes del permiso)', () => {
+    let page = '/a';
+    const a = createAnalytics({ currentPage: () => page });
+    a.track({ name: 'sign_up', method: 'email', source: 'home' });
+    page = '/b';
+    a.track({ name: 'sign_up', method: 'email', source: 'reto' });
+    const { sink, calls } = strictSink();
+    a.enable(sink);
+    expect(calls).toEqual([['sign_up', { method: 'email', source: 'reto' }]]);
   });
 });

@@ -18,6 +18,7 @@ const ID = 'G-TEST123';
 const decision = (d: Partial<ConsentDecision>): ConsentDecision => ({ analytics: false, showBanner: false, showPreferences: false, ...d });
 
 function reset() {
+  delete (window as unknown as Record<string, unknown>)[`ga-disable-G-TEST123`];
   delete w.dataLayer;
   delete w.gtag;
   document.head.querySelectorAll('script').forEach((s) => s.remove());
@@ -34,7 +35,7 @@ describe('loadGtag', () => {
     loadGtag(ID);
     const c = calls();
     expect(c[0]).toEqual(['consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted' }]);
-    expect(c.find((x) => x[0] === 'config')).toEqual(['config', ID, { allow_google_signals: false, allow_ad_personalization_signals: false }]);
+    expect(c.find((x) => x[0] === 'config')).toEqual(['config', ID, { allow_google_signals: false, allow_ad_personalization_signals: false, send_page_view: false }]);
   });
   it('dataLayer recibe objetos `arguments` (gtag.js ignora arrays)', () => {
     loadGtag(ID);
@@ -135,15 +136,33 @@ describe('ConsentManager', () => {
     expect(document.cookie).not.toContain('_ga=');
     expect(document.cookie).toContain('aa_consent=v1.denied');
     expect(reload).toHaveBeenCalledOnce();
+    expect((window as unknown as Record<string, unknown>)[`ga-disable-${ID}`]).toBe(true);
     const before = calls().length;
     analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
     expect(calls()).toHaveLength(before);
   });
 
-  it('rechazar sin haber cargado gtag no recarga (no hay nada que sacar de memoria)', () => {
+  it('rechazar sin haber cargado gtag no recarga, pero SÍ borra un _ga viejo (de otra visita)', () => {
+    document.cookie = '_ga=GA1.viejo; Path=/';
     const { reload } = setup({ showBanner: true, showPreferences: true });
     fireEvent.click(screen.getByRole('button', { name: text.reject }));
     expect(reload).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain('_ga=');
+  });
+
+  it('al montar sin permiso, un _ga viejo se borra', () => {
+    document.cookie = '_ga=GA1.viejo; Path=/';
+    setup({ analytics: false });
+    expect(document.cookie).not.toContain('_ga=');
+  });
+
+  it('con permiso: un page_view propio con la URL saneada (config lleva send_page_view:false)', () => {
+    window.history.replaceState(null, '', '/gracias?pedido=cs_live_secreto');
+    setup({ analytics: true });
+    const pv = calls().find((c) => c[0] === 'event' && c[1] === 'page_view');
+    expect(pv?.[2]).toMatchObject({ page_location: `${window.location.origin}/gracias` });
+    expect(JSON.stringify(calls())).not.toContain('cs_live');
+    window.history.replaceState(null, '', '/');
   });
 
   it('rechazo guardado: lo que esperaba en la cola se tira al montar, y no sale aunque luego acepte', () => {

@@ -24,12 +24,14 @@ afterEach(() => vi.unstubAllEnvs());
 describe('layout: el gestor de consentimiento está enganchado', () => {
   it('UE sin elección, con ID: banner y preferencias en la página', async () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', 'G-AB12CD34EF');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'production');
     const h = await html('DE');
     expect(h).toContain(BANNER);
     expect(h).toContain(PREFS);
   });
   it('UE que ya rechazó: el layout LEE la cookie y no vuelve a preguntar', async () => {
     vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', 'G-AB12CD34EF');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'production');
     const h = await html('DE', 'v1.denied');
     expect(h).not.toContain(BANNER);
     expect(h).toContain(PREFS);
