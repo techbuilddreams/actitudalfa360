@@ -9,6 +9,8 @@ import { DeliveryEta } from './delivery-eta';
 import { Faq } from './faq';
 import { KitButton } from './kit-button';
 import { CheckoutProvider } from './use-checkout';
+import { TrackView } from './track-view';
+import type { PriceCatalog } from '@/lib/analytics';
 import { Assurances } from './product-card';
 import { ProductGallery, thumb } from './product-gallery';
 
@@ -36,6 +38,11 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
   const pv = partner ? defaultVariant(partner) : undefined;
   // El kit solo se ofrece si el servidor puede cobrarlo: las dos piezas disponibles.
   const kit = partner && pv && pv.available && v.available ? { partner, pv } : undefined;
+  // Solo para medir: el precio real lo pone el servidor al crear el pago.
+  const prices: PriceCatalog = {
+    [v.sku]: { name, priceCents: v.price.cents },
+    ...(kit ? { [kit.pv.sku]: { name: displayName(kit.partner), priceCents: kit.pv.price.cents } } : {}),
+  };
 
   return (
     <>
@@ -49,7 +56,8 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
         </nav>
         <div className="pdp">
           <ProductGallery images={product.images} />
-          <CheckoutProvider messages={copy.checkout}>
+          <TrackView item={{ item_id: v.sku, item_name: name, priceCents: v.price.cents, quantity: 1 }} />
+          <CheckoutProvider messages={copy.checkout} prices={prices}>
           <div className="buy">
             <div className="pdp-title">
               <h1>{name}{quote && <><span className="sr-only"> — </span><span className="frase">{quote}</span></>}</h1>

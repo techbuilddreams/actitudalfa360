@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { connection } from 'next/server';
+import { cookies, headers } from 'next/headers';
 import { copy } from '@/content';
 import { site } from '@/config/site';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { ConsentManager } from '@/components/consent/consent-manager';
+import { CONSENT_COOKIE } from '@/domain/consent';
+import { measurementProps } from '@/lib/consent-request';
 import './globals.css';
 
 const body = localFont({ src: './fonts/Archivo-wght.woff2', variable: '--font-body', weight: '100 900', display: 'swap', preload: true });
@@ -41,6 +45,8 @@ export const viewport: Viewport = { themeColor: site.themeColor, colorScheme: 'd
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // CSP con nonce por petición ⇒ cada página se renderiza al pedirla (los scripts llevan el nonce).
   await connection();
+  // País (Vercel), GPC y la elección guardada: el banner sale o no desde el servidor, sin parpadeo.
+  const m = measurementProps(await headers(), (await cookies()).get(CONSENT_COOKIE)?.value);
   return (
     <html lang={site.lang} className={`${body.variable} ${serif.variable}`}>
       <body>
@@ -48,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="skip" href="#main">Ir al contenido</a>
         <SiteHeader labels={copy.nav} />
         <main id="main">{children}</main>
-        <SiteFooter />
+        <SiteFooter consent={m && <ConsentManager measurementId={m.measurementId} decision={m.decision} text={copy.consent} />} />
       </body>
     </html>
   );

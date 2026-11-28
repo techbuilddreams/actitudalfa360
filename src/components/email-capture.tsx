@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { normalizeEmail } from '@/domain/email';
+import { analytics, type AnalyticsEvent } from '@/lib/analytics';
 
 export interface CaptureText {
   label: string; placeholder: string; button: string; busy: string; micro: string; privacy: string; health: string;
@@ -33,10 +34,12 @@ interface Props {
    * marcaría. NUNCA se marca sola: una casilla premarcada no es consentimiento (TJUE, Planet49).
    */
   membershipHash?: string;
+  /** Medición inyectable (tests). Por defecto, la de la página (solo manda si hay permiso). */
+  track?: (e: AnalyticsEvent) => void;
 }
 
 /** Alta en el reto: un solo campo. Misma regla de correo que el servidor (`normalizeEmail`). */
-export function EmailCapture({ source, text: t, submit = postSignup, resolveTimeZone = browserTimeZone, membershipHash }: Props) {
+export function EmailCapture({ source, text: t, submit = postSignup, resolveTimeZone = browserTimeZone, membershipHash, track = analytics.track }: Props) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +77,12 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
     setError(null);
     try {
       const res = await submit({ email, timeZone: resolveTimeZone(), source, membershipInterest: member });
-      if (res.status === 202) { setDone(email); return; }
+      if (res.status === 202) {
+        // Solo método y origen: el correo nunca sale hacia la medición.
+        track({ name: 'sign_up', method: 'email', source });
+        setDone(email);
+        return;
+      }
       const body = res.status === 400 ? ((await res.json().catch(() => ({}))) as { error?: unknown }) : {};
       setError(typeof body.error === 'string' && body.error ? body.error : t.errRetry);
     } catch {

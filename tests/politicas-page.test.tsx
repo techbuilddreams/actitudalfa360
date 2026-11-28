@@ -50,3 +50,31 @@ describe('/politicas: términos', () => {
     expect(terms).not.toMatch(/Nueva York/);
   });
 });
+
+describe('/politicas: qué medimos y por qué', () => {
+  const list = () => document.querySelector('#medicion + ul')!.textContent!;
+  it('subsección #medicion dentro de Privacidad', () => {
+    render(<Politicas />);
+    expect(screen.getByRole('heading', { level: 3, name: /medimos/i }).id).toBe('medicion');
+  });
+  it('dice herramienta, qué se mide, qué NO, para qué, cuánto se guarda y cómo decir no', () => {
+    render(<Politicas />);
+    const text = list();
+    for (const re of [/Google Analytics 4/, /productos? que ves/, /empiezas a pagar/, /te apuntas al reto/, /14 meses/, /Global Privacy Control/, /Preferencias de cookies/])
+      expect(text).toMatch(re);
+  });
+  it('la línea roja por escrito: ni casillas, ni salud, ni correo a la medición; sin anuncios', () => {
+    render(<Politicas />);
+    const text = list();
+    expect(text).toMatch(/no enviamos tu correo/);
+    expect(text).toMatch(/casillas del reto/);
+    expect(text).toMatch(/no usamos anuncios/i);
+    expect(text).toMatch(/Google Signals/);
+  });
+  it('dice qué recibe Google y qué cookies pone (transparencia UE)', () => {
+    render(<Politicas />);
+    const text = list();
+    expect(text).toMatch(/_ga/);
+    expect(text).toMatch(/dirección IP/);
+  });
+});
