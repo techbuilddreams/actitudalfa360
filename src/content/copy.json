@@ -1,42 +1,137 @@
 {
   "home": {
-    "title": "Actitud Alfa 360 | Tazas y vasos con frases en español",
-    "description": "Tazas y vasos con frases en español para quienes están construyendo algo: cuerpo, mente, dinero y carácter. Hechos a pedido. Envío en EE. UU.",
-    "h1": "Mentalidad para los que están construyendo algo",
-    "heroLede": "No es dominar a nadie, es dominarte a ti. Actitud Alfa 360 es para el que se levanta temprano, maneja la ruta, entrena y trabaja en lo suyo. Piezas para tu día a día que te recuerdan por qué empezaste.",
-    "pillarsIntro": "El 360 significa no descuidar ninguna área. Si una se cae, arrastra a las demás. Cuatro pilares, cuatro verbos:",
-    "shopIntro": "Cada pieza se imprime cuando la pides, con el sello Actitud Alfa 360 y una frase que no necesita explicación. Para el escritorio, el carro o el gym.",
-    "manifesto": [
-      "Nadie viene a salvarte. Ni el jefe, ni la suerte, ni el algoritmo. Lo que tengas dentro de cinco años lo estás construyendo hoy, con lo que haces cuando nadie te está mirando.",
-      "Por eso el 360: entrenas el cuerpo, alimentas la mente, produces dinero y cumples tu palabra. No uno a la vez. Todos, todos los días, aunque sea un poco.",
-      "Háblame de hacer dinero, no de gente. Menos chisme y más trabajo. Menos excusas y más disciplina. Eso es Actitud Alfa 360."
+    "title": "Disciplina en 4 pilares: reto de {diasReto} días y tienda | Actitud Alfa 360",
+    "description": "Reto gratis de {diasReto} días de disciplina en cuerpo, mente, dinero y carácter: cada noche marcas si cumpliste. Y tazas y vasos con frases en español, hechos a pedido en EE. UU.",
+    "eyebrow": "Reto de {diasReto} días · Gratis",
+    "h1": "Disciplina diaria en cuerpo, mente, dinero y carácter.",
+    "lede": "Un reto gratis de {diasReto} días. Cada noche marcas si cumpliste en los cuatro pilares; te toma 30 segundos.",
+    "sealAlt": "Sello de Actitud Alfa 360: un ojo dentro de un triángulo",
+    "pillars": {
+      "eyebrow": "El 360",
+      "h2": "Cuatro pilares, cuatro verbos",
+      "lede": "Si un área se cae, arrastra a las demás. Por eso se cumplen las cuatro, todos los días, aunque sea un poco."
+    },
+    "how": {
+      "eyebrow": "Cómo funciona",
+      "h2": "Treinta días, una pregunta cada noche",
+      "steps": [
+        {
+          "h": "Dejas tu correo",
+          "p": "Te llegan las reglas y confirmas el correo. El día 1 es mañana."
+        },
+        {
+          "h": "Cada noche: ¿cumpliste hoy?",
+          "p": "Cuatro casillas, una por pilar, en el mismo correo. Treinta segundos. Si te dormiste, tienes hasta el mediodía."
+        },
+        {
+          "h": "Al día 30, tu puntuación",
+          "p": "Un punto por pilar cumplido cada día, hasta 120. Ves en qué pilar cumples y en cuál te caes. Sin adornos."
+        }
+      ]
+    },
+    "registro": {
+      "eyebrow": "El registro",
+      "h2": "Así se ve cumplir",
+      "lede": "No es una app más. Es una pregunta honesta que te llega todos los días a la misma hora.",
+      "q": "¿Cumpliste hoy?",
+      "example": "Ejemplo · día 12 de 30",
+      "caption": "Ejemplo del registro diario",
+      "rows": [
+        {
+          "verb": "Entrena",
+          "task": "Cuerpo · 20 minutos de movimiento",
+          "done": true
+        },
+        {
+          "verb": "Lee",
+          "task": "Mente · 10 páginas",
+          "done": true
+        },
+        {
+          "verb": "Produce",
+          "task": "Dinero · 30 minutos en lo tuyo",
+          "done": false
+        },
+        {
+          "verb": "Cumple",
+          "task": "Carácter · la promesa de hoy",
+          "done": true
+        }
+      ],
+      "today": "Hoy",
+      "todayValue": "3 de 4",
+      "total": "En el reto",
+      "totalValue": "41 de 48",
+      "doneLabel": "cumplido",
+      "notDoneLabel": "sin cumplir"
+    },
+    "manifesto": {
+      "h2": "No es dominar a nadie. Es dominarte a ti.",
+      "lede": "Nadie viene a salvarte. Lo que tengas dentro de cinco años lo estás construyendo hoy, con lo que haces cuando nadie te está mirando."
+    },
+    "member": {
+      "eyebrow": "Próximamente",
+      "h2": "Membresía El 360",
+      "per": "al mes",
+      "lede": "Para que alguien te pregunte cada día si cumpliste, también después del día 30. Todavía no está abierta.",
+      "cta": "Avísame cuando abra",
+      "micro": "Si haces el reto, te avisamos por correo. No cobramos nada hasta que abra.",
+      "listLabel": "Lo que tendrá",
+      "items": [
+        "Registro diario de los cuatro pilares",
+        "Una escuadra de 5 personas que ve tu progreso",
+        "Un reto nuevo cada mes"
+      ]
+    },
+    "shop": {
+      "eyebrow": "Tienda",
+      "h2": "Para el escritorio, el carro y el gym",
+      "lede": "Cada pieza se imprime cuando la pides, en Estados Unidos.",
+      "kitName": "Kit del día",
+      "kitLine": "Taza + vaso, con un solo envío de {envio}."
+    },
+    "trust": [
+      {
+        "b": "Pago seguro",
+        "t": "Stripe, Apple Pay y Google Pay. No guardamos tu tarjeta."
+      },
+      {
+        "b": "Reemplazo o reembolso",
+        "t": "Si llega dañado, con defecto o equivocado, avísanos dentro de {diasDevolucion} días de la entrega."
+      },
+      {
+        "b": "Envío fijo de {envio}",
+        "t": "A cualquier dirección de Estados Unidos, por pedido."
+      }
     ],
+    "trustLabel": "Garantías",
+    "faqHead": {
+      "eyebrow": "Preguntas",
+      "h2": "Antes de empezar"
+    },
     "faq": [
       {
-        "q": "¿Qué significa Actitud Alfa 360?",
-        "a": "Actitud Alfa 360 es una marca de mentalidad y desarrollo personal en español. \"Alfa\" no significa dominar a otros, sino dominarte a ti mismo. \"360\" significa crecer en todas las áreas de la vida a la vez: cuerpo (entrena), mente (lee), dinero (produce) y carácter (cumple)."
+        "q": "¿Qué pasa después de los {diasReto} días?",
+        "a": "Te quedas con tu puntuación por pilar. Estamos preparando la membresía El 360 ({precioMembresia} al mes) para seguir con una escuadra; te avisamos por correo cuando abra."
       },
       {
-        "q": "¿Para quién es Actitud Alfa 360?",
-        "a": "Es para latinos y personas de habla hispana que están construyendo algo: emprendedores, repartidores y choferes de apps, gente que trabaja doble turno y quienes entrenan en el gym. Si prefieres hablar de metas y dinero en lugar de hablar de los demás, esta marca es para ti."
+        "q": "¿El reto es gratis de verdad?",
+        "a": "Sí. No pedimos tarjeta. Solo tu correo, para mandarte las reglas y el registro de cada noche."
       },
       {
-        "q": "¿Cuánto tarda en llegar mi pedido?",
-        "a": "Cada producto se hace a pedido. La producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles adicionales, así que en total son aproximadamente de 5 a 12 días hábiles. Por ahora solo enviamos dentro de Estados Unidos, con un costo fijo de {envio}."
+        "q": "¿Necesito ir al gimnasio?",
+        "a": "No. El mínimo del pilar Cuerpo son 20 minutos de movimiento. Caminar cuenta."
       },
       {
-        "q": "¿Puedo devolver un producto?",
-        "a": "Como cada pieza se fabrica cuando la pides, no aceptamos devoluciones por cambio de opinión. Si llega dañada, con un defecto o no es lo que pediste, avísanos dentro de los {diasDevolucion} días siguientes a la entrega con una foto y te enviamos un reemplazo o te devolvemos el dinero. Los detalles están en nuestra página de políticas."
+        "q": "¿Por qué se llama Actitud Alfa?",
+        "a": "Porque el «alfa» es contigo mismo: dominar tus horas, tu dinero y tu carácter. Nada que ver con dominar a otros."
       },
       {
-        "q": "¿De qué material son la taza y el vaso térmico?",
-        "a": "La taza negra de 15 oz es de cerámica, impresa por ambos lados, y se puede usar en el microondas y el lavavajillas. El vaso térmico de 20 oz es de acero inoxidable, trae tapa y popote, cabe en el portavasos del carro y se recomienda lavarlo a mano."
-      },
-      {
-        "q": "¿Qué le regalo a un emprendedor o a alguien que trabaja duro?",
-        "a": "Un regalo que use todos los días funciona mejor que uno que se queda guardado. La taza negra de 15 oz ({precioTaza}) acompaña el café de la mañana en el escritorio, y el vaso térmico de 20 oz ({precioVaso}) va en el carro o al gym. Ambos llevan la mentalidad Actitud Alfa 360."
+        "q": "¿Cuánto tarda un pedido de la tienda?",
+        "a": "Cada pieza se hace a pedido: de {diasProduccion} días hábiles de producción y de {diasEnvio} de envío. En la ficha de cada producto ves la fecha estimada."
       }
-    ]
+    ],
+    "closing": "Empieza mañana. Hoy solo dejas el correo."
   },
   "products": {
     "taza-negra-15oz": {
@@ -79,7 +174,9 @@
         "taza 15 oz negra",
         "spanish quote mug",
         "regalo para hombre latino"
-      ]
+      ],
+      "pillar": "dinero",
+      "cardLine": "Cerámica, apta para microondas."
     },
     "vaso-termico-20oz": {
       "title": "Vaso térmico 20 oz de acero inoxidable | Actitud Alfa 360",
@@ -120,7 +217,9 @@
         "regalo para emprendedor",
         "tumbler 20 oz spanish",
         "vaso para el gym"
-      ]
+      ],
+      "pillar": "dinero",
+      "cardLine": "Acero inoxidable, cabe en el portavasos."
     }
   },
   "politicas": {
@@ -158,5 +257,207 @@
       "#Hustle",
       "#Mentalidad360"
     ]
+  },
+  "pillars": [
+    {
+      "id": "cuerpo",
+      "rn": "I",
+      "name": "Cuerpo",
+      "verb": "Entrena",
+      "desc": "Mueves el cuerpo aunque no tengas ganas.",
+      "base": [
+        "",
+        "20 minutos",
+        " de movimiento. Caminar cuenta."
+      ],
+      "estandar": [
+        "",
+        "45 minutos",
+        " de entrenamiento, uno al aire libre por semana."
+      ]
+    },
+    {
+      "id": "mente",
+      "rn": "II",
+      "name": "Mente",
+      "verb": "Lee",
+      "desc": "Lees algo que te deje mejor que ayer.",
+      "base": [
+        "",
+        "10 páginas",
+        " de un libro. Las redes no cuentan."
+      ],
+      "estandar": [
+        "",
+        "20 páginas",
+        " y una idea anotada."
+      ]
+    },
+    {
+      "id": "dinero",
+      "rn": "III",
+      "name": "Dinero",
+      "verb": "Produce",
+      "desc": "Le dedicas tiempo a lo tuyo, no solo al jefe.",
+      "base": [
+        "",
+        "30 minutos",
+        " en lo tuyo: negocio, habilidad o ahorro."
+      ],
+      "estandar": [
+        "",
+        "1 hora",
+        " en lo tuyo y anotas lo que gastaste."
+      ]
+    },
+    {
+      "id": "caracter",
+      "rn": "IV",
+      "name": "Carácter",
+      "verb": "Cumple",
+      "desc": "Haces lo que dijiste que ibas a hacer.",
+      "base": [
+        "Por la mañana escribes ",
+        "una promesa",
+        " para hoy, y la cumples."
+      ],
+      "estandar": [
+        "La promesa, y ",
+        "un día sin quejas",
+        " ni hablar de otros."
+      ]
+    }
+  ],
+  "reto": {
+    "title": "Reto de {diasReto} días de disciplina (gratis) | Actitud Alfa 360",
+    "description": "Reto gratis de {diasReto} días de disciplina: un mínimo diario en cuerpo, mente, dinero y carácter. Reglas completas, sin reinicio si fallas, y un registro de 30 segundos cada noche.",
+    "crumb": "Reto de {diasReto} días",
+    "eyebrow": "Gratis · Empiezas cualquier día",
+    "h1": "Reto de {diasReto} días de disciplina: cuerpo, mente, dinero y carácter",
+    "lede": "Las reglas están completas en esta página, sin registro. El correo es solo para el registro de cada noche.",
+    "factsLabel": "El reto en cifras",
+    "facts": [
+      {
+        "v": "30",
+        "l": "días"
+      },
+      {
+        "v": "4",
+        "l": "pilares al día"
+      },
+      {
+        "v": "30 s",
+        "l": "para registrar"
+      }
+    ],
+    "rules": {
+      "eyebrow": "Las reglas",
+      "h2": "Un mínimo por pilar, cada día",
+      "lede": "Eliges un nivel el día 1. Puedes subir de Base a Estándar cuando quieras; si bajas, esos días cuentan como Base. Base es para quien trabaja doble turno; Estándar, para quien ya tiene rutina.",
+      "caption": "Reglas del reto por pilar y nivel",
+      "colPillar": "Pilar",
+      "colBase": "Base",
+      "colStd": "Estándar"
+    },
+    "fail": {
+      "eyebrow": "Si fallas un día",
+      "h2": "No vuelves al día 1",
+      "paras": [
+        "El día del reto lo marca el calendario desde que empiezas. Un día que no cumples vale cero y hoy sigues en el día que toca: si ayer fallaste el día 9, hoy haces el 10. No recuperas el día perdido ni haces dos en uno.",
+        "¿Se te pasó marcar por la noche? Puedes anotar el día anterior hasta el mediodía siguiente, en tu hora. Anotas lo que hiciste; no lo haces después.",
+        "Al día 30 cuenta tu puntuación, no tu racha.",
+        "Otros retos te obligan a reiniciar. Aquí, quien maneja doce horas y falla un martes no abandona el miércoles."
+      ]
+    },
+    "day": {
+      "eyebrow": "Un día del reto",
+      "h2": "Lo que pasa cada día",
+      "steps": [
+        {
+          "h": "Por la mañana",
+          "p": "Escribes la promesa del pilar Carácter. Una línea."
+        },
+        {
+          "h": "Durante el día",
+          "p": "Cumples los cuatro mínimos, en el orden que te deje tu trabajo."
+        },
+        {
+          "h": "Por la noche",
+          "p": "Te llega «¿Cumpliste hoy?». Marcas cuatro casillas y listo. Si te dormiste, lo anotas antes del mediodía."
+        }
+      ]
+    },
+    "after": {
+      "eyebrow": "Al terminar · próximamente",
+      "h2": "Sigue con una escuadra",
+      "lede": "La membresía El 360 te pondrá en una escuadra de 5 personas que ve si cumpliste. Todavía no está abierta.",
+      "cta": "Avísame cuando abra",
+      "micro": "Deja tu correo para el reto y te avisamos cuando abra. No cobramos nada hasta entonces."
+    },
+    "faqHead": {
+      "eyebrow": "Preguntas",
+      "h2": "Sobre el reto"
+    },
+    "faq": [
+      {
+        "q": "¿Qué hacen con mi correo?",
+        "a": "Te mandamos las reglas y el registro de cada noche. No lo vendemos ni lo compartimos. Te das de baja con un clic en cualquier correo."
+      },
+      {
+        "q": "¿Qué cuenta como leer?",
+        "a": "Un libro, en papel, digital o audio. Redes sociales, noticias y videos cortos no cuentan."
+      },
+      {
+        "q": "¿Qué cuenta como «lo tuyo» en el pilar Dinero?",
+        "a": "Tiempo en algo que te hace crecer fuera del sueldo: tu negocio, aprender una habilidad, ordenar tu presupuesto o ahorrar."
+      },
+      {
+        "q": "¿Puedo cambiar de nivel a mitad del reto?",
+        "a": "Sí. Puedes subir de Base a Estándar cuando quieras. Si bajas a Base, esos días cuentan como Base."
+      },
+      {
+        "q": "¿Y si me duermo antes de marcar?",
+        "a": "Puedes anotar el día anterior hasta el mediodía siguiente. Es anotar lo que ya hiciste, no hacerlo después."
+      }
+    ],
+    "health": "Este reto no sustituye el consejo médico. Si tienes una condición de salud o llevas tiempo sin hacer ejercicio, consulta a tu médico antes de empezar.",
+    "closing": "El día 1 es mañana."
+  },
+  "capture": {
+    "label": "Tu correo para el registro diario",
+    "placeholder": "tu@correo.com",
+    "button": "Empiezo el reto",
+    "busy": "Enviando…",
+    "micro": "Gratis y sin tarjeta. Te das de baja con un clic.",
+    "privacy": "Privacidad",
+    "health": "No sustituye el consejo médico: si tienes una condición de salud, consulta a tu médico antes de empezar.",
+    "errEmpty": "Escribe tu correo para recibir el registro de cada noche.",
+    "errInvalid": "Ese correo no parece completo. Revisa que tenga @ y un dominio, por ejemplo tu@correo.com.",
+    "errRetry": "No pudimos registrarte ahora. Revisa tu conexión e intenta de nuevo en un momento.",
+    "okTitle": "Listo. Revisa tu correo.",
+    "okBefore": "Te mandamos un enlace a ",
+    "okAfter": " para confirmar. El día 1 empieza mañana."
+  },
+  "pdp": {
+    "crumbHome": "Inicio",
+    "crumbShop": "Tienda",
+    "buy": "Comprar ahora",
+    "barBuy": "Comprar",
+    "paywith": "Pago seguro con Stripe · Apple Pay · Google Pay",
+    "printed": "Se imprime en EE. UU. cuando la pides",
+    "kitButton": "Agregar el kit",
+    "inUse": {
+      "eyebrow": "En uso",
+      "h2": "La pieza en detalle"
+    },
+    "pillarPre": "Esta frase es del pilar ",
+    "pillarPost": ". Ahí están sus reglas del reto.",
+    "faqHead": {
+      "eyebrow": "Preguntas",
+      "h2": "Sobre este producto"
+    },
+    "kitTitle": "Llévate también: ",
+    "kitPricePre": "Kit ",
+    "kitPriceMid": " · un solo envío, ahorras "
   }
 }

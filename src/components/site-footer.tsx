@@ -1,52 +1,49 @@
 import Link from 'next/link';
+import { copy } from '@/content';
 import { site } from '@/config/site';
+import { displayName } from '@/domain/product';
 import { catalog } from '@/infrastructure/container';
 
+/** Pie. Solo enlaza lo que existe: sin Guías ni páginas de pilar (van a sus reglas del reto). */
 export function SiteFooter() {
   const products = catalog.all();
   return (
-    <footer className="site-footer">
+    <footer className="foot">
       <div className="wrap">
-        <div className="signoff">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/sello-320.webp" width={72} height={72} alt="" loading="lazy" decoding="async" />
-          <p>Háblame de hacer dinero, <em>no de gente.</em></p>
-        </div>
-
-        <div className="fcols">
-          <div className="fbrand">
-            <Link className="brand" href="/"><span>{site.name}</span></Link>
-            <p>Mentalidad 360° para los que están construyendo algo. Cuerpo, mente, dinero y carácter.</p>
+        <div className="foot-grid">
+          <div className="foot-brand">
+            <Link className="brand" href="/">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/img/sello-68.webp" alt="" width={28} height={28} loading="lazy" decoding="async" />
+              {site.name}
+            </Link>
+            <p>{site.slogan}</p>
           </div>
-          <nav aria-label="Tienda">
-            <p className="fhead">Tienda</p>
+          <nav aria-labelledby="f-reto">
+            <h2 className="foot-h" id="f-reto">Reto</h2>
             <ul>
-              {products.map((p) => <li key={p.slug}><Link href={`/productos/${p.slug}`}>{p.name}</Link></li>)}
-              <li><Link href="/#tienda">Toda la colección</Link></li>
+              <li><Link href="/reto-30-dias">Reto de 30 días</Link></li>
+              <li><Link href="/#membresia">Membresía</Link></li>
             </ul>
           </nav>
-          <nav aria-label="Marca">
-            <p className="fhead">Marca</p>
-            <ul>
-              <li><Link href="/#pilares">Los 4 pilares</Link></li>
-              <li><Link href="/#manifiesto">Manifiesto</Link></li>
-              <li><Link href="/#preguntas">Preguntas</Link></li>
-            </ul>
+          <nav aria-labelledby="f-pilares">
+            <h2 className="foot-h" id="f-pilares">Pilares</h2>
+            <ul>{copy.pillars.map((p) => <li key={p.id}><Link href={`/reto-30-dias#regla-${p.id}`}>{p.name}</Link></li>)}</ul>
           </nav>
-          <nav aria-label="Legal">
-            <p className="fhead">Ayuda y legal</p>
+          <nav aria-labelledby="f-tienda">
+            <h2 className="foot-h" id="f-tienda">Tienda</h2>
             <ul>
+              {products.map((p) => <li key={p.slug}><Link href={`/productos/${p.slug}`}>{displayName(p)}</Link></li>)}
               <li><Link href="/politicas#envios">Envíos y devoluciones</Link></li>
-              <li><Link href="/politicas#privacidad">Privacidad</Link></li>
-              <li><Link href="/politicas#terminos">Términos</Link></li>
-              <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
             </ul>
           </nav>
         </div>
-
-        <div className="fbase">
-          <p>© {new Date().getFullYear()} {site.name} · {site.legalName}</p>
-          <p>Hecho a pedido · Envíos en EE. UU.</p>
+        <div className="legal">
+          <span>© {new Date().getFullYear()} {site.legalName}</span>
+          {site.postalAddress && <span>{site.postalAddress}</span>}
+          <a href={`mailto:${site.email}`}>{site.email}</a>
+          <Link href="/politicas#privacidad">Privacidad</Link>
+          <Link href="/politicas#terminos">Términos</Link>
         </div>
       </div>
     </footer>

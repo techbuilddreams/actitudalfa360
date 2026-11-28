@@ -7,18 +7,8 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import './globals.css';
 
-const display = localFont({ src: './fonts/Anton-Regular.woff2', variable: '--font-display', display: 'swap', preload: true });
-const body = localFont({ src: './fonts/Archivo-wght.woff2', variable: '--font-body', weight: '100 900', display: 'swap' });
-const mono = localFont({
-  src: [
-    { path: './fonts/IBMPlexMono-Regular.woff2', weight: '400' },
-    { path: './fonts/IBMPlexMono-Medium.woff2', weight: '500' },
-  ],
-  variable: '--font-mono',
-  display: 'swap',
-  preload: false,
-});
-// Serifa editorial (solo latin): titulares de sección, citas y firma. Se usa en el hero ⇒ precarga.
+const body = localFont({ src: './fonts/Archivo-wght.woff2', variable: '--font-body', weight: '100 900', display: 'swap', preload: true });
+// Serifa editorial (solo latin): todos los titulares. Se usa en el H1 ⇒ precarga.
 const serif = localFont({
   src: [
     { path: './fonts/CormorantGaramond-Medium.woff2', weight: '500', style: 'normal' },
@@ -34,7 +24,6 @@ export const metadata: Metadata = {
   title: { default: copy.home.title, template: `%s | ${site.name}` },
   description: copy.home.description,
   applicationName: site.name,
-  alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     siteName: site.name,
@@ -53,12 +42,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // CSP con nonce por petición ⇒ cada página se renderiza al pedirla (los scripts llevan el nonce).
   await connection();
   return (
-    <html lang={site.lang} className={`${display.variable} ${body.variable} ${mono.variable} ${serif.variable}`}>
+    <html lang={site.lang} className={`${body.variable} ${serif.variable}`}>
       <body>
         {site.isStaging && <div className="preview-bar">Staging · no es la tienda real · pagos en modo prueba</div>}
         <a className="skip" href="#main">Ir al contenido</a>
         <SiteHeader />
-        <main className="wrap" id="main">{children}</main>
+        <main id="main">{children}</main>
         <SiteFooter />
       </body>
     </html>

@@ -19,5 +19,9 @@ export const copy = fillCopy(raw, {
   precioTaza: formatMoney(PRICES.taza),
   precioVaso: formatMoney(PRICES.vaso),
   diasDevolucion: String(site.returns.days),
+  diasReto: String(site.challenge.days),
+  precioMembresia: formatMoney(usd(site.membership.priceCents)),
+  diasProduccion: `${site.shipping.handlingDays.min} a ${site.shipping.handlingDays.max}`,
+  diasEnvio: `${site.shipping.transitDays.min} a ${site.shipping.transitDays.max}`,
   impuesto: pub.STRIPE_AUTOMATIC_TAX ? ' El impuesto de tu estado se suma al pagar.' : '',
 });

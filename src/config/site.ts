@@ -15,6 +15,12 @@ export const site = {
     transitDays: { min: 3, max: 7 },
   },
   returns: { days: 30 },
+  /** Duración del reto (días de calendario). */
+  challenge: { days: 30 },
+  /** Membresía: aún no se vende (decisión 10). El precio se muestra como «próximamente». */
+  membership: { priceCents: 1200 },
+  /** Dirección postal para el pie (CAN-SPAM). null hasta que Luis dé una real: no se inventa. */
+  postalAddress: null as string | null,
 } as const;
 
 export const deliveryPromise =
