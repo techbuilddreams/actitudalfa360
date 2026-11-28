@@ -1,15 +1,16 @@
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { normalizeEmail } from '@/domain/email';
 
 export interface CaptureText {
   label: string; placeholder: string; button: string; busy: string; micro: string; privacy: string; health: string;
   errEmpty: string; errInvalid: string; errRetry: string; okTitle: string; okBefore: string; okAfter: string;
+  membership: string; daily: string;
 }
 
-export interface SignupPayload { email: string; timeZone: string; source: 'home' | 'reto' }
+export interface SignupPayload { email: string; timeZone: string; source: 'home' | 'reto'; membershipInterest: boolean }
 
 const postSignup = (p: SignupPayload) =>
   fetch('/api/reto/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
@@ -24,15 +25,28 @@ interface Props {
   text: CaptureText;
   /** Puerto inyectable (tests). Por defecto, POST a /api/reto/signup. */
   submit?: (p: SignupPayload) => Promise<Response>;
+  /** Zona del participante, inyectable (tests). Por defecto, la del navegador. */
+  resolveTimeZone?: () => string;
+  /** Si la URL llega con este hash («Avísame cuando abra»), la casilla de la membresía empieza marcada. */
+  membershipHash?: string;
 }
 
 /** Alta en el reto: un solo campo. Misma regla de correo que el servidor (`normalizeEmail`). */
-export function EmailCapture({ source, text: t, submit = postSignup }: Props) {
+export function EmailCapture({ source, text: t, submit = postSignup, resolveTimeZone = browserTimeZone, membershipHash }: Props) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const [member, setMember] = useState(false);
+
+  useEffect(() => {
+    if (!membershipHash) return;
+    const sync = () => { if (window.location.hash === `#${membershipHash}`) setMember(true); };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, [membershipHash]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,7 +61,7 @@ export function EmailCapture({ source, text: t, submit = postSignup }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const res = await submit({ email, timeZone: browserTimeZone(), source });
+      const res = await submit({ email, timeZone: resolveTimeZone(), source, membershipInterest: member });
       if (res.status === 202) { setDone(email); return; }
       const body = res.status === 400 ? ((await res.json().catch(() => ({}))) as { error?: unknown }) : {};
       setError(typeof body.error === 'string' && body.error ? body.error : t.errRetry);
@@ -78,6 +92,8 @@ export function EmailCapture({ source, text: t, submit = postSignup }: Props) {
         <button className="btn" type="submit" disabled={busy} aria-busy={busy}>{t.button}</button>
       </div>
       {error && <p className="err" id={errId} role="alert">{error}</p>}
+      <label className="check"><input type="checkbox" name="membresia" checked={member} onChange={(e) => setMember(e.target.checked)} /> {t.membership}</label>
+      <p className="micro">{t.daily}</p>
       <p className="micro">{t.micro} <Link href="/politicas#privacidad">{t.privacy}</Link>.</p>
       <p className="micro health-note">{t.health}</p>
     </form>

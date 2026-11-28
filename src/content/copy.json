@@ -436,7 +436,9 @@
     "errRetry": "No pudimos registrarte ahora. Revisa tu conexión e intenta de nuevo en un momento.",
     "okTitle": "Listo. Revisa tu correo.",
     "okBefore": "Te mandamos un enlace a ",
-    "okAfter": " para confirmar. El día 1 empieza mañana."
+    "okAfter": " para confirmar. El día 1 empieza mañana.",
+    "membership": "Avísame también cuando abra la membresía",
+    "daily": "Te escribimos una vez al día durante el reto."
   },
   "pdp": {
     "crumbHome": "Inicio",

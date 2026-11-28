@@ -110,7 +110,7 @@ export default function Home() {
               <div className="member-name"><h2 id="h-member" className="h3">{h.member.h2}</h2><span className="price num">{formatMoney(usd(site.membership.priceCents))} <small>{h.member.per}</small></span></div>
               <p className="lede">{h.member.lede}</p>
               {/* Decisión 10: no se vende aún. El aviso es el mismo alta del reto. */}
-              <a className="btn ghost" href="#empieza">{h.member.cta}</a>
+              <a className="btn ghost" href="#empieza-membresia">{h.member.cta}</a>
               <p className="micro">{h.member.micro}</p>
             </div>
             <ul className="checks" aria-label={h.member.listLabel}>{h.member.items.map((i) => <li key={i}>{i}</li>)}</ul>
@@ -151,7 +151,8 @@ export default function Home() {
       <section className="sec band" id="empieza" aria-labelledby="h-cierre">
         <div className="wrap closing">
           <h2 id="h-cierre">{h.closing}</h2>
-          <EmailCapture source="home" text={copy.capture} />
+          <span id="empieza-membresia" aria-hidden="true" />
+          <EmailCapture source="home" text={copy.capture} membershipHash="empieza-membresia" />
         </div>
       </section>
     </>

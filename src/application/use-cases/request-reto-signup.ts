@@ -18,6 +18,8 @@ export function makeRequestRetoSignup({ signup, isValidTimeZone }: Deps) {
     if (typeof timeZone !== 'string' || !isValidTimeZone(timeZone)) throw new DomainError('INVALID_INPUT', 'No pudimos reconocer tu zona horaria.');
     const source = o.source;
     if (source !== 'home' && source !== 'reto') throw new DomainError('INVALID_INPUT', 'Petición no válida.');
-    await signup.request({ email, timeZone, source });
+    const interest = o.membershipInterest ?? false;
+    if (typeof interest !== 'boolean') throw new DomainError('INVALID_INPUT', 'Petición no válida.');
+    await signup.request({ email, timeZone, source, membershipInterest: interest });
   };
 }

@@ -76,7 +76,7 @@ export function RetoContent() {
               <p className="lede">{r.after.lede}</p>
             </div>
             <div className="stack">
-              <a className="btn ghost" href="#empieza">{r.after.cta}</a>
+              <a className="btn ghost" href="#empieza-membresia">{r.after.cta}</a>
               <p className="micro">{r.after.micro}</p>
             </div>
           </div>
@@ -94,7 +94,8 @@ export function RetoContent() {
       <section className="sec band" id="empieza" aria-labelledby="h-cierre-reto">
         <div className="wrap closing">
           <h2 id="h-cierre-reto">{r.closing}</h2>
-          <EmailCapture source="reto" text={copy.capture} />
+          <span id="empieza-membresia" aria-hidden="true" />
+          <EmailCapture source="reto" text={copy.capture} membershipHash="empieza-membresia" />
         </div>
       </section>
     </>
