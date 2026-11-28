@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import copy from '@/content/copy.json';
+import { copy } from '@/content';
 import { site } from '@/config/site';
-import { env } from '@/config/env';
+import { shippingFlatCents } from '@/config/env';
 import { formatMoney } from '@/domain/money';
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function Politicas() {
-  const ship = formatMoney({ cents: env().SHIPPING_FLAT_CENTS, currency: 'usd' });
+  const ship = formatMoney({ cents: shippingFlatCents(), currency: 'usd' });
   const { handlingDays: h, transitDays: t } = site.shipping;
   return (
     <article className="doc">

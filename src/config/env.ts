@@ -109,3 +109,13 @@ export function requireEnv<K extends keyof ServerEnv>(key: K): NonNullable<Serve
 }
 
 export const isProduction = () => env().APP_ENV === 'production';
+
+/**
+ * Solo el envío fijo, validado con el mismo esquema. Lo usa el copy público (home, layout):
+ * un secreto de pago mal configurado no debe tumbar páginas que no cobran.
+ */
+export function shippingFlatCents(raw: NodeJS.ProcessEnv = process.env): number {
+  const r = schema.shape.SHIPPING_FLAT_CENTS.safeParse(raw.SHIPPING_FLAT_CENTS);
+  if (!r.success) throw new Error('Variable de entorno inválida: SHIPPING_FLAT_CENTS');
+  return r.data;
+}

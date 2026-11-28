@@ -22,11 +22,11 @@
       },
       {
         "q": "¿Cuánto tarda en llegar mi pedido?",
-        "a": "Cada producto se hace a pedido. La producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles adicionales, así que en total son aproximadamente de 5 a 12 días hábiles. Por ahora solo enviamos dentro de Estados Unidos, con un costo fijo de $8.99."
+        "a": "Cada producto se hace a pedido. La producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles adicionales, así que en total son aproximadamente de 5 a 12 días hábiles. Por ahora solo enviamos dentro de Estados Unidos, con un costo fijo de {envio}."
       },
       {
         "q": "¿Puedo devolver un producto?",
-        "a": "Como cada pieza se fabrica cuando la pides, solo aceptamos devoluciones o reemplazos si el producto llega dañado o con un defecto. Tienes 30 días desde la entrega para reportarlo con una foto del problema. No aceptamos devoluciones por cambio de opinión. Los detalles están en nuestra página de políticas."
+        "a": "Como cada pieza se fabrica cuando la pides, no aceptamos devoluciones por cambio de opinión. Si llega dañada, con un defecto o no es lo que pediste, avísanos dentro de los 30 días siguientes a la entrega con una foto y te enviamos un reemplazo o te devolvemos el dinero. Los detalles están en nuestra página de políticas."
       },
       {
         "q": "¿De qué material son la taza y el vaso térmico?",
@@ -50,7 +50,7 @@
         "Impresa por ambos lados: el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\"",
         "Apta para microondas y lavavajillas",
         "Hecha a pedido: producción en 2 a 5 días hábiles y envío en 3 a 7 días hábiles",
-        "Envío fijo de $8.99 a cualquier dirección de Estados Unidos"
+        "Envío fijo de {envio} a cualquier dirección de Estados Unidos"
       ],
       "faq": [
         {
@@ -63,7 +63,7 @@
         },
         {
           "q": "¿Cuánto cuesta la taza y cuánto tarda en llegar?",
-          "a": "La taza negra de 15 oz cuesta $24.99 más $8.99 de envío fijo dentro de Estados Unidos. Se imprime a pedido: la producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles, en total de 5 a 12 días hábiles aproximadamente."
+          "a": "La taza negra de 15 oz cuesta $24.99 más {envio} de envío fijo dentro de Estados Unidos. Se imprime a pedido: la producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles, en total de 5 a 12 días hábiles aproximadamente."
         }
       ],
       "imageAlts": [
@@ -92,7 +92,7 @@
         "Incluye tapa y popote",
         "Forma delgada que cabe en el portavasos del carro",
         "Lavar a mano para cuidar el acabado y la impresión",
-        "Hecho a pedido, con envío fijo de $8.99 dentro de Estados Unidos"
+        "Hecho a pedido, con envío fijo de {envio} dentro de Estados Unidos"
       ],
       "faq": [
         {
@@ -105,7 +105,7 @@
         },
         {
           "q": "¿Qué incluye el vaso térmico y cuánto cuesta?",
-          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta $34.99. El envío dentro de Estados Unidos es de $8.99 fijo. Se hace a pedido: de 2 a 5 días hábiles de producción más 3 a 7 días hábiles de envío."
+          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta $34.99. El envío dentro de Estados Unidos es de {envio} fijo. Se hace a pedido: de 2 a 5 días hábiles de producción más 3 a 7 días hábiles de envío."
         }
       ],
       "imageAlts": [
@@ -125,7 +125,7 @@
   },
   "politicas": {
     "title": "Envíos, devoluciones y privacidad | Actitud Alfa 360",
-    "description": "Envío fijo de $8.99 solo en EE. UU. Producción de 2 a 5 días hábiles y envío de 3 a 7. Reemplazo por daño o defecto dentro de 30 días."
+    "description": "Envío fijo de {envio} solo en EE. UU. Producción de 2 a 5 días hábiles y envío de 3 a 7. Reemplazo o reembolso por daño, defecto o error en 30 días."
   },
   "organization": {
     "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, con sede en Nueva York.",

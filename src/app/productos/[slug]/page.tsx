@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { deliveryPromise } from '@/config/site';
 import { env } from '@/config/env';
-import { formatMoney } from '@/domain/money';
+import { formatMoney, usd } from '@/domain/money';
+import { shippingNote } from '@/lib/price-notes';
 import { defaultVariant } from '@/domain/product';
 import { catalog } from '@/infrastructure/container';
 import { BuyBox } from '@/components/buy-box';
@@ -65,7 +66,7 @@ export default async function ProductPage({ params }: Params) {
           <p className="pitch">{product.shortPitch}</p>
           <div className="buybox">
             <BuyBox sku={v.sku} label="Comprar ahora" />
-            <p className="ship">{deliveryPromise} · envío fijo {formatMoney({ cents: env().SHIPPING_FLAT_CENTS, currency: 'usd' })}</p>
+            <p className="ship">{deliveryPromise} · {shippingNote(usd(env().SHIPPING_FLAT_CENTS), env().STRIPE_AUTOMATIC_TAX)}</p>
             <Assurances />
           </div>
           <ol className="bullets">{product.bullets.map((b) => <li key={b}>{b}</li>)}</ol>

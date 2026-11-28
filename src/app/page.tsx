@@ -1,4 +1,4 @@
-import copy from '@/content/copy.json';
+import { copy } from '@/content';
 import { site } from '@/config/site';
 import { catalog } from '@/infrastructure/container';
 import { ProductCard } from '@/components/product-card';

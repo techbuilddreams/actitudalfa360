@@ -1,4 +1,4 @@
-import copy from '@/content/copy.json';
+import { copy } from '@/content';
 import type { CatalogRepository } from '@/application/ports/catalog';
 import type { Product } from '@/domain/product';
 import { usd } from '@/domain/money';

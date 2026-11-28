@@ -18,8 +18,9 @@ export function makeCreateCheckout(deps: CreateCheckoutDeps) {
       cart,
       shipping: deps.shippingFor(cart),
       successUrl: `${deps.siteUrl}/gracias?pedido={CHECKOUT_SESSION_ID}`,
-      // Si cancela, vuelve a la pieza que estaba viendo (o a la tienda si llevaba varias).
-      cancelUrl: cart.lines.length === 1 ? `${deps.siteUrl}/productos/${cart.lines[0]!.product.slug}` : `${deps.siteUrl}/#tienda`,
+      // Si cancela, vuelve a la ficha de la primera pieza: es desde donde se agrega el kit.
+      // Sale del catálogo, nunca de una URL del cliente (sin redirección abierta).
+      cancelUrl: `${deps.siteUrl}/productos/${cart.lines[0]!.product.slug}`,
     });
   };
 }

@@ -1,4 +1,4 @@
-import copy from '@/content/copy.json';
+import { copy } from '@/content';
 import { site } from '@/config/site';
 import { toDecimalString } from '@/domain/money';
 import { defaultVariant, type Faq, type Product } from '@/domain/product';

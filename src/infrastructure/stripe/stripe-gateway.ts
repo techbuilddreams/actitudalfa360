@@ -23,46 +23,7 @@ export class StripeGateway implements PaymentGateway {
   }
 
   async createCheckout(req: CheckoutRequest): Promise<{ url: string }> {
-    const lines = req.cart.lines.map((l) => ({ sku: l.variant.sku, quantity: l.quantity }));
-    const session = await this.stripe.checkout.sessions.create(
-      {
-        mode: 'payment',
-        locale: 'es',
-        line_items: req.cart.lines.map((l) => ({
-          quantity: l.quantity,
-          price_data: {
-            currency: l.variant.price.currency,
-            unit_amount: l.variant.price.cents,
-            tax_behavior: 'exclusive', // precio sin impuesto; Stripe Tax lo suma si está activo
-            product_data: {
-              name: `${l.product.name} — ${l.variant.label}`,
-              metadata: { sku: l.variant.sku },
-            },
-          },
-        })),
-        shipping_address_collection: { allowed_countries: ['US'] },
-        shipping_options: [
-          {
-            shipping_rate_data: {
-              type: 'fixed_amount',
-              display_name: 'Envío estándar EE. UU.',
-              fixed_amount: { amount: req.shipping.cents, currency: req.shipping.currency },
-              tax_behavior: 'exclusive',
-              delivery_estimate: {
-                minimum: { unit: 'business_day', value: this.opts.deliveryDays.min },
-                maximum: { unit: 'business_day', value: this.opts.deliveryDays.max },
-              },
-            },
-          },
-        ],
-        phone_number_collection: { enabled: true },
-        automatic_tax: { enabled: this.opts.automaticTax },
-        success_url: req.successUrl,
-        cancel_url: req.cancelUrl,
-        metadata: { lines: encodeLines(lines) },
-        payment_intent_data: { metadata: { lines: encodeLines(lines) } },
-      },
-    );
+    const session = await this.stripe.checkout.sessions.create(buildCheckoutSessionParams(req, this.opts));
     if (!session.url) throw new Error('Stripe no devolvió URL de checkout');
     return { url: session.url };
   }
@@ -143,5 +104,50 @@ function toAddress(s: Stripe.Checkout.Session): ShippingAddress | null {
     state: a.state ?? '',
     postalCode: a.postal_code ?? '',
     country: a.country ?? 'US',
+  };
+}
+
+/** Parámetros de la sesión de pago: función pura, testeable sin red. Precio y envío salen siempre del servidor. */
+export function buildCheckoutSessionParams(
+  req: CheckoutRequest,
+  opts: Pick<Options, 'automaticTax' | 'deliveryDays'>,
+): Stripe.Checkout.SessionCreateParams {
+  const lines = req.cart.lines.map((l) => ({ sku: l.variant.sku, quantity: l.quantity }));
+  return {
+    mode: 'payment',
+    locale: 'es',
+    line_items: req.cart.lines.map((l) => ({
+      quantity: l.quantity,
+      price_data: {
+        currency: l.variant.price.currency,
+        unit_amount: l.variant.price.cents,
+        tax_behavior: 'exclusive', // precio sin impuesto; Stripe Tax lo suma si está activo
+        product_data: {
+          name: `${l.product.name} — ${l.variant.label}`,
+          metadata: { sku: l.variant.sku },
+        },
+      },
+    })),
+    shipping_address_collection: { allowed_countries: ['US'] },
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          display_name: 'Envío estándar EE. UU.',
+          fixed_amount: { amount: req.shipping.cents, currency: req.shipping.currency },
+          tax_behavior: 'exclusive',
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: opts.deliveryDays.min },
+            maximum: { unit: 'business_day', value: opts.deliveryDays.max },
+          },
+        },
+      },
+    ],
+    phone_number_collection: { enabled: false }, // Printify no lo exige; un campo menos en el pago
+    automatic_tax: { enabled: opts.automaticTax },
+    success_url: req.successUrl,
+    cancel_url: req.cancelUrl,
+    metadata: { lines: encodeLines(lines) },
+    payment_intent_data: { metadata: { lines: encodeLines(lines) } },
   };
 }
