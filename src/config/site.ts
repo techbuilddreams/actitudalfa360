@@ -21,8 +21,8 @@ export const site = {
   challenge: { days: 30 },
   /** Membresía: aún no se vende (decisión 10). El precio se muestra como «próximamente». */
   membership: { priceCents: 1200 },
-  /** Dirección postal para el pie (CAN-SPAM). null hasta que Luis dé una real: no se inventa. */
-  postalAddress: null as string | null,
+  /** Dirección postal para el pie (CAN-SPAM): la de la LLC, dada por Luis el 2026-11-28. */
+  postalAddress: '2125 Biscayne Blvd, Ste 204, Miami, FL 33137, United States' as string | null,
 } as const;
 
 export const deliveryPromise =

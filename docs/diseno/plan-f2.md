@@ -58,7 +58,8 @@
 
 1. ~~OK para fusionar el PR #8~~ hecho (2026-11-28).
 2. **Luis:** validar el borrador de reglas del reto y el texto de privacidad del reto (`copy.json` → `politicas.retoPrivacy`).
-3. **Luis:** dirección postal para el pie (CAN-SPAM, bloquea F3). Feriados en la fecha de entrega: sí/no.
+3. ~~Dirección postal~~ hecha (2026-11-28: la de la LLC, en `site.postalAddress`, con test del pie).
+   **Luis:** feriados en la fecha de entrega: sí/no (sigue abierto).
 4. ~~Test inestable «20 webhooks simultáneos ⇒ 1 pedido»~~ hecho (2026-11-28, `3398774`). Era bug del **test**, no de
    producción: el creador del pedido puede perder el reclamo de producción ante un reenvío y sale con `RetryLaterError`
    (Stripe reintenta → 200 `duplicate`; 1 aviso, 1 producción). El test ahora mide `orderPaid` + la fila, y hay un test
@@ -73,6 +74,9 @@
 - Zonas antiguas tipo `US/Eastern` se rechazan.
 
 ## Trampas
+
+- Con la máquina cargada (p. ej. Xcode compilando otro proyecto, load > 100) fallan por timeout de 5 s
+  `reto-signup-real-route` y los dos del kit agotado en la home: cargan el contenedor real. Sin carga pasan.
 
 - Los worktrees de agentes a veces nacen en una base vieja: el brief debe empezar con `git reset --hard <rama>`.
 - `next build` no acepta `node_modules` enlazado: en un worktree, `cp -c -R` desde el checkout principal.
