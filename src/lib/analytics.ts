@@ -67,6 +67,8 @@ export interface Analytics {
   enable(sink: Sink): void;
   /** No hay permiso (o se retiró): tira lo pendiente y no manda nada. */
   disable(): void;
+  /** ¿Hay permiso AHORA? Solo así viaja la atribución con el pago (y con ella el `purchase` server-side). */
+  isEnabled(): boolean;
 }
 
 const browserPage = () => (typeof window === 'undefined' ? '' : window.location.pathname);
@@ -101,6 +103,7 @@ export function createAnalytics({ maxQueue = 20, currentPage = browserPage }: { 
       sink = null;
       queue = [];
     },
+    isEnabled: () => state === 'enabled',
   };
 }
 

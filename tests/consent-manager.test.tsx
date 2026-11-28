@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StrictMode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { clearGaCookies, GTAG_SRC, loadGtag } from '@/components/consent/gtag';
+import { CAMPAIGN_KEY } from '@/lib/attribution-client';
 import { ConsentManager, type ConsentText } from '@/components/consent/consent-manager';
 import { createAnalytics } from '@/lib/analytics';
 import type { ConsentDecision } from '@/domain/consent';
@@ -184,5 +185,35 @@ describe('ConsentManager', () => {
     setup({ analytics: true });
     expect(screen.queryByRole('button', { name: text.preferences })).toBeNull();
     expect(screen.queryByRole('button', { name: text.accept })).toBeNull();
+  });
+});
+
+describe('ConsentManager — campaña de la primera visita', () => {
+  const setup = (d: Partial<ConsentDecision>) =>
+    render(<ConsentManager measurementId={ID} decision={decision(d)} text={text} analytics={createAnalytics()} load={vi.fn()} reload={vi.fn()} />);
+  const saved = () => window.localStorage.getItem(CAMPAIGN_KEY);
+  beforeEach(() => { window.localStorage.clear(); window.history.replaceState(null, '', '/?utm_source=tiktok&utm_campaign=reto'); });
+  afterEach(() => { window.localStorage.clear(); window.history.replaceState(null, '', '/'); });
+
+  it('con permiso al montar: la recuerda', () => {
+    setup({ analytics: true });
+    expect(JSON.parse(saved()!).utm).toMatchObject({ source: 'tiktok', campaign: 'reto' });
+  });
+  it('sin permiso: NO la recuerda, y borra una de antes', () => {
+    window.localStorage.setItem(CAMPAIGN_KEY, JSON.stringify({ utm: { source: 'vieja' }, at: new Date().toISOString() }));
+    setup({ analytics: false });
+    expect(saved()).toBeNull();
+  });
+  it('mientras el banner espera: no la recuerda; al aceptar, sí', () => {
+    setup({ showBanner: true, showPreferences: true });
+    expect(saved()).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: text.accept }));
+    expect(JSON.parse(saved()!).utm.source).toBe('tiktok');
+  });
+  it('al retirar el permiso se olvida con las cookies', () => {
+    setup({ analytics: true, showPreferences: true });
+    fireEvent.click(screen.getByRole('button', { name: text.preferences }));
+    fireEvent.click(screen.getByRole('button', { name: text.reject }));
+    expect(saved()).toBeNull();
   });
 });
