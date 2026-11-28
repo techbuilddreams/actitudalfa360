@@ -2,6 +2,7 @@ import 'server-only';
 import Stripe from 'stripe';
 import { usd } from '@/domain/money';
 import { InvalidWebhookError } from '@/domain/errors';
+import { attributionFromMetadata, attributionToMetadata } from '@/domain/attribution';
 import { decodeLines, encodeLines, type OrderLine, type ShippingAddress } from '@/domain/order';
 import type { CheckoutRequest, CheckoutSummary, PaidCheckout, PaymentGateway } from '@/application/ports/payment-gateway';
 
@@ -58,6 +59,7 @@ export class StripeGateway implements PaymentGateway {
       email: s.customer_details?.email ?? null,
       phone: s.customer_details?.phone ?? null,
       shipping: toAddress(s),
+      attribution: attributionFromMetadata(s.metadata),
     };
   }
 
@@ -147,7 +149,8 @@ export function buildCheckoutSessionParams(
     automatic_tax: { enabled: opts.automaticTax },
     success_url: req.successUrl,
     cancel_url: req.cancelUrl,
-    metadata: { lines: encodeLines(lines) },
+    // La atribución solo en la sesión: el PaymentIntent no necesita el ID de GA4.
+    metadata: { lines: encodeLines(lines), ...(req.attribution ? attributionToMetadata(req.attribution) : {}) },
     payment_intent_data: { metadata: { lines: encodeLines(lines) } },
   };
 }

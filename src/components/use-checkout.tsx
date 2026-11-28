@@ -1,7 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import type { Attribution } from '@/domain/attribution';
 import { analytics, checkoutItems, type PriceCatalog } from '@/lib/analytics';
+import { currentAttribution } from '@/lib/attribution-client';
 
 export interface CheckoutItem { readonly sku: string; readonly quantity: number }
 /** Qué control abrió el pago: solo ese muestra el texto de espera y el error. */
@@ -23,6 +25,9 @@ const Ctx = createContext<CheckoutState | null>(null);
 
 /** Programa `fn` tras `ms` y devuelve cómo cancelarlo. Inyectable para los tests. */
 export type Schedule = (fn: () => void, ms: number) => () => void;
+/** Campaña y visita de GA4 para el pago: SOLO con la medición encendida (sin permiso, ni la clave viaja). */
+const defaultAttribution = (): Attribution | undefined => (analytics.isEnabled() ? currentAttribution() : undefined);
+
 const defaultSchedule: Schedule = (fn, ms) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); };
 /**
  * Si tras `location.assign` la página sigue VISIBLE pasado este tiempo, la navegación no ocurrió (Esc, extensión que
@@ -35,8 +40,9 @@ export const NAVIGATION_STUCK_MS = 8_000;
  * está abriendo Stripe todos quedan deshabilitados (nunca dos sesiones de checkout a la vez).
  * El servidor pone el precio: aquí solo viajan sku y cantidad.
  */
-export function CheckoutProvider({ children, messages: t, schedule = defaultSchedule, prices = {} }: {
+export function CheckoutProvider({ children, messages: t, schedule = defaultSchedule, prices = {}, attribution = defaultAttribution }: {
   children: ReactNode; messages: CheckoutMessages; schedule?: Schedule;
+  attribution?: () => Attribution | undefined;
   /** Nombre y precio por sku, solo para medir `begin_checkout`. El cobro lo pone el servidor, no esto. */
   prices?: PriceCatalog;
 }) {
@@ -74,7 +80,8 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        // undefined ⇒ JSON.stringify quita la clave: sin permiso, el servidor no recibe ni un campo vacío.
+        body: JSON.stringify({ items, attribution: attribution() }),
       });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? t.errorStart);

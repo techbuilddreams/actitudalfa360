@@ -6,12 +6,15 @@ import { env } from '@/config/env';
 import { checkoutLimiter, createCheckout, logger } from '@/infrastructure/container';
 import { clientIp, isSameOrigin } from '@/infrastructure/security/request-guards';
 import { BodyTooLargeError, json, readTextLimited } from '@/lib/http';
+import { consentOfRequest } from '@/lib/consent-request';
 
 const Body = z.object({
   items: z
     .array(z.object({ sku: z.string().regex(/^[A-Z0-9-]{3,40}$/), quantity: z.number().int().min(1).max(MAX_QTY_PER_LINE) }))
     .min(1)
     .max(MAX_LINES),
+  // Campaña y visita de GA4 (solo si el navegador mide). Se valida campo a campo en el caso de uso: nunca da 400.
+  attribution: z.unknown().optional(),
 });
 
 export async function POST(req: Request) {
@@ -30,7 +33,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { url } = await createCheckout()(body.items);
+    // Nunca confiar en el cliente: el permiso lo decide el SERVIDOR (país, GPC, cookie), con la misma función que
+    // el banner. Una pestaña que no se enteró de que se retiró el permiso en otra no hace medir la compra.
+    const attribution = consentOfRequest(req.headers).analytics ? body.attribution : undefined;
+    const { url } = await createCheckout()(body.items, attribution);
     return json(200, { url });
   } catch (err) {
     if (err instanceof DomainError) return json(400, { error: err.message });

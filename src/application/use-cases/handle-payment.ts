@@ -7,6 +7,7 @@ import type { Logger } from '../ports/logger';
 import type { Notifier } from '../ports/notifier';
 import type { OrderRepository } from '../ports/order-repository';
 import type { PaidCheckout } from '../ports/payment-gateway';
+import type { Defer, PurchaseReporter } from '../ports/purchase-reporter';
 
 export interface HandlePaymentDeps {
   orders: OrderRepository;
@@ -16,6 +17,8 @@ export interface HandlePaymentDeps {
   logger: Logger;
   newId: () => string;
   now: () => Date;
+  /** `purchase` server-side hacia GA4. Ausente = no se mide (local, staging, o sin secreto). */
+  analytics?: { reporter: PurchaseReporter; defer: Defer } | null;
 }
 
 export type HandlePaymentResult = 'created' | 'duplicate';
@@ -72,11 +75,33 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
       phone: paid.phone,
       shipping: paid.shipping,
       fulfillmentRef: null,
+      utm: paid.attribution.utm,
       createdAt: deps.now(),
     };
 
     // 1) Registro idempotente (índice único en paymentRef).
     const { created, order } = await deps.orders.createIfAbsent(draft);
+    // 1b) Compra hacia GA4: solo el pedido NUEVO (un reenvío de Stripe no cuenta dos veces) y solo si la visita se
+    // midió con permiso (sin client_id no hubo permiso). Se programa ANTES del aviso de pedido: si el aviso lanza, el
+    // reintento llega como `duplicate` y la compra se perdería. Fuera de la respuesta, y su fallo nunca toca el pago.
+    const clientId = paid.attribution.gaClientId;
+    if (created && clientId && deps.analytics) {
+      const { reporter, defer } = deps.analytics;
+      const fail = (err: unknown) =>
+        deps.logger.error('analytics_purchase_failed', { orderId: order.id, reason: err instanceof Error ? err.message : 'desconocido' });
+      try {
+        defer(async () => {
+          try {
+            await reporter.reportPurchase(order, { clientId, sessionId: paid.attribution.gaSessionId });
+          } catch (err) {
+            fail(err);
+          }
+        });
+      } catch (err) {
+        fail(err); // programar tampoco puede tumbar el webhook ni saltarse la producción
+      }
+    }
+
     if (created) await deps.notifier.orderPaid(order);
     else deps.logger.info('Pago ya registrado', { paymentRef: paid.paymentRef });
 

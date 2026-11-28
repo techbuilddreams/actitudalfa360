@@ -2,7 +2,7 @@
 
 > Pedido de Luis: GA4 «como en los otros sistemas», saber qué hace el usuario y mejorar, decirlo claro en la
 > política, las mejores formas de conversión, datos organizados que den valor a la empresa, y que nos encuentren
-> los LLM y la búsqueda social. **Estado: paso 1 (consentimiento + GA4) construido en la rama `medicion-consentimiento` (ver «Paso 1: estado» al final).** Va en su propia sesión.
+> los LLM y la búsqueda social. **Estado: paso 1 mergeado (PR #10); paso 2 (`purchase` server-side + UTM) en la rama `medicion-purchase` (ver «Paso 2: estado» al final).** Va en su propia sesión.
 
 ## 1. Postura (lo que cambio del pedido, y por qué)
 
@@ -110,12 +110,50 @@ consentimiento; todo lo que encontraron está arreglado y con test (rojo → ver
 9. Bing Webmaster Tools: «Importar desde Google Search Console».
 
 **Pendiente**
-- Luis aprueba el texto de `#medicion` → abogado (junto con el resto de la política, paso 4).
+- ~~Luis aprueba el texto de `#medicion`~~ aprobado 2026-11-28; el paso 2 le añade dos frases (ver abajo). → abogado (paso 4).
 - Humo en producción (cuando F3 levante la compuerta): Tiempo real de GA4 ve `page_view` sin query; con `Sec-GPC: 1`
   no sale nada. Staging nunca mide, así que esto solo se puede comprobar en producción.
-- Paso 2: `purchase` server-side desde el webhook (Measurement Protocol) + UTM en el pedido.
+- Paso 2: ver «Paso 2: estado».
 
 **Deliberadamente NO hecho**
 - Sin enlace «decir no» en EE. UU. aparte de GPC (decisión de Luis; la política no promete otro).
 - Sin `add_to_cart`: no hay carrito; el kit va directo al pago.
 - Sin modo avanzado / modelado (ver arriba).
+
+## Paso 2: estado (2026-11-28)
+
+Rama `medicion-purchase` (PR a `develop`). TDD; revisado por el QA de medición y el Rompedor de atribución. Sus dos P1
+(emoji en el carácter 100 ⇒ 502 de Stripe durante 90 días; el servidor no comprobaba el permiso) y los P2 están
+arreglados, con test rojo → verde.
+
+**Qué hace el código**
+- El navegador, SOLO con la medición encendida, manda `attribution` al abrir el pago: client_id (`_ga`), session_id
+  (`_ga_<ID>` de nuestra propiedad) y la campaña de la primera visita (localStorage `aa360_campaign`, 90 días; se borra
+  al retirar el permiso). El servidor la descarta si NO ve permiso (país + GPC + cookie, `consentOfRequest`).
+- Viaja en la metadata de la sesión de Stripe (no en el PaymentIntent). El webhook la valida otra vez.
+- UTM en columnas `orders.utm_*` (migración 0002, solo expansión). Los IDs de GA4 no van a Postgres.
+- `purchase` por Measurement Protocol solo en el pedido NUEVO con client_id, dentro de `after`, programado antes del
+  correo de pedido. `transaction_id` = AA360-N; `value` = subtotal − descuento (sin desglose: el total); envío e impuesto
+  aparte; anuncios DENIED; sin contacto. Fallo ⇒ log `analytics_purchase_failed`, sin reintento (decisión: una métrica
+  gratis no justifica una cola).
+- Producción con `NEXT_PUBLIC_GA_MEASUREMENT_ID` y sin `GA_API_SECRET` tumba la build.
+
+**Runbook (Luis), además del del paso 1**
+10. GA4 → flujo web → «Secretos de la API de Measurement Protocol» → crear → pasarme el valor. Yo lo pongo en Vercel
+    (`GA_API_SECRET`, solo Production), junto con el `G-…`.
+11. Humo tras levantar la compuerta de F3: una compra real con la medición encendida ⇒ en GA4 Tiempo real aparece
+    `purchase` con `AA360-N`; la fila tiene `utm_*`. Validar una vez el payload contra `/debug/mp/collect` (GA4 responde
+    2xx aunque el payload sea inválido). Comprobar que la observabilidad de Vercel no guarda la query de salida (lleva
+    el `api_secret`, como exige Google).
+
+**Pendiente**
+- Luis aprueba las dos frases nuevas de `#medicion` (compra server-side + campaña; nombran `_ga_…` y Stripe).
+- Merge del PR → `develop`.
+
+**Deliberadamente NO hecho**
+- Sin reintento ni cola del `purchase`: si GA4 falla o la función muere justo tras guardar el pedido, esa compra no llega
+  a GA4 (el pedido sí está en Postgres, que es la verdad del dinero).
+- En la UE, si alguien llega con UTM, navega y acepta en otra página, esa campaña no se guarda (GA4 en modo básico
+  pierde lo mismo).
+- Un pago empezado con permiso y completado tras retirarlo (la pestaña de Stripe ya abierta) se mide.
+- `ga_cid`/`utm_*` quedan en la metadata de la sesión de Stripe (lo dice la política); no se borran tras el webhook.

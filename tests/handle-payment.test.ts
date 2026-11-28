@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { makeHandlePayment } from '@/application/use-cases/handle-payment';
 import type { FulfillmentProvider } from '@/application/ports/fulfillment';
+import type { PurchaseReporter } from '@/application/ports/purchase-reporter';
+import { EMPTY_ATTRIBUTION } from '@/domain/attribution';
 import { RetryLaterError } from '@/domain/errors';
 import { staticCatalog } from '@/infrastructure/catalog/static-catalog';
 import { InMemoryOrderRepository } from '@/infrastructure/memory/in-memory-order-repository';
@@ -151,5 +153,98 @@ describe('handlePayment', () => {
     expect(await orders.completeFulfillment(order.id, a!, { status: 'fulfillment_created', ref: 'pfA' })).toEqual({ kind: 'recorded', previous: 'fulfillment_failed' });
     expect(await orders.completeFulfillment(order.id, b!, { status: 'fulfillment_failed' })).toEqual({ kind: 'stale' });
     expect(await orders.findByPaymentRef(order.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pfA' });
+  });
+});
+
+describe('handlePayment → purchase server-side (GA4)', () => {
+  const visit = { gaClientId: '123.456', gaSessionId: '1700000123', utm: { source: 'tiktok', medium: 'social', campaign: 'reto', term: null, content: null } };
+  const mk = (reporter: PurchaseReporter, logger = noopLogger) => {
+    const orders = new InMemoryOrderRepository();
+    const tasks: (() => Promise<void>)[] = [];
+    const handle = makeHandlePayment({
+      orders, catalog: staticCatalog, fulfillment: null, logger,
+      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} },
+      newId: () => 'id-1', now: () => new Date('2026-11-28T00:00:00Z'),
+      analytics: { reporter, defer: (t) => { tasks.push(t); } },
+    });
+    const flush = () => Promise.all(tasks.splice(0).map((t) => t()));
+    return { orders, handle, flush, tasks };
+  };
+
+  it('pedido nuevo con visita medida ⇒ un purchase, DESPUÉS de responder (defer), con el número de pedido', async () => {
+    const reportPurchase = vi.fn(async () => {});
+    const { handle, flush, tasks } = mk({ reportPurchase });
+    await handle(paidCheckout({ attribution: visit }));
+    expect(reportPurchase).not.toHaveBeenCalled(); // nada dentro de la respuesta a Stripe
+    expect(tasks).toHaveLength(1);
+    await flush();
+    expect(reportPurchase).toHaveBeenCalledWith(expect.objectContaining({ number: 10001 }), { clientId: '123.456', sessionId: '1700000123' });
+  });
+
+  it('el reenvío de Stripe (duplicate) no vuelve a mandar la compra', async () => {
+    const reportPurchase = vi.fn(async () => {});
+    const { handle, flush } = mk({ reportPurchase });
+    await handle(paidCheckout({ attribution: visit }));
+    expect(await handle(paidCheckout({ attribution: visit }))).toBe('duplicate');
+    await flush();
+    expect(reportPurchase).toHaveBeenCalledOnce();
+  });
+
+  it('sin client_id (no hubo permiso de medir) ⇒ Google no se entera; el pedido se guarda igual', async () => {
+    const reportPurchase = vi.fn(async () => {});
+    const { handle, tasks, orders } = mk({ reportPurchase });
+    expect(await handle(paidCheckout({ attribution: { ...EMPTY_ATTRIBUTION, utm: null } }))).toBe('created');
+    expect(tasks).toHaveLength(0);
+    expect(await orders.findByPaymentRef('cs_test_123')).toBeDefined();
+  });
+
+  it('si GA4 falla, se registra y el pago sigue siendo created (la medición nunca tumba el webhook)', async () => {
+    const error = vi.fn();
+    const { handle, flush } = mk({ reportPurchase: async () => { throw new Error('HTTP 500'); } }, { ...noopLogger, error });
+    expect(await handle(paidCheckout({ attribution: visit }))).toBe('created');
+    await expect(flush()).resolves.toBeDefined();
+    expect(error).toHaveBeenCalledWith('analytics_purchase_failed', expect.objectContaining({ orderId: 'id-1' }));
+  });
+
+  it('la campaña de origen (UTM) queda en el pedido; los IDs de GA4 no', async () => {
+    const { handle, orders } = mk({ reportPurchase: async () => {} });
+    await handle(paidCheckout({ attribution: visit }));
+    const o = await orders.findByPaymentRef('cs_test_123');
+    expect(o?.utm).toEqual(visit.utm);
+    expect(JSON.stringify(o)).not.toContain('123.456');
+  });
+
+  it('sin UTM ⇒ utm null (visita directa)', async () => {
+    const { handle, orders } = mk({ reportPurchase: async () => {} });
+    await handle(paidCheckout());
+    expect((await orders.findByPaymentRef('cs_test_123'))?.utm).toBeNull();
+  });
+});
+
+describe('handlePayment → purchase: robustez (Rompedor P2 / QA P2)', () => {
+  const visit = { gaClientId: '123.456', gaSessionId: null, utm: null };
+  it('si `defer` lanza al programar, el pago sigue: created, producción hecha, y se registra', async () => {
+    const error = vi.fn();
+    const createDraftOrder = vi.fn(async () => 'pf_1');
+    const handle = makeHandlePayment({
+      orders: new InMemoryOrderRepository(), catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
+      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} },
+      logger: { ...noopLogger, error }, newId: () => 'id-1', now: () => new Date(),
+      analytics: { reporter: { reportPurchase: async () => {} }, defer: () => { throw new Error('after fuera de contexto'); } },
+    });
+    expect(await handle(paidCheckout({ attribution: visit }))).toBe('created');
+    expect(createDraftOrder).toHaveBeenCalledOnce();
+    expect(error).toHaveBeenCalledWith('analytics_purchase_failed', expect.objectContaining({ orderId: 'id-1' }));
+  });
+  it('la compra se programa ANTES del aviso de pedido: si el aviso lanza, el purchase no se pierde', async () => {
+    const tasks: (() => Promise<void>)[] = [];
+    const handle = makeHandlePayment({
+      orders: new InMemoryOrderRepository(), catalog: staticCatalog, fulfillment: null,
+      notifier: { orderPaid: async () => { throw new Error('SMTP'); }, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} },
+      logger: noopLogger, newId: () => 'id-1', now: () => new Date(),
+      analytics: { reporter: { reportPurchase: async () => {} }, defer: (t) => { tasks.push(t); } },
+    });
+    await expect(handle(paidCheckout({ attribution: visit }))).rejects.toThrow('SMTP');
+    expect(tasks).toHaveLength(1);
   });
 });

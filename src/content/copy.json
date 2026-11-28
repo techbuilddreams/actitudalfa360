@@ -244,7 +244,9 @@
     "medicion": {
       "h3": "Qué medimos y por qué",
       "items": [
-        "Usamos Google Analytics 4 para saber qué páginas sirven y dónde se traba la gente: las páginas que visitas, los productos que ves, cuándo empiezas a pagar y cuándo te apuntas al reto. Con eso decidimos qué mejorar. Para contar visitas, Google Analytics pone sus cookies (_ga) y recibe tu dirección IP, tu navegador y tu dispositivo.",
+        "Usamos Google Analytics 4 para saber qué páginas sirven y dónde se traba la gente: las páginas que visitas, los productos que ves, cuándo empiezas a pagar, cuándo compras y cuándo te apuntas al reto. Con eso decidimos qué mejorar. Para contar visitas, Google Analytics pone sus cookies (_ga) y recibe tu dirección IP, tu navegador y tu dispositivo.",
+        "Cuando compras, y solo si medimos tu visita, nuestro servidor le avisa a Google Analytics: el número de pedido, los productos, el importe y los identificadores de tu visita (de las cookies _ga y _ga_…). Esos identificadores viajan con tu pago por Stripe y quedan en su registro del pago. Nunca tu nombre, correo, teléfono ni dirección. Si no medimos tu visita, Google no se entera de tu compra.",
+        "Si llegaste por un enlace de campaña (los parámetros utm_ de la dirección), lo recordamos en tu navegador hasta 90 días y lo guardamos con tu pedido (y en el registro del pago en Stripe), para saber qué campañas traen ventas. Si el enlace trae un correo, lo descartamos. Solo si medimos tu visita; si retiras el permiso, se borra de tu navegador.",
         "Lo que no medimos: no enviamos tu correo, ni las casillas del reto, ni nada de tu salud. Cuando te apuntas al reto, Google solo sabe que alguien se apuntó.",
         "No usamos anuncios: Google Signals y la personalización de anuncios están apagadas, y estos datos no se comparten para publicidad.",
         "Google borra los datos de cada visita a los 14 meses; solo quedan totales sin datos personales.",

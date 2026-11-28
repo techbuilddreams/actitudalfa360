@@ -83,3 +83,15 @@ describe('una llave live fuera de APP_ENV=production es un problema, local inclu
   it('APP_ENV=local + rk_live_ en desarrollo', () => expect(probs({ APP_ENV: 'local', STRIPE_SECRET_KEY: 'rk_live_x' }).join()).toMatch(/live/));
   it('APP_ENV=local con llave de prueba: sin problemas', () => expect(probs({ APP_ENV: 'local', STRIPE_SECRET_KEY: 'sk_test_x' })).toEqual([]));
 });
+
+describe('GA4 en producción: medir páginas sin medir compras es un fallo silencioso', () => {
+  const probs = (e: Record<string, string>) => { const p = parseEnv(e); if (!p.success) throw new Error('env inválido'); return deploymentProblems(p.data); };
+  const ga = { NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF' };
+  it('producción con ID de GA4 y sin GA_API_SECRET ⇒ problema que nombra la variable', () =>
+    expect(probs({ ...prod, ...ga }).join()).toMatch(/GA_API_SECRET/));
+  it('con el secreto ⇒ sin problema de GA4', () =>
+    expect(probs({ ...prod, ...ga, GA_API_SECRET: 'abcdefghijklmnop' }).join()).not.toMatch(/GA_API_SECRET/));
+  it('sin ID de GA4 no se exige el secreto (aún no se mide)', () => expect(probs(prod).join()).not.toMatch(/GA_API_SECRET/));
+  it('staging nunca mide: no se le exige', () => expect(probs({ ...staging, ...ga }).join()).not.toMatch(/GA_API_SECRET/));
+  it('un secreto demasiado corto es un error de escritura', () => expect(parseEnv({ GA_API_SECRET: 'abc' }).success).toBe(false));
+});

@@ -12,6 +12,7 @@ import { staticCatalog } from '@/infrastructure/catalog/static-catalog';
 import { usd } from '@/domain/money';
 import { RetryLaterError } from '@/domain/errors';
 import type { Order } from '@/domain/order';
+import { EMPTY_ATTRIBUTION } from '@/domain/attribution';
 import { amounts } from './fixtures';
 import { runMigrate, type RunResult } from './support/run-migrate';
 
@@ -24,11 +25,11 @@ const ROUNDS = Number(process.env.R11_ROUNDS ?? 200);
 const newOrder = (over: Partial<Order> = {}): Order => ({
   id: randomUUID(), paymentRef: `cs_test_${randomUUID()}`, number: null, status: 'fulfillment_pending',
   lines: [{ sku: 'X', quantity: 1, name: 'X', unitCents: 2499 }], total: usd(3398), amounts: amounts(2499),
-  email: 'a@b.com', phone: null, shipping: null, fulfillmentRef: null, createdAt: new Date(), ...over,
+  email: 'a@b.com', phone: null, shipping: null, fulfillmentRef: null, utm: null, createdAt: new Date(), ...over,
 });
 const paidOf = (over: Partial<PaidCheckout> = {}): PaidCheckout => ({
   paymentRef: `cs_test_${randomUUID()}`, lines: [{ sku: 'AA360-TAZA-15-NEGRA', quantity: 1 }], total: usd(3398), amounts: amounts(2499),
-  email: null, phone: null, shipping: { name: 'A B', line1: '1', city: 'Troy', state: 'NY', postalCode: '12182', country: 'US' }, ...over,
+  email: null, phone: null, shipping: { name: 'A B', line1: '1', city: 'Troy', state: 'NY', postalCode: '12182', country: 'US' }, attribution: EMPTY_ATTRIBUTION, ...over,
 });
 
 // Como Supabase: roles anon/authenticated con privilegios POR DEFECTO sobre todo lo que se cree en public.
@@ -291,6 +292,21 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
       const { order } = await repo().createIfAbsent(newOrder());
       await expect(admin`UPDATE orders SET status = 'fulfillment_processing', claimed_at = NULL WHERE id = ${order.id}`).rejects.toThrow(/orders_processing_claim_ck/);
     });
+  });
+
+  it('la campaña de origen (UTM) se guarda y se lee igual; sin campaña, null', async () => {
+    const utm = { source: 'tiktok', medium: 'social', campaign: 'reto-30', term: null, content: 'v1' };
+    const a = newOrder({ utm });
+    const b = newOrder();
+    await repo().createIfAbsent(a);
+    await repo().createIfAbsent(b);
+    expect((await repo().findByPaymentRef(a.paymentRef))?.utm).toEqual(utm);
+    expect((await repo().findByPaymentRef(b.paymentRef))?.utm).toBeNull();
+  });
+
+  it('una UTM del largo máximo del dominio (100) cabe: la base no pone un límite que pierda un pago', async () => {
+    const o = newOrder({ utm: { source: 'x'.repeat(100), medium: null, campaign: null, term: null, content: null } });
+    expect((await repo().createIfAbsent(o)).created).toBe(true);
   });
 
   it('updated_at cambia solo en cada UPDATE (trigger)', async () => {
