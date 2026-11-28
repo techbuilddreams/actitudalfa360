@@ -1,6 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import { env, isProduction, requireEnv } from '@/config/env';
+import { env, isProduction, publicEnv, requireEnv } from '@/config/env';
 import { site } from '@/config/site';
 import { flatShipping } from '@/domain/cart';
 import { orderLabel } from '@/domain/order';
@@ -80,11 +80,14 @@ function notifications(): Notifier {
   return notifier;
 }
 
+/** El envío que se cobra: el mismo valor público que muestra el copy. */
+export const checkoutShipping = () => flatShipping(publicEnv().SHIPPING_FLAT_CENTS);
+
 export const createCheckout = () =>
   makeCreateCheckout({
     catalog,
     payments: paymentGateway(),
-    shippingFor: flatShipping(env().SHIPPING_FLAT_CENTS),
+    shippingFor: checkoutShipping(),
     siteUrl: env().NEXT_PUBLIC_SITE_URL.replace(/\/$/, ''),
   });
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { site } from '@/config/site';
 import { formatMoney } from '@/domain/money';
 import { defaultVariant, type Product } from '@/domain/product';
 import { ProductPlate } from './product-gallery';
@@ -7,7 +8,7 @@ export function Assurances() {
   return (
     <ul className="assure">
       <li>Pago seguro con Stripe · Apple Pay · Google Pay</li>
-      <li>¿Llegó dañado? Reemplazo o reembolso en 30 días</li>
+      <li>¿Llegó dañado, defectuoso o equivocado? Reemplazo o reembolso en {site.returns.days} días</li>
     </ul>
   );
 }

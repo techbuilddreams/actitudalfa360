@@ -45,7 +45,8 @@ const schema = z.object({
   MAIL_FROM: z.string().default('Actitud Alfa 360 <hola@actitudalfa360.com>'),
   ORDER_NOTIFY_EMAIL: z.email().optional(),
 
-  SHIPPING_FLAT_CENTS: z.coerce.number().int().min(0).default(899),
+  // Centavos enteros, de 0 a $100. Un "" o "1e3" ya no valen 0/1000 en silencio.
+  SHIPPING_FLAT_CENTS: z.string().regex(/^\d{1,5}$/).default('899').transform(Number).pipe(z.number().int().max(10_000)),
 
   /** Lo pone Vercel solo (variable de sistema). Sirve para detectar variables cruzadas entre entornos. */
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
@@ -110,12 +111,15 @@ export function requireEnv<K extends keyof ServerEnv>(key: K): NonNullable<Serve
 
 export const isProduction = () => env().APP_ENV === 'production';
 
+const publicSchema = schema.pick({ SHIPPING_FLAT_CENTS: true, STRIPE_AUTOMATIC_TAX: true });
+export type PublicEnv = z.infer<typeof publicSchema>;
+
 /**
- * Solo el envío fijo, validado con el mismo esquema. Lo usa el copy público (home, layout):
- * un secreto de pago mal configurado no debe tumbar páginas que no cobran.
+ * Solo lo que se muestra al público (envío fijo, si se suma impuesto), con el mismo esquema.
+ * Lo usan el copy, las fichas y el checkout: un secreto mal configurado no tumba páginas que no cobran.
  */
-export function shippingFlatCents(raw: NodeJS.ProcessEnv = process.env): number {
-  const r = schema.shape.SHIPPING_FLAT_CENTS.safeParse(raw.SHIPPING_FLAT_CENTS);
-  if (!r.success) throw new Error('Variable de entorno inválida: SHIPPING_FLAT_CENTS');
+export function publicEnv(raw: Record<string, string | undefined> = process.env): PublicEnv {
+  const r = publicSchema.safeParse(raw);
+  if (!r.success) throw new Error(`Variables de entorno inválidas: ${r.error.issues.map((x) => x.path.join('.')).join(', ')}`);
   return r.data;
 }

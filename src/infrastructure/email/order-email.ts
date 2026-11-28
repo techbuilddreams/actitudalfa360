@@ -79,7 +79,7 @@ export function newSaleEmail(order: Order, to: string, note?: string): EmailMess
   const text = [
     `Nueva venta ${ref} — ${formatMoney(order.total)}`,
     ...items.map((i) => `- ${i.name} x${i.quantity}`),
-    `Cliente: ${order.email ?? 's/e'} ${order.phone ?? ''}`,
+    `Cliente: ${order.email ?? 's/e'}${order.phone ? ` ${order.phone}` : ''}`,
     note ?? (order.fulfillmentRef ? `Printify: ${order.fulfillmentRef}` : 'Crear el pedido en Printify.'),
   ].join('\n');
   return { to, subject: `💰 Nueva venta ${formatMoney(order.total)} · ${ref}`, text, html: `<pre style="font:14px Menlo,monospace">${esc(text)}</pre>` };

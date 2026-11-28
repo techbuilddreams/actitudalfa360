@@ -36,6 +36,25 @@ También corregido de paso: «palabra» → «carácter» en la FAQ; «plantilla
 
 ## Correcciones sin decisión (van con la implementación, con TDD)
 
+### Estado (2026-11-27, rama `f1-correcciones-dinero`, QA de dinero + Rompedor de compra, sin P0)
+
+**Hecho en código, con test rojo → verde y sondas de mutación:**
+- vitest corre `.tsx` (jsdom). `BuyBox` ofrece 1..`MAX_QTY_PER_LINE` (ya era así en código; el 1-10 era solo de la maqueta).
+- `cancelUrl` = ficha de la primera pieza, también con varias.
+- Stripe sin teléfono; `buildCheckoutSessionParams` pura, con test completo de los parámetros.
+- Copy sin montos ni plazos a mano: `{envio}`, `{precioTaza}`, `{precioVaso}`, `{diasDevolucion}`, `{impuesto}` (rellenados en `src/content`; eslint prohíbe importar `copy.json` directo).
+- `SHIPPING_FLAT_CENTS` estricto: `""`, `1e3` y `0x10` ya no valen 0/1000/16. El tope es $100.
+- `publicEnv()`: copy, fichas, políticas y checkout leen solo envío e impuesto, así que un secreto roto no tumba la home.
+- Aviso de impuesto en la ficha y en las FAQ de precio. Garantías y FAQ alineadas con la política. Privacidad ya no dice «teléfono».
+
+**Pasa a F2 (no existe aún en código):**
+- La fecha de entrega «Llega aprox.» debe ser una función pura que salte los fines de semana. Los feriados están sin decidir.
+- La barra fija, el botón de compra a 390 px y el kit en la UI. El kit tiene que mandar **la pieza de la ficha actual primero**: de eso depende `cancelUrl`. Hace falta un test en la UI del kit.
+- Arreglar el 1-10 y los montos escritos a mano en `maqueta-unificada.html`.
+- No hay test que conecte el aviso de impuesto con la página: solo se prueba la función. Queda cubierto cuando la ficha nueva tenga test de componente.
+
+**Por verificar en el smoke de staging (paso 5):** Printify no documenta si `phone` es obligatorio en pedidos estándar de EE. UU. (solo lo es en Express). Si lo exigiera, el pedido cae en `fulfillment_failed` con aviso, nunca en silencio.
+
 **Dinero / compra**
 - Selector de cantidad 1-10 en la maqueta; el servidor acepta 1-5 (`MAX_QTY_PER_LINE`, `cart.ts:5`). A 6 falla
   siempre. Fuente única: el límite sale del dominio. La nota de la línea 758 confunde líneas con unidades.

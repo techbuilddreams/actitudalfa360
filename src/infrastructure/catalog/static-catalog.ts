@@ -1,7 +1,7 @@
 import { copy } from '@/content';
 import type { CatalogRepository } from '@/application/ports/catalog';
 import type { Product } from '@/domain/product';
-import { usd } from '@/domain/money';
+import { PRICES } from './prices';
 
 const t = copy.products['taza-negra-15oz'];
 const v = copy.products['vaso-termico-20oz'];
@@ -36,7 +36,7 @@ const PRODUCTS: readonly Product[] = [
       {
         sku: 'AA360-TAZA-15-NEGRA',
         label: '15 oz',
-        price: usd(2499),
+        price: PRICES.taza,
         available: true,
         fulfillment: { provider: 'printify', productId: '6ab327c9f4968858080c763d', variantId: 104470 },
       },
@@ -66,7 +66,7 @@ const PRODUCTS: readonly Product[] = [
       {
         sku: 'AA360-VASO-20-NEGRO',
         label: '20 oz',
-        price: usd(3499),
+        price: PRICES.vaso,
         available: true,
         fulfillment: { provider: 'printify', productId: '6ab327cbb4a5ca59a905799e', variantId: 119531 },
       },

@@ -26,7 +26,7 @@
       },
       {
         "q": "¿Puedo devolver un producto?",
-        "a": "Como cada pieza se fabrica cuando la pides, no aceptamos devoluciones por cambio de opinión. Si llega dañada, con un defecto o no es lo que pediste, avísanos dentro de los 30 días siguientes a la entrega con una foto y te enviamos un reemplazo o te devolvemos el dinero. Los detalles están en nuestra página de políticas."
+        "a": "Como cada pieza se fabrica cuando la pides, no aceptamos devoluciones por cambio de opinión. Si llega dañada, con un defecto o no es lo que pediste, avísanos dentro de los {diasDevolucion} días siguientes a la entrega con una foto y te enviamos un reemplazo o te devolvemos el dinero. Los detalles están en nuestra página de políticas."
       },
       {
         "q": "¿De qué material son la taza y el vaso térmico?",
@@ -34,14 +34,14 @@
       },
       {
         "q": "¿Qué le regalo a un emprendedor o a alguien que trabaja duro?",
-        "a": "Un regalo que use todos los días funciona mejor que uno que se queda guardado. La taza negra de 15 oz ($24.99) acompaña el café de la mañana en el escritorio, y el vaso térmico de 20 oz ($34.99) va en el carro o al gym. Ambos llevan la mentalidad Actitud Alfa 360."
+        "a": "Un regalo que use todos los días funciona mejor que uno que se queda guardado. La taza negra de 15 oz ({precioTaza}) acompaña el café de la mañana en el escritorio, y el vaso térmico de 20 oz ({precioVaso}) va en el carro o al gym. Ambos llevan la mentalidad Actitud Alfa 360."
       }
     ]
   },
   "products": {
     "taza-negra-15oz": {
       "title": "Taza negra 15 oz con frase en español | Actitud Alfa 360",
-      "description": "Taza negra de cerámica de 15 oz con el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". Apta para microondas. $24.99.",
+      "description": "Taza negra de cerámica de 15 oz con el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". Apta para microondas. {precioTaza}.",
       "h1": "Taza negra 15 oz — Háblame de hacer dinero, no de gente",
       "shortPitch": "Para el café de las 5 a. m. de alguien que tiene cosas que construir.",
       "longDescription": "Esta taza negra de cerámica de 15 oz está hecha para el primer café del día, ese que tomas antes de que el resto se levante. Por un lado lleva el sello Actitud Alfa 360, el ojo dentro del triángulo con la brújula; por el otro, la frase que resume la marca: \"Háblame de hacer dinero, no de gente\". Es una taza con frase en español para quien prefiere hablar de metas y no de chismes. Sus 15 oz alcanzan para un café grande o un té largo mientras trabajas. Se puede meter al microondas y al lavavajillas, así que aguanta el uso diario. Es un buen regalo para un emprendedor, para tu papá, tu pareja o el amigo que siempre está trabajando en algo. Cada taza se imprime a pedido y se envía dentro de Estados Unidos.",
@@ -63,7 +63,7 @@
         },
         {
           "q": "¿Cuánto cuesta la taza y cuánto tarda en llegar?",
-          "a": "La taza negra de 15 oz cuesta $24.99 más {envio} de envío fijo dentro de Estados Unidos. Se imprime a pedido: la producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles, en total de 5 a 12 días hábiles aproximadamente."
+          "a": "La taza negra de 15 oz cuesta {precioTaza} más {envio} de envío fijo dentro de Estados Unidos.{impuesto} Se imprime a pedido: la producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles, en total de 5 a 12 días hábiles aproximadamente."
         }
       ],
       "imageAlts": [
@@ -83,7 +83,7 @@
     },
     "vaso-termico-20oz": {
       "title": "Vaso térmico 20 oz de acero inoxidable | Actitud Alfa 360",
-      "description": "Vaso térmico de acero inoxidable de 20 oz con tapa y popote, sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". $34.99.",
+      "description": "Vaso térmico de acero inoxidable de 20 oz con tapa y popote, sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". {precioVaso}.",
       "h1": "Vaso térmico 20 oz — Háblame de hacer dinero, no de gente",
       "shortPitch": "Para la ruta, el gym y los días largos: tu bebida va contigo.",
       "longDescription": "Hay días que empiezan en el carro y terminan en el gym. Este vaso térmico de acero inoxidable de 20 oz está hecho para esos días. Su forma delgada cabe en el portavasos del carro, así que te acompaña en la ruta de delivery, en el trayecto al trabajo o en la obra. Incluye tapa y popote para tomar sin detenerte. Lleva el sello Actitud Alfa 360 arriba y, debajo, la frase \"Háblame de hacer dinero, no de gente\": un recordatorio para los que están construyendo algo. Con 20 oz tienes espacio para el café de la mañana, el agua del entrenamiento o tu batido. Para cuidar el acabado, lávalo a mano. Es un regalo práctico para un repartidor, un chofer, un emprendedor o alguien que no se pierde un día de gym. Se hace a pedido y se envía dentro de Estados Unidos.",
@@ -105,7 +105,7 @@
         },
         {
           "q": "¿Qué incluye el vaso térmico y cuánto cuesta?",
-          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta $34.99. El envío dentro de Estados Unidos es de {envio} fijo. Se hace a pedido: de 2 a 5 días hábiles de producción más 3 a 7 días hábiles de envío."
+          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta {precioVaso}. El envío dentro de Estados Unidos es de {envio} fijo.{impuesto} Se hace a pedido: de 2 a 5 días hábiles de producción más 3 a 7 días hábiles de envío."
         }
       ],
       "imageAlts": [
@@ -125,7 +125,7 @@
   },
   "politicas": {
     "title": "Envíos, devoluciones y privacidad | Actitud Alfa 360",
-    "description": "Envío fijo de {envio} solo en EE. UU. Producción de 2 a 5 días hábiles y envío de 3 a 7. Reemplazo o reembolso por daño, defecto o error en 30 días."
+    "description": "Envío fijo de {envio} solo en EE. UU. Producción de 2 a 5 días hábiles y envío de 3 a 7. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días."
   },
   "organization": {
     "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, con sede en Nueva York.",

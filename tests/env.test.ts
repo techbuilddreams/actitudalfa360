@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deploymentProblems, parseEnv, type ServerEnv } from '@/config/env';
+import { deploymentProblems, parseEnv, publicEnv, type ServerEnv } from '@/config/env';
 
 const base: ServerEnv = {
   NODE_ENV: 'production', APP_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com',
@@ -51,5 +51,17 @@ describe('URLs de base de datos (Postgres)', () => {
     const r = parseEnv({ DATABASE_URL: 'postgres://u:SEC#RETO@h:5432/d' });
     expect(r.success).toBe(false);
     expect(JSON.stringify(r.error)).not.toContain('SEC');
+  });
+});
+
+describe('SHIPPING_FLAT_CENTS', () => {
+  it.each(['', ' ', '0x10', '1e3', '8.99', '-1', '99999999999'])('rechaza %j (nunca envío gratis o absurdo en silencio)', (v) => {
+    expect(() => publicEnv({ SHIPPING_FLAT_CENTS: v })).toThrow(/SHIPPING_FLAT_CENTS/);
+    expect(parseEnv({ SHIPPING_FLAT_CENTS: v }).success).toBe(false);
+  });
+  it('acepta centavos enteros y usa 899 si falta', () => {
+    expect(publicEnv({ SHIPPING_FLAT_CENTS: '1099' }).SHIPPING_FLAT_CENTS).toBe(1099);
+    expect(publicEnv({ SHIPPING_FLAT_CENTS: '0' }).SHIPPING_FLAT_CENTS).toBe(0);
+    expect(publicEnv({}).SHIPPING_FLAT_CENTS).toBe(899);
   });
 });

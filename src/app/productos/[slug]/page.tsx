@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { deliveryPromise } from '@/config/site';
-import { env } from '@/config/env';
+import { publicEnv } from '@/config/env';
 import { formatMoney, usd } from '@/domain/money';
 import { shippingNote } from '@/lib/price-notes';
 import { defaultVariant } from '@/domain/product';
@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: Params) {
 
   return (
     <>
-      <JsonLd data={graph(productLd(product, env().SHIPPING_FLAT_CENTS), breadcrumbLd(trail), faqLd(product.faq))} />
+      <JsonLd data={graph(productLd(product, publicEnv().SHIPPING_FLAT_CENTS), breadcrumbLd(trail), faqLd(product.faq))} />
       <nav aria-label="Migas de pan">
         <ol className="crumbs">
           <li><Link href="/">Inicio</Link></li>
@@ -66,7 +66,7 @@ export default async function ProductPage({ params }: Params) {
           <p className="pitch">{product.shortPitch}</p>
           <div className="buybox">
             <BuyBox sku={v.sku} label="Comprar ahora" />
-            <p className="ship">{deliveryPromise} · {shippingNote(usd(env().SHIPPING_FLAT_CENTS), env().STRIPE_AUTOMATIC_TAX)}</p>
+            <p className="ship">{deliveryPromise} · {shippingNote(usd(publicEnv().SHIPPING_FLAT_CENTS), publicEnv().STRIPE_AUTOMATIC_TAX)}</p>
             <Assurances />
           </div>
           <ol className="bullets">{product.bullets.map((b) => <li key={b}>{b}</li>)}</ol>

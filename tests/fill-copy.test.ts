@@ -16,4 +16,8 @@ describe('fillCopy', () => {
   it('falla en voz alta con un marcador desconocido (un error tipográfico no llega a la web)', () => {
     expect(() => fillCopy({ a: 'Envío {envo}' }, { envio: '$8.99' })).toThrow(/envo/);
   });
+
+  it.each(['{Envio}', '{ envio }', '{envío}', '{envio_eu}'])('también lanza con un marcador mal formado: %s', (m) => {
+    expect(() => fillCopy({ a: `Envío ${m}` }, { envio: '$8.99' })).toThrow(/Marcador/);
+  });
 });

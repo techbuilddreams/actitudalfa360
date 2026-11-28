@@ -4,11 +4,14 @@
  */
 export function fillCopy<T>(value: T, vars: Readonly<Record<string, string>>): T {
   if (typeof value === 'string') {
-    return value.replace(/\{([a-z][a-zA-Z0-9]*)\}/g, (_, key: string) => {
+    const filled = value.replace(/\{([a-z][a-zA-Z0-9]*)\}/g, (_, key: string) => {
       const v = vars[key];
       if (v === undefined) throw new Error(`Marcador de copy sin valor: {${key}}`);
       return v;
-    }) as T;
+    });
+    const left = /\{[^}]*\}/.exec(value.replace(/\{[a-z][a-zA-Z0-9]*\}/g, ''));
+    if (left) throw new Error(`Marcador de copy mal formado: ${left[0]}`);
+    return filled as T;
   }
   if (Array.isArray(value)) return value.map((v) => fillCopy(v, vars)) as T;
   if (value && typeof value === 'object') {
