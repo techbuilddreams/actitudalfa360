@@ -19,10 +19,10 @@ function runCheck(env: Record<string, string>) {
 const without = (o: Record<string, string>, ...keys: string[]) => Object.fromEntries(Object.entries(o).filter(([k]) => !keys.includes(k)));
 
 const staging = {
-  APP_ENV: 'staging', VERCEL_ENV: 'preview', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360-git-develop.vercel.app',
+  APP_ENV: 'staging', NEXT_PUBLIC_APP_ENV: 'staging', VERCEL_ENV: 'preview', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360-git-develop.vercel.app',
   DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres', STRIPE_SECRET_KEY: 'rk_test_x', STRIPE_WEBHOOK_SECRET: 'whsec_x',
 };
-const prod = { ...staging, APP_ENV: 'production', VERCEL_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com', STRIPE_SECRET_KEY: 'sk_live_abc' };
+const prod = { ...staging, APP_ENV: 'production', NEXT_PUBLIC_APP_ENV: 'production', VERCEL_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com', STRIPE_SECRET_KEY: 'sk_live_abc' };
 
 describe('vercel-build: la compuerta va ANTES de migrar y de next build', () => {
   it('el script de build empieza por el chequeo', () => {

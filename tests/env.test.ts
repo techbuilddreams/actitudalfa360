@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deploymentProblems, parseEnv, publicEnv, type ServerEnv } from '@/config/env';
 
 const base: ServerEnv = {
-  NODE_ENV: 'production', APP_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com',
+  NODE_ENV: 'production', APP_ENV: 'production', NEXT_PUBLIC_APP_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com',
   STRIPE_SECRET_KEY: 'rk_live_x', STRIPE_WEBHOOK_SECRET: 'whsec_x', STRIPE_AUTOMATIC_TAX: false,
   DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres', DATABASE_MIGRATION_URL: undefined, DB_POOL_SIZE: 5,
   PRINTIFY_AUTO_ORDER: false, PRINTIFY_API_TOKEN: undefined, PRINTIFY_SHOP_ID: undefined,
@@ -14,7 +14,7 @@ describe('configuración de despliegue', () => {
   it('producción con el alta del reto en modo log: falla (F3 pendiente)', () =>
     expect(deploymentProblems({ ...base, RETO_SIGNUP: 'log' }).join()).toContain('El alta del reto solo registra en el log: falta F3'));
   it('staging con el alta del reto en modo log: sigue funcionando', () =>
-    expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', RETO_SIGNUP: 'log' })).toEqual([]));
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging', NEXT_PUBLIC_APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', RETO_SIGNUP: 'log' })).toEqual([]));
   it('RETO_SIGNUP por defecto es log', () => {
     const r = parseEnv({});
     expect(r.success && r.data.RETO_SIGNUP).toBe('log');
@@ -41,7 +41,7 @@ describe('configuración de despliegue', () => {
     expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'production' }).join()).toContain('VERCEL_ENV'));
   it('entornos de Vercel bien emparejados: sin problemas', () => {
     expect(deploymentProblems({ ...base, VERCEL_ENV: 'production' }).filter((x) => !x.includes('falta F3'))).toEqual([]);
-    expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging', NEXT_PUBLIC_APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
   });
   it('local no exige nada (con llave de prueba)', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', STRIPE_SECRET_KEY: 'rk_test_x', DATABASE_URL: undefined })).toEqual([]));
 });

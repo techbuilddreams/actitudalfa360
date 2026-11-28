@@ -26,6 +26,8 @@ const postgresUrl = z.string().refine(isPostgresUrl, 'debe ser una URL postgres:
 export const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
+  // Lo que ve el NAVEGADOR (banner «pagos en modo prueba», noindex). Al desplegar debe ser igual a APP_ENV.
+  NEXT_PUBLIC_APP_ENV: z.enum(['local', 'staging', 'production']).optional(),
   NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3000'),
 
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_/).optional(),
@@ -76,6 +78,8 @@ export function deploymentProblems(e: ServerEnv): string[] {
   if (e.APP_ENV === 'local') return problems;
   const need = ['DATABASE_URL', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'] as const;
   for (const k of need) if (!e[k]) problems.push(`${k} es obligatoria en ${e.APP_ENV}`);
+  // Si no coinciden, producción puede mostrar el banner de staging y noindex mientras cobra live (o al revés).
+  if (e.NEXT_PUBLIC_APP_ENV !== e.APP_ENV) problems.push(`NEXT_PUBLIC_APP_ENV debe ser igual a APP_ENV=${e.APP_ENV} (hay ${e.NEXT_PUBLIC_APP_ENV ?? 'nada'})`);
   if (!e.NEXT_PUBLIC_SITE_URL.startsWith('https://')) problems.push('NEXT_PUBLIC_SITE_URL debe ser https');
   if (e.APP_ENV === 'production' && e.STRIPE_SECRET_KEY && !live) problems.push('Producción requiere una llave de Stripe live');
   if (e.PRINTIFY_AUTO_ORDER && (!e.PRINTIFY_API_TOKEN || !e.PRINTIFY_SHOP_ID)) problems.push('PRINTIFY_AUTO_ORDER requiere PRINTIFY_API_TOKEN y PRINTIFY_SHOP_ID');
@@ -100,7 +104,8 @@ export function checkDeployment(raw: Record<string, string | undefined>): string
   const parsed = parseEnv(raw);
   if (!parsed.success) return [`Variables de entorno inválidas: ${parsed.error.issues.map((i) => i.path.join('.')).join(', ')}`];
   // En Vercel (build o runtime) o en un `next start`, la falta de APP_ENV es un error de despliegue, no "local".
-  if (!raw.APP_ENV && (raw.NODE_ENV === 'production' || raw.VERCEL_ENV))
+  // VERCEL=1 lo pone Vercel siempre, aunque no exponga VERCEL_ENV a la build; un `npm run build` local no lo tiene.
+  if (!raw.APP_ENV && (raw.NODE_ENV === 'production' || raw.VERCEL_ENV || raw.VERCEL === '1'))
     return ['APP_ENV es obligatoria al desplegar o ejecutar en modo producción (local | staging | production)'];
   return deploymentProblems(parsed.data);
 }
