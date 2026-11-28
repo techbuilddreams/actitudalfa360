@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function Politicas() {
-  const ship = formatMoney({ cents: publicEnv().SHIPPING_FLAT_CENTS, currency: 'usd' });
+  const shipCents = publicEnv().SHIPPING_FLAT_CENTS;
+  const ship = formatMoney({ cents: shipCents, currency: 'usd' });
   const { handlingDays: h, transitDays: t } = site.shipping;
   return (
     <article className="doc">
@@ -19,7 +20,7 @@ export default function Politicas() {
       <h1>Políticas</h1>
 
       <h2 id="envios">Envíos</h2>
-      <p>Cada producto se imprime a pedido en EE. UU. La producción toma <strong>{h.min}–{h.max} días hábiles</strong> y la entrega <strong>{t.min}–{t.max} días hábiles</strong> más. El envío cuesta <strong>{ship}</strong> por pedido y se muestra antes de pagar. Por ahora enviamos solo dentro de Estados Unidos. Cuando tu pedido salga, recibirás el número de rastreo por correo.</p>
+      <p>Cada producto se imprime a pedido en EE. UU. La producción toma <strong>{h.min}–{h.max} días hábiles</strong> y la entrega <strong>{t.min}–{t.max} días hábiles</strong> más. {shipCents === 0 ? <>El envío es <strong>gratis</strong>.</> : <>El envío cuesta <strong>{ship}</strong> por pedido y se muestra antes de pagar.</>} Por ahora enviamos solo dentro de Estados Unidos. Cuando tu pedido salga, recibirás el número de rastreo por correo.</p>
 
       <h2 id="devoluciones">Devoluciones y cambios</h2>
       <p>Como cada pieza se hace especialmente para ti, no aceptamos devoluciones por cambio de opinión. Si tu producto llega <strong>dañado, defectuoso o equivocado</strong>, escríbenos dentro de los <strong>{site.returns.days} días</strong> siguientes a la entrega con una foto y tu número de pedido, y te enviamos un reemplazo o te devolvemos el dinero sin costo para ti.</p>

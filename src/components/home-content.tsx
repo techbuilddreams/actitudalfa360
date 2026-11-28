@@ -117,7 +117,8 @@ export function HomeContent() {
           </div>
           <div className="shop">
             {products.map((p) => <ProductCard key={p.slug} product={p} />)}
-            {first && second && (
+            {/* Igual que la ficha: el kit solo se anuncia si el servidor puede cobrarlo (las dos piezas disponibles). */}
+            {first && second && defaultVariant(first).available && defaultVariant(second).available && (
               <KitCard first={first} second={second} name={h.shop.kitName} line={h.shop.kitLine}
                 total={addMoney(defaultVariant(first).price, defaultVariant(second).price)} />
             )}

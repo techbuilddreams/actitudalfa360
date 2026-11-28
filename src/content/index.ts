@@ -7,6 +7,11 @@ import { fillCopy } from '@/lib/fill-copy';
 import { PRICES } from '@/infrastructure/catalog/prices';
 
 const pub = publicEnv();
+const envio = formatMoney(usd(pub.SHIPPING_FLAT_CENTS));
+// Con envío 0, el texto dice «envío gratis», nunca «$0.00» (las dos frases viven en copy.json → envioFrase).
+// Las dos frases no se exportan: la que no aplica no debe poder pintarse.
+const { envioFrase: frases, ...texts } = raw;
+const envioFrase = fillCopy(pub.SHIPPING_FLAT_CENTS === 0 ? frases.gratis : frases.fijo, { envio });
 
 /**
  * Copy del sitio con los datos de negocio rellenados desde su única fuente.
@@ -14,8 +19,10 @@ const pub = publicEnv();
  * no puede separarse de lo que cobra Stripe. Lee solo variables públicas: un secreto
  * de pago mal puesto no tumba páginas que no cobran.
  */
-export const copy = fillCopy(raw, {
-  envio: formatMoney(usd(pub.SHIPPING_FLAT_CENTS)),
+export const copy = fillCopy(texts, {
+  envio,
+  envioFrase,
+  envioTitulo: envioFrase.charAt(0).toUpperCase() + envioFrase.slice(1),
   precioTaza: formatMoney(PRICES.taza),
   precioVaso: formatMoney(PRICES.vaso),
   diasDevolucion: String(site.returns.days),

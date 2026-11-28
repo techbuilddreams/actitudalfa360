@@ -20,25 +20,35 @@ export interface CheckoutMessages { busy: string; errorStart: string; errorNetwo
 
 const Ctx = createContext<CheckoutState | null>(null);
 
+/** Programa `fn` tras `ms` y devuelve cómo cancelarlo. Inyectable para los tests. */
+export type Schedule = (fn: () => void, ms: number) => () => void;
+const defaultSchedule: Schedule = (fn, ms) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); };
+/**
+ * Si tras `location.assign` la página sigue VISIBLE pasado este tiempo, la navegación no ocurrió (Esc, extensión que
+ * bloquea checkout.stripe.com, red caída): se reactivan los botones. Si la página ya se ocultó, va camino de Stripe.
+ */
+export const NAVIGATION_STUCK_MS = 8_000;
+
 /**
  * UN estado de pago por ficha: comprar, la barra fija y el kit lo comparten, así que mientras cualquiera
  * está abriendo Stripe todos quedan deshabilitados (nunca dos sesiones de checkout a la vez).
  * El servidor pone el precio: aquí solo viajan sku y cantidad.
  */
-export function CheckoutProvider({ children, messages: t }: { children: ReactNode; messages: CheckoutMessages }) {
+export function CheckoutProvider({ children, messages: t, schedule = defaultSchedule }: { children: ReactNode; messages: CheckoutMessages; schedule?: Schedule }) {
   const [busy, setBusy] = useState(false);
   const [origin, setOrigin] = useState<CheckoutOrigin | null>(null);
   const [error, setError] = useState<string | null>(null);
   // El estado de React no cambia entre dos clics del mismo tick; la ref sí.
   const inFlight = useRef(false);
+  const cancelStuck = useRef<(() => void) | null>(null);
+  // Estado Y ref, siempre juntos: un botón habilitado con la ref en true parece vivo pero no hace nada.
+  const release = () => { cancelStuck.current?.(); cancelStuck.current = null; inFlight.current = false; setBusy(false); };
 
   // Al volver de Stripe con "Atrás", el navegador puede restaurar la página congelada.
   useEffect(() => {
-    const onShow = (e: PageTransitionEvent) => {
-      if (e.persisted) { inFlight.current = false; setBusy(false); }
-    };
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) release(); };
     window.addEventListener('pageshow', onShow);
-    return () => window.removeEventListener('pageshow', onShow);
+    return () => { window.removeEventListener('pageshow', onShow); cancelStuck.current?.(); };
   }, []);
 
   async function start(items: readonly CheckoutItem[], from: CheckoutOrigin) {
@@ -56,11 +66,11 @@ export function CheckoutProvider({ children, messages: t }: { children: ReactNod
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? t.errorStart);
       window.location.assign(data.url);
+      cancelStuck.current = schedule(() => { if (document.visibilityState === 'visible') release(); }, NAVIGATION_STUCK_MS);
     } catch (e) {
       const msg = e instanceof TypeError ? t.errorNetwork : (e as Error).message;
       setError(`${msg} ${t.errorRetry}`);
-      inFlight.current = false;
-      setBusy(false);
+      release();
     }
   }
 

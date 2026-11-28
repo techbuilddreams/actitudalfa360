@@ -1,4 +1,8 @@
 {
+  "envioFrase": {
+    "fijo": "envío fijo de {envio}",
+    "gratis": "envío gratis"
+  },
   "home": {
     "title": "Disciplina en 4 pilares: reto de {diasReto} días y tienda | Actitud Alfa 360",
     "description": "Reto gratis de {diasReto} días de disciplina en cuerpo, mente, dinero y carácter: cada noche marcas si cumpliste. Y tazas y vasos con frases en español, hechos a pedido en EE. UU.",
@@ -88,7 +92,7 @@
       "h2": "Para el escritorio, el carro y el gym",
       "lede": "Cada pieza se imprime cuando la pides, en Estados Unidos.",
       "kitName": "Kit del día",
-      "kitLine": "Taza + vaso, con un solo envío de {envio}."
+      "kitLine": "Taza + vaso en un solo paquete, con {envioFrase}."
     },
     "trust": [
       {
@@ -100,7 +104,7 @@
         "t": "Si llega dañado, con defecto o equivocado, avísanos dentro de {diasDevolucion} días de la entrega."
       },
       {
-        "b": "Envío fijo de {envio}",
+        "b": "{envioTitulo}",
         "t": "A cualquier dirección de Estados Unidos, por pedido."
       }
     ],
@@ -145,7 +149,7 @@
         "Impresa por ambos lados: el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\"",
         "Apta para microondas y lavavajillas",
         "Hecha a pedido: producción en {diasProduccion} días hábiles y envío en {diasEnvio} días hábiles",
-        "Envío fijo de {envio} a cualquier dirección de Estados Unidos"
+        "{envioTitulo} a cualquier dirección de Estados Unidos"
       ],
       "faq": [
         {
@@ -158,7 +162,7 @@
         },
         {
           "q": "¿Cuánto cuesta la taza y cuánto tarda en llegar?",
-          "a": "La taza negra de 15 oz cuesta {precioTaza} más {envio} de envío fijo dentro de Estados Unidos.{impuesto} Se imprime a pedido: la producción toma de {diasProduccion} días hábiles y el envío de {diasEnvio} días hábiles, en total de {diasTotal} días hábiles aproximadamente."
+          "a": "La taza negra de 15 oz cuesta {precioTaza}, con {envioFrase} dentro de Estados Unidos.{impuesto} Se imprime a pedido: la producción toma de {diasProduccion} días hábiles y el envío de {diasEnvio} días hábiles, en total de {diasTotal} días hábiles aproximadamente."
         }
       ],
       "imageAlts": [
@@ -189,7 +193,7 @@
         "Incluye tapa y popote",
         "Forma delgada que cabe en el portavasos del carro",
         "Lavar a mano para cuidar el acabado y la impresión",
-        "Hecho a pedido, con envío fijo de {envio} dentro de Estados Unidos"
+        "Hecho a pedido, con {envioFrase} dentro de Estados Unidos"
       ],
       "faq": [
         {
@@ -202,7 +206,7 @@
         },
         {
           "q": "¿Qué incluye el vaso térmico y cuánto cuesta?",
-          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta {precioVaso}. El envío dentro de Estados Unidos es de {envio} fijo.{impuesto} Se hace a pedido: de {diasProduccion} días hábiles de producción más {diasEnvio} días hábiles de envío."
+          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta {precioVaso}. {envioTitulo} dentro de Estados Unidos.{impuesto} Se hace a pedido: de {diasProduccion} días hábiles de producción más {diasEnvio} días hábiles de envío."
         }
       ],
       "imageAlts": [
@@ -224,7 +228,7 @@
   },
   "politicas": {
     "title": "Envíos, devoluciones y privacidad | Actitud Alfa 360",
-    "description": "Envío fijo de {envio} solo en EE. UU. Producción de {diasProduccion} días hábiles y envío de {diasEnvio}. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días.",
+    "description": "{envioTitulo} solo en EE. UU. Producción de {diasProduccion} días hábiles y envío de {diasEnvio}. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días.",
     "retoPrivacy": {
       "h3": "La lista del reto",
       "items": [
@@ -455,6 +459,7 @@
     "crumbShop": "Tienda",
     "buy": "Comprar ahora",
     "barBuy": "Comprar",
+    "soldOut": "Agotado",
     "paywith": "Pago seguro con Stripe · Apple Pay · Google Pay",
     "printed": "Se imprime en EE. UU. cuando la pides",
     "kitButton": "Comprar el kit",

@@ -24,7 +24,7 @@ beforeEach(() => { FakeIO.last = null; vi.stubGlobal('IntersectionObserver', Fak
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const props = { sku: 'AA360-TAZA-15-NEGRA', label: 'Comprar ahora', barLabel: 'Comprar', name: 'Taza negra 15 oz', price: '$24.99', thumb: '/img/x.webp',
-  qtyLabels: { group: 'Cantidad', less: 'Quitar una', more: 'Agregar una', value: 'Cantidad elegida' } };
+  qtyLabels: { group: 'Cantidad', less: 'Quitar una', more: 'Agregar una', value: 'Cantidad elegida' }, available: true, soldOutLabel: 'Agotado' };
 const messages = { busy: 'Abriendo pago seguro…', errorStart: 'No se pudo iniciar el pago.', errorNetwork: 'No se pudo conectar.', errorRetry: 'Intenta de nuevo en un momento.' };
 const wrapper = ({ children }: { children: ReactNode }) => <CheckoutProvider messages={messages}>{children}</CheckoutProvider>;
 const failing = () => vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'x' }), { status: 400 }));

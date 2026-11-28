@@ -16,6 +16,9 @@ interface Props {
   price: string;
   thumb: string;
   qtyLabels: QtyLabels;
+  /** Variante disponible. Si no, comprar y la barra quedan deshabilitados con `soldOutLabel` (el servidor la rechazaría). */
+  available: boolean;
+  soldOutLabel: string;
 }
 
 /**
@@ -24,12 +27,13 @@ interface Props {
  * si se llega por ancla o con el scroll restaurado, sin haber visto nunca el botón.
  * El estado de pago es el de la ficha (CheckoutProvider): si el kit está abriendo Stripe, aquí no se compra.
  */
-export function BuyBox({ sku, label, barLabel, name, price, thumb, qtyLabels: q }: Props) {
+export function BuyBox({ sku, label, barLabel, name, price, thumb, qtyLabels: q, available, soldOutLabel }: Props) {
   const [qty, setQty] = useState(1);
   const [bar, setBar] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
   const { busy, busyLabel, origin, error, start } = useCheckout();
   const mine = origin === 'buy';
+  const off = busy || !available;
 
   useEffect(() => {
     const el = sentinel.current;
@@ -48,12 +52,12 @@ export function BuyBox({ sku, label, barLabel, name, price, thumb, qtyLabels: q 
     <>
       <div className="qty-row">
         <div className="stepper" role="group" aria-label={q.group}>
-          <button type="button" aria-label={q.less} onClick={() => set(qty - 1)} disabled={busy || qty <= 1}>−</button>
+          <button type="button" aria-label={q.less} onClick={() => set(qty - 1)} disabled={off || qty <= 1}>−</button>
           <output aria-label={q.value} aria-live="polite">{qty}</output>
-          <button type="button" aria-label={q.more} onClick={() => set(qty + 1)} disabled={busy || qty >= MAX_QTY_PER_LINE}>+</button>
+          <button type="button" aria-label={q.more} onClick={() => set(qty + 1)} disabled={off || qty >= MAX_QTY_PER_LINE}>+</button>
         </div>
-        <button className="btn block" type="button" onClick={buy} disabled={busy} aria-busy={busy && mine}>
-          {busy && mine ? busyLabel : label}
+        <button className="btn block" type="button" onClick={buy} disabled={off} aria-busy={busy && mine}>
+          {!available ? soldOutLabel : busy && mine ? busyLabel : label}
         </button>
       </div>
       <div ref={sentinel} className="buy-sentinel" aria-hidden="true" />
@@ -63,7 +67,7 @@ export function BuyBox({ sku, label, barLabel, name, price, thumb, qtyLabels: q 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <div className="bb-img"><img src={thumb} alt="" width={44} height={44} sizes="44px" loading="lazy" decoding="async" /></div>
         <div><div className="bb-name">{name}</div><div className="bb-price num">{price}{qty > 1 ? ` × ${qty}` : ''}</div></div>
-        <button className="btn sm" type="button" tabIndex={bar ? 0 : -1} onClick={buy} disabled={busy}>{barLabel}</button>
+        <button className="btn sm" type="button" tabIndex={bar ? 0 : -1} onClick={buy} disabled={off}>{available ? barLabel : soldOutLabel}</button>
       </div>
     </>
   );

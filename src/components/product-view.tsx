@@ -56,7 +56,7 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
               <span className="price num">{formatMoney(v.price)}</span>
             </div>
             <BuyBox sku={v.sku} label={t.buy} barLabel={t.barBuy} name={name} price={formatMoney(v.price)}
-              thumb={thumb(product.images[0].src)} qtyLabels={t.qty} />
+              thumb={thumb(product.images[0].src)} qtyLabels={t.qty} available={v.available} soldOutLabel={t.soldOut} />
             <p className="lede">{product.shortPitch}</p>
             <p className="paywith">{t.paywith}</p>
             <div className="arrive">
