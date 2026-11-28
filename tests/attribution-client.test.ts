@@ -48,7 +48,7 @@ describe('currentAttribution', () => {
   it('lee client_id, session_id y la campaña guardada', () => {
     const s = fakeStorage();
     rememberCampaign({ search: '?utm_source=tiktok', storage: s, now });
-    expect(currentAttribution({ cookie: cookies, storage: s, now })).toEqual({
+    expect(currentAttribution({ cookie: cookies, storage: s, now, measurementId: 'G-AB12CD34EF' })).toEqual({
       gaClientId: '1234567890.1700000000', gaSessionId: '1700000123',
       utm: { source: 'tiktok', medium: null, campaign: null, term: null, content: null },
     });
@@ -83,4 +83,12 @@ describe('Analytics.isEnabled (lo que decide si la atribución viaja con el pago
     a.disable();
     expect(a.isEnabled()).toBe(false);
   });
+});
+
+describe('session_id de NUESTRA propiedad (Rompedor P2: otra propiedad de GA4 en el dominio padre)', () => {
+  const two = '_ga=GA1.1.1234567890.1700000000; _ga_OTRA999=GS2.1.s1111111111$o1; _ga_AB12CD34EF=GS2.1.s1700000123$o3';
+  it('con el ID de medición, lee su cookie y no la primera _ga_*', () =>
+    expect(currentAttribution({ cookie: two, storage: fakeStorage(), now, measurementId: 'G-AB12CD34EF' }).gaSessionId).toBe('1700000123'));
+  it('sin nuestra cookie de sesión ⇒ null, no la de otra propiedad', () =>
+    expect(currentAttribution({ cookie: '_ga=GA1.1.1.2; _ga_OTRA999=GS2.1.s1111111111$o1', storage: fakeStorage(), now, measurementId: 'G-AB12CD34EF' }).gaSessionId).toBeNull());
 });

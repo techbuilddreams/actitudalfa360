@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StrictMode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { clearGaCookies, GTAG_SRC, loadGtag } from '@/components/consent/gtag';
-import { CAMPAIGN_KEY } from '@/lib/attribution-client';
+import { CAMPAIGN_KEY, currentAttribution } from '@/lib/attribution-client';
 import { ConsentManager, type ConsentText } from '@/components/consent/consent-manager';
 import { createAnalytics } from '@/lib/analytics';
 import type { ConsentDecision } from '@/domain/consent';
@@ -215,5 +215,14 @@ describe('ConsentManager — campaña de la primera visita', () => {
     fireEvent.click(screen.getByRole('button', { name: text.preferences }));
     fireEvent.click(screen.getByRole('button', { name: text.reject }));
     expect(saved()).toBeNull();
+  });
+});
+
+describe('ConsentManager — configura la propiedad para leer SU cookie de sesión', () => {
+  it('con permiso, currentAttribution() lee _ga_<ID sin G->', () => {
+    document.cookie = `_ga_${ID.replace(/^G-/, '')}=GS2.1.s1700000123$o3; Path=/`;
+    document.cookie = '_ga=GA1.1.1234567890.1700000000; Path=/';
+    render(<ConsentManager measurementId={ID} decision={decision({ analytics: true })} text={text} analytics={createAnalytics()} load={vi.fn()} reload={vi.fn()} />);
+    expect(currentAttribution().gaSessionId).toBe('1700000123');
   });
 });

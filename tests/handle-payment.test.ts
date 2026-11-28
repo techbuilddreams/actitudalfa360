@@ -220,3 +220,31 @@ describe('handlePayment → purchase server-side (GA4)', () => {
     expect((await orders.findByPaymentRef('cs_test_123'))?.utm).toBeNull();
   });
 });
+
+describe('handlePayment → purchase: robustez (Rompedor P2 / QA P2)', () => {
+  const visit = { gaClientId: '123.456', gaSessionId: null, utm: null };
+  it('si `defer` lanza al programar, el pago sigue: created, producción hecha, y se registra', async () => {
+    const error = vi.fn();
+    const createDraftOrder = vi.fn(async () => 'pf_1');
+    const handle = makeHandlePayment({
+      orders: new InMemoryOrderRepository(), catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
+      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} },
+      logger: { ...noopLogger, error }, newId: () => 'id-1', now: () => new Date(),
+      analytics: { reporter: { reportPurchase: async () => {} }, defer: () => { throw new Error('after fuera de contexto'); } },
+    });
+    expect(await handle(paidCheckout({ attribution: visit }))).toBe('created');
+    expect(createDraftOrder).toHaveBeenCalledOnce();
+    expect(error).toHaveBeenCalledWith('analytics_purchase_failed', expect.objectContaining({ orderId: 'id-1' }));
+  });
+  it('la compra se programa ANTES del aviso de pedido: si el aviso lanza, el purchase no se pierde', async () => {
+    const tasks: (() => Promise<void>)[] = [];
+    const handle = makeHandlePayment({
+      orders: new InMemoryOrderRepository(), catalog: staticCatalog, fulfillment: null,
+      notifier: { orderPaid: async () => { throw new Error('SMTP'); }, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} },
+      logger: noopLogger, newId: () => 'id-1', now: () => new Date(),
+      analytics: { reporter: { reportPurchase: async () => {} }, defer: (t) => { tasks.push(t); } },
+    });
+    await expect(handle(paidCheckout({ attribution: visit }))).rejects.toThrow('SMTP');
+    expect(tasks).toHaveLength(1);
+  });
+});

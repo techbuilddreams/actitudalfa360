@@ -151,3 +151,22 @@ describe('atribución por defecto del pago (sin inyectar)', () => {
     document.cookie = '_ga=; Max-Age=0; Path=/';
   });
 });
+
+describe('atribución por defecto con la medición ENCENDIDA (QA P2: el camino real)', () => {
+  it('viaja el client_id de la cookie _ga', async () => {
+    const { analytics } = await import('@/lib/analytics');
+    analytics.enable(() => {});
+    document.cookie = '_ga=GA1.1.1234567890.1700000000; Path=/';
+    const fetchMock = failing();
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      render(<BuyBox {...props} />, { wrapper });
+      fireEvent.click(screen.getByRole('button', { name: 'Comprar ahora' }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(JSON.parse(fetchMock.mock.calls[0]![1].body).attribution).toMatchObject({ gaClientId: '1234567890.1700000000' });
+    } finally {
+      analytics.disable();
+      document.cookie = '_ga=; Max-Age=0; Path=/';
+    }
+  });
+});

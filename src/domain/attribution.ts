@@ -46,11 +46,20 @@ export function gaSessionIdFromCookie(value: string | undefined): string | null 
   return m && SESSION_ID_RE.test(m[1]!) ? m[1]! : null;
 }
 
-/** Recorta, quita caracteres de control y limita a 100. Vacío ⇒ null. */
+/** Mitad de un par sustituto sin su pareja: Stripe la rechaza (encodeURIComponent lanza) y el pago no abre. */
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+/** Un correo en una UTM (boletines que lo meten en utm_content): dato personal que no guardamos. */
+const LOOKS_LIKE_EMAIL = /@|%40/i;
+
+/**
+ * Texto bien formado, sin controles, sin correos y de 100 CARACTERES como mucho (no unidades UTF-16: cortar
+ * por unidades parte un emoji y deja un sustituto suelto). Vacío ⇒ null.
+ */
 function clean(v: unknown): string | null {
   if (typeof v !== 'string') return null;
-  const s = v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, UTM_MAX_LEN).trim();
-  return s || null;
+  const s = v.replace(LONE_SURROGATE, '\uFFFD').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  if (LOOKS_LIKE_EMAIL.test(s)) return null;
+  return Array.from(s).slice(0, UTM_MAX_LEN).join('').trim() || null;
 }
 
 /** Sin `source` no hay campaña: GA4 tampoco atribuye una UTM sin él. */

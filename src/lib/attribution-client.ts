@@ -7,6 +7,12 @@ import { firstTouch, gaClientIdFromCookie, gaSessionIdFromCookie, parseAttributi
  */
 export const CAMPAIGN_KEY = 'aa360_campaign';
 
+/** ID de NUESTRA propiedad (lo fija ConsentManager al encender la medición): su cookie de sesión es `_ga_<ID sin G->`. */
+let configuredId: string | null = null;
+export function configureAttribution(measurementId: string): void {
+  configuredId = measurementId;
+}
+
 type KV = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 const browserStorage = (): KV | null => {
@@ -45,12 +51,12 @@ const cookieValue = (cookie: string, match: (name: string) => boolean): string |
 };
 
 /** Lo que viaja con el pago. Validado con las mismas reglas que aplica el servidor. */
-export function currentAttribution({ cookie = typeof document === 'undefined' ? '' : document.cookie, storage = browserStorage(), now = new Date() }: { cookie?: string; storage?: KV | null; now?: Date } = {}): Attribution {
+export function currentAttribution({ cookie = typeof document === 'undefined' ? '' : document.cookie, storage = browserStorage(), now = new Date(), measurementId = configuredId }: { cookie?: string; storage?: KV | null; now?: Date; measurementId?: string | null } = {}): Attribution {
   const touch = firstTouch(readSaved(storage), null, now);
   return parseAttribution({
     gaClientId: gaClientIdFromCookie(cookieValue(cookie, (n) => n === '_ga')),
-    // Una sola propiedad de GA4 en este dominio: su cookie es la única _ga_<contenedor>.
-    gaSessionId: gaSessionIdFromCookie(cookieValue(cookie, (n) => n.startsWith('_ga_'))),
+    // Solo la cookie de NUESTRA propiedad: otra propiedad en el dominio padre pegaría la compra a una sesión ajena.
+    gaSessionId: measurementId ? gaSessionIdFromCookie(cookieValue(cookie, (n) => n === `_ga_${measurementId.replace(/^G-/, '')}`)) : null,
     utm: touch?.utm ?? null,
   });
 }

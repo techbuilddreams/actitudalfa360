@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import Stripe from 'stripe';
 import { buildCheckoutSessionParams, StripeGateway } from '@/infrastructure/stripe/stripe-gateway';
+import { parseAttribution, utmFromSearch } from '@/domain/attribution';
 import { priceCart } from '@/domain/cart';
 import { usd } from '@/domain/money';
 import { staticCatalog } from '@/infrastructure/catalog/static-catalog';
@@ -79,5 +80,20 @@ describe('parseWebhook lee la atribución (evento firmado de verdad, sin red)', 
     const paid = await gateway.parseWebhook(payload, header);
     expect(paid?.attribution).toEqual({ gaClientId: null, gaSessionId: null, utm: null });
     expect(paid?.total.cents).toBe(3398);
+  });
+});
+
+describe('Rompedor P1: la atribución nunca impide abrir el pago (codificador REAL de Stripe, red falsa)', () => {
+  const fakeFetch = (async () => new Response(JSON.stringify({ id: 'cs_test_x', object: 'checkout.session', url: 'https://checkout.test' }),
+    { status: 200, headers: { 'content-type': 'application/json', 'request-id': 'req_1' } })) as unknown as typeof fetch;
+  const stripe = new Stripe('sk_test_fake', { httpClient: Stripe.createFetchHttpClient(fakeFetch), maxNetworkRetries: 0 });
+  it('emoji justo en el carácter 100 de una UTM: la sesión se crea', async () => {
+    const utm = utmFromSearch(`?utm_source=ig&utm_campaign=${'a'.repeat(99)}${encodeURIComponent('🔥')}`);
+    const attribution = parseAttribution({ gaClientId: '123.456', utm });
+    await expect(stripe.checkout.sessions.create(buildCheckoutSessionParams({ ...req, attribution }, opts))).resolves.toBeTruthy();
+  });
+  it('un surrogate suelto que llegue crudo del cliente tampoco', async () => {
+    const attribution = parseAttribution({ gaClientId: '123.456', utm: { source: 'ig\uD83D', campaign: '\uDC00x' } });
+    await expect(stripe.checkout.sessions.create(buildCheckoutSessionParams({ ...req, attribution }, opts))).resolves.toBeTruthy();
   });
 });

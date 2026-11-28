@@ -87,3 +87,24 @@ describe('metadata de Stripe (ida y vuelta)', () => {
     }));
   it('sin metadata ⇒ vacía', () => expect(attributionFromMetadata(null)).toEqual({ gaClientId: null, gaSessionId: null, utm: null }));
 });
+
+describe('UTM: texto bien formado y sin datos personales (Rompedor P1 / QA P2)', () => {
+  const wellFormed = (s: string) => !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(s);
+  it('el recorte a 100 nunca parte un emoji (cuenta caracteres, no unidades UTF-16)', () => {
+    const c = utmFromSearch(`?utm_source=ig&utm_campaign=${'a'.repeat(99)}${encodeURIComponent('🔥')}x`)!.campaign!;
+    expect(wellFormed(c)).toBe(true);
+    expect(c).toBe(`${'a'.repeat(99)}🔥`);
+  });
+  it('surrogates sueltos que lleguen crudos se reemplazan', () => {
+    const u = parseAttribution({ utm: { source: 'ig\uD83D', content: '\uDC00' } }).utm!;
+    expect(wellFormed(u.source!)).toBe(true);
+    expect(wellFormed(u.content ?? '')).toBe(true);
+  });
+  it('un valor que parece un correo se descarta (boletines que meten el email en utm_content)', () => {
+    const u = parseAttribution({ utm: { source: 'newsletter', content: 'ana@example.com', term: 'x ANA%40EXAMPLE.COM' } }).utm!;
+    expect(u.content).toBeNull();
+    expect(u.term).toBeNull();
+    expect(u.source).toBe('newsletter');
+  });
+  it('una source que parece correo ⇒ no hay campaña', () => expect(parseAttribution({ utm: { source: 'a@b.co' } }).utm).toBeNull());
+});

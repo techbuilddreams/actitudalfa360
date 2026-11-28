@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CONSENT_COOKIE, CONSENT_MAX_AGE_DAYS, serializeConsentCookie, type ConsentChoice, type ConsentDecision } from '@/domain/consent';
 import { analytics as pageAnalytics, type Analytics } from '@/lib/analytics';
-import { forgetCampaign, rememberCampaign } from '@/lib/attribution-client';
+import { configureAttribution, forgetCampaign, rememberCampaign } from '@/lib/attribution-client';
 import { clearGaCookies, gtagEvent, loadGtag, revokeGtag } from './gtag';
 
 /** Textos (copy.json → `consent`). */
@@ -38,6 +38,7 @@ export function ConsentManager({ measurementId, decision, text: t, analytics = p
   const start = () => {
     if (!loaded.current) load(measurementId);
     loaded.current = true;
+    configureAttribution(measurementId);
     analytics.enable(gtagEvent);
     rememberCampaign();
   };
