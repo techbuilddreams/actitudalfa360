@@ -52,8 +52,13 @@ export function ConsentManager({ measurementId, decision, text: t, analytics = p
   }, []);
 
   // page_view propio en cada página (también en la navegación en cliente). Va DESPUÉS del efecto de arriba.
+  // La ref recuerda la última ruta medida: ni re-renders ni el doble efecto de StrictMode la repiten.
   const pathname = usePathname();
+  const lastPage = useRef<string | null>(null);
   useEffect(() => {
+    const page = window.location.pathname;
+    if (lastPage.current === page) return;
+    lastPage.current = page;
     analytics.track({ name: 'page_view', location: window.location.href, title: document.title });
   }, [pathname, analytics]);
 

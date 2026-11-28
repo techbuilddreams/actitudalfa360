@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { StrictMode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { clearGaCookies, GTAG_SRC, loadGtag } from '@/components/consent/gtag';
 import { ConsentManager, type ConsentText } from '@/components/consent/consent-manager';
@@ -172,6 +173,11 @@ describe('ConsentManager', () => {
     fireEvent.click(screen.getByRole('button', { name: text.preferences }));
     fireEvent.click(screen.getByRole('button', { name: text.accept }));
     expect(calls().some((c) => c[0] === 'event')).toBe(false);
+  });
+
+  it('StrictMode (doble efecto en desarrollo): UN page_view por página', () => {
+    render(<StrictMode><ConsentManager measurementId={ID} decision={decision({ analytics: true })} text={text} analytics={createAnalytics()} load={loadGtag} reload={() => {}} /></StrictMode>);
+    expect(calls().filter((c) => c[0] === 'event' && c[1] === 'page_view')).toHaveLength(1);
   });
 
   it('fuera de la UE no hay enlace de preferencias ni banner', () => {
