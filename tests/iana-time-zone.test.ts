@@ -7,6 +7,9 @@ describe('canonicalTimeZone (nombres IANA, en su forma canónica)', () => {
   it.each(['+05:00', '-0300', '-0400', '+5', 'GMT+5', 'UTC-03:00', 'Mars/Base', '', 'A/'.repeat(900), '../../etc/passwd', 'utc ', 'America/New_York\n', 'A/' + 'b'.repeat(200)])(
     'rechaza %j', (z) => expect(canonicalTimeZone(z)).toBeNull());
 
+  // Sonda ATAQUE 4 del Rompedor r3: el motor acepta zonas heredadas que el tzdata moderno (p. ej. Postgres) ya no tiene.
+  it.each(['SystemV/AST4', 'SystemV/EST5EDT', 'systemv/pst8pdt'])('rechaza la zona heredada %s', (z) => expect(canonicalTimeZone(z)).toBeNull());
+
   it('canoniza mayúsculas: america/santo_domingo → America/Santo_Domingo', () =>
     expect(canonicalTimeZone('america/santo_domingo')).toBe('America/Santo_Domingo'));
   it('Etc/GMT+5 se queda como Etc/GMT+5 (el signo POSIX no se toca)', () => expect(canonicalTimeZone('Etc/GMT+5')).toBe('Etc/GMT+5'));
