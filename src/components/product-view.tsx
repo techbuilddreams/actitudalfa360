@@ -8,8 +8,9 @@ import { BuyBox } from './buy-box';
 import { DeliveryEta } from './delivery-eta';
 import { Faq } from './faq';
 import { KitButton } from './kit-button';
+import { CheckoutProvider } from './use-checkout';
 import { Assurances } from './product-card';
-import { ProductGallery, staged } from './product-gallery';
+import { ProductGallery, thumb } from './product-gallery';
 
 interface Props {
   product: Product;
@@ -46,13 +47,14 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
         </nav>
         <div className="pdp">
           <ProductGallery images={product.images} />
+          <CheckoutProvider messages={copy.checkout}>
           <div className="buy">
             <div className="pdp-title">
               <h1>{name}{quote && <><span className="sr-only"> — </span><span className="frase">{quote}</span></>}</h1>
               <span className="price num">{formatMoney(v.price)}</span>
             </div>
             <BuyBox sku={v.sku} label={t.buy} barLabel={t.barBuy} name={name} price={formatMoney(v.price)}
-              thumb={staged(product.images[0].src).src} />
+              thumb={thumb(product.images[0].src)} qtyLabels={t.qty} />
             <p className="lede">{product.shortPitch}</p>
             <p className="paywith">{t.paywith}</p>
             <div className="arrive">
@@ -63,7 +65,7 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
               <div className="kit" id="kit">
                 <div className="stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={staged(partner.images[0].src).src} alt="" width={800} height={800} loading="lazy" decoding="async" />
+                  <img src={thumb(partner.images[0].src)} alt="" width={800} height={800} sizes="96px" loading="lazy" decoding="async" />
                 </div>
                 <div>
                   <p>{t.kitTitle}<Link href={`/productos/${partner.slug}`}>{displayName(partner)}</Link></p>
@@ -77,6 +79,7 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
             </ul>
             <Assurances />
           </div>
+          </CheckoutProvider>
         </div>
       </div>
 

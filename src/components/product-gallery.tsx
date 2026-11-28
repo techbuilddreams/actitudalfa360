@@ -11,6 +11,12 @@ export function staged(src: string): { src: string; srcSet?: string } {
   return { src: `${base}.webp`, srcSet: `${base}-800.webp 800w, ${base}.webp 1200w` };
 }
 
+/** La variante más chica (-800) para miniaturas: la barra fija y el kit nunca necesitan la de 1200. */
+export function thumb(src: string): string {
+  const m = /^\/img\/([\w-]+)\.webp$/.exec(src);
+  return m ? `/img/stage/${m[1]}-800.webp` : src;
+}
+
 const PDP_SIZES = '(min-width: 900px) 56vw, calc(100vw - 32px)';
 
 /** Galería de la ficha: fotos apiladas en escritorio, carrusel con scroll-snap en móvil (sin JS). */

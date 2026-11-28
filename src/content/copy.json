@@ -458,6 +458,18 @@
     },
     "kitTitle": "Llévate también: ",
     "kitPricePre": "Kit ",
-    "kitPriceMid": " · un solo envío, ahorras "
+    "kitPriceMid": " · un solo envío, ahorras ",
+    "qty": {
+      "group": "Cantidad",
+      "less": "Quitar una",
+      "more": "Agregar una",
+      "value": "Cantidad elegida"
+    }
+  },
+  "checkout": {
+    "busy": "Abriendo pago seguro…",
+    "errorStart": "No se pudo iniciar el pago.",
+    "errorNetwork": "No se pudo conectar.",
+    "errorRetry": "Intenta de nuevo en un momento."
   }
 }
