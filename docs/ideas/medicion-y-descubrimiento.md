@@ -2,7 +2,7 @@
 
 > Pedido de Luis: GA4 «como en los otros sistemas», saber qué hace el usuario y mejorar, decirlo claro en la
 > política, las mejores formas de conversión, datos organizados que den valor a la empresa, y que nos encuentren
-> los LLM y la búsqueda social. **Estado: propuesta, sin aprobar. Nada construido.** Va en su propia sesión.
+> los LLM y la búsqueda social. **Estado: decidido por Luis el 2026-11-28 (ver «Decisiones» al final). Nada construido.** Va en su propia sesión.
 
 ## 1. Postura (lo que cambio del pedido, y por qué)
 
@@ -64,10 +64,19 @@ Lo que ya funciona, por orden de impacto:
 4. Política actualizada → abogado.
 5. Meta CAPI: solo el día que haya presupuesto de anuncios.
 
-## Decisiones para Luis
+## Decisiones (Luis, 2026-11-28)
 
-- ¿Aprobado el orden de §5? Recomendación: sí, empezar por 1-2.
-- ¿Habrá anuncios pagados en Meta/TikTok en los próximos 3 meses? Si no, el punto 5 se aplaza y la política
-  es más simple.
-- ¿Permitimos el entrenamiento de IA (GPTBot, Google-Extended) o solo la búsqueda? Recomendación: solo búsqueda
-  por ahora; se puede abrir después.
+- **Orden de §5: aprobado.** Primero 1 (consentimiento + GA4 + Search Console/Bing) y 2 (`purchase` server-side).
+- **Sin anuncios pagados**, solo contenido orgánico. Se aplaza Meta Pixel/CAPI (§2.4 y §5.5) y el enlace CCPA
+  «No vender ni compartir». Si un día hay presupuesto de anuncios, se reabre: cambia la política.
+- **Banner solo para EEE/Reino Unido/Suiza** (país por la cabecera de geo de Vercel). En EE. UU.: sin banner,
+  GA4 con Google Signals y personalización de anuncios **apagadas**, GPC respetado (con GPC: `analytics_storage`
+  denied). Sustituye al «banner para todos» de §2.2.
+- **Corrección del CTO a §2.3: `reto_day_completed` NO va a GA4.** El avance del reto vive en Postgres (F3) y las
+  cohortes salen de ahí. GA4 recibe solo `sign_up` del reto, sin nada de salud. Así lo promete la política.
+- **Bots de IA: solo búsqueda** (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot). GPTBot y
+  Google-Extended bloqueados por ahora.
+- **Reto solo para mayores de 18** (dicho en la política y junto al formulario; sin casilla).
+- **La promesa de Carácter no se guarda** (se escribe para uno mismo). F3 no tiene campo de texto libre.
+- Abierto para el abogado: si la ley de Washington (*My Health My Data*) cubre unas casillas de ejercicio. Mientras,
+  se diseña como si las cubriera.

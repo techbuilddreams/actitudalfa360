@@ -27,6 +27,9 @@ export const copy = fillCopy(texts, {
   precioVaso: formatMoney(PRICES.vaso),
   diasDevolucion: String(site.returns.days),
   diasReto: String(site.challenge.days),
+  correo: site.email,
+  diasBorrado: String(site.privacy.deleteAfterUnsubscribeDays),
+  diasRespuesta: String(site.privacy.responseDays),
   precioMembresia: formatMoneyShort(usd(site.membership.priceCents)),
   // Puntuación máxima: un punto por pilar cada día. El día del ejemplo es relativo al total (12 de 30).
   puntosMax: String(site.challenge.days * raw.pillars.length),
