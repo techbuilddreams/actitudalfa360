@@ -33,5 +33,10 @@ jobs:
       - run: npm test
       - name: Los tests de integración corrieron (no se saltaron)
         run: npx vitest run tests/postgres.int.test.ts --reporter=verbose 2>&1 | tee /tmp/int.log && ! grep -qE '↓|skipped' /tmp/int.log
+      - name: La compuerta de despliegue corre en Node 22 (la misma línea que vercel-build) y bloquea producción incompleta
+        run: |
+          node --experimental-strip-types --no-warnings scripts/check-deploy.ts
+          if APP_ENV=production node --experimental-strip-types --no-warnings scripts/check-deploy.ts; then echo "La compuerta dejó pasar producción incompleta"; exit 1; fi
+        env: { APP_ENV: local }
       - run: npm run build
         env: { NEXT_PUBLIC_SITE_URL: https://actitudalfa360.com, APP_ENV: production }
