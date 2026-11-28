@@ -57,7 +57,10 @@
 ## Siguiente, en orden
 
 1. ~~OK para fusionar el PR #8~~ hecho (2026-11-28).
-2. **Luis:** validar el borrador de reglas del reto y el texto de privacidad del reto (`copy.json` → `politicas.retoPrivacy`).
+2. **Luis:** validar el borrador de reglas del reto. ~~Texto de privacidad del reto~~ aprobado el 2026-11-28 (rama
+   `privacidad-reto`). Lo que promete y F3 tiene que cumplir con test: borrar las casillas
+   `site.privacy.deleteAfterUnsubscribeDays` días después de la baja, guardar solo el correo en una lista de bajas,
+   ningún dato del reto hacia GA4/anuncios, no guardar la promesa diaria, y responder en `site.privacy.responseDays` días.
 3. ~~Dirección postal~~ hecha (2026-11-28: la de la LLC, en `site.postalAddress`, con test del pie).
    **Luis:** feriados en la fecha de entrega: sí/no (sigue abierto).
 4. ~~Test inestable «20 webhooks simultáneos ⇒ 1 pedido»~~ hecho (2026-11-28, `3398774`). Era bug del **test**, no de
@@ -65,6 +68,8 @@
    (Stripe reintenta → 200 `duplicate`; 1 aviso, 1 producción). El test ahora mide `orderPaid` + la fila, y hay un test
    de intercalación forzada (determinista). 15 corridas seguidas en verde; mutante «avisar en duplicados» muerto.
 5. F3: Resend + suscriptores con doble confirmación + registro diario. Al cerrarlo, añadir el adaptador real a `RETO_SIGNUP`.
+   Cumplir las promesas de la política del reto (punto 2).
+6. Medición: decidida en `docs/ideas/medicion-y-descubrimiento.md` (sesión propia; empieza por consentimiento + GA4).
 
 ## Aceptado a propósito (no «arreglar»)
 

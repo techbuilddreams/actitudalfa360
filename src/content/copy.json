@@ -232,11 +232,13 @@
     "retoPrivacy": {
       "h3": "La lista del reto",
       "items": [
-        "Qué guardamos: tu correo, tu zona horaria, si marcaste que te avisemos de la membresía y, cuando el registro diario esté activo, las marcas de cada día.",
-        "Para qué: mandarte el correo diario del reto a tu hora y contarte tu puntuación. Y, solo si lo marcaste, avisarte cuando abra la membresía.",
-        "Quién lo procesa: nuestro proveedor de correo envía los mensajes como encargado del tratamiento, por cuenta nuestra y solo para eso.",
-        "Te das de baja con un clic desde cualquier correo, y dejamos de escribirte.",
-        "No vendemos ni compartimos tu correo ni tus marcas con nadie. Para pedir que borremos tus datos, escríbenos."
+        "Qué guardamos: tu correo, tu zona horaria, tu nivel (Base o Estándar), las cuatro casillas que marcas cada noche y, si lo pediste, que te avisemos de la membresía. Nada más: no guardamos peso, medidas ni síntomas. La promesa de cada mañana la escribes para ti; no la guardamos.",
+        "Para qué: mandarte el registro de cada noche a tu hora y calcular tu puntuación. Y, solo si lo marcaste, avisarte cuando abra la membresía.",
+        "Tus casillas no se usan para anuncios, no se envían a herramientas de medición y no se venden ni se comparten.",
+        "Quién lo procesa, por cuenta nuestra y solo para el reto: Resend (envía los correos), Supabase (guarda los datos) y Vercel (aloja la web), en EE. UU.",
+        "Te das de baja con un clic desde cualquier correo. Al darte de baja borramos tus casillas en {diasBorrado} días; guardamos solo tu correo en una lista de bajas, para no volver a escribirte.",
+        "El reto es para mayores de 18 años.",
+        "Para ver o borrar tus datos, escribe a {correo}. Respondemos en {diasRespuesta} días."
       ]
     }
   },
@@ -442,7 +444,7 @@
     "placeholder": "tu@correo.com",
     "button": "Empiezo el reto",
     "busy": "Enviando…",
-    "micro": "Gratis y sin tarjeta. Te das de baja con un clic.",
+    "micro": "Gratis, sin tarjeta y para mayores de 18. Te das de baja con un clic.",
     "privacy": "Privacidad",
     "health": "No sustituye el consejo médico: si tienes una condición de salud, consulta a tu médico antes de empezar.",
     "errEmpty": "Escribe tu correo para recibir el registro de cada noche.",

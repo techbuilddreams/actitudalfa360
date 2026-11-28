@@ -16,7 +16,8 @@ describe('EmailCapture', () => {
     render(<EmailCapture source="home" text={t} submit={ok} />);
     expect(screen.getAllByRole('textbox')).toHaveLength(1);
     expect(screen.getByText(/Te das de baja con un clic/)).toBeTruthy();
-    expect(screen.getByRole('link', { name: t.privacy }).getAttribute('href')).toBe('/politicas#privacidad');
+    expect(screen.getByText(/mayores de 18/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: t.privacy }).getAttribute('href')).toBe('/politicas#privacidad-reto');
   });
 
   it('vacío o inválido: error con role=alert, aria-invalid y NO envía', async () => {

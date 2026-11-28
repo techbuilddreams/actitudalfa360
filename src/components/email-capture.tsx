@@ -108,7 +108,7 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
         <input ref={memberBox} type="checkbox" name="membresia" checked={member} onChange={(e) => setMember(e.target.checked)} /> {t.membership}
       </label>
       <p className="micro">{t.daily}</p>
-      <p className="micro">{t.micro} <Link href="/politicas#privacidad">{t.privacy}</Link>.</p>
+      <p className="micro">{t.micro} <Link href="/politicas#privacidad-reto">{t.privacy}</Link>.</p>
       <p className="micro health-note">{t.health}</p>
     </form>
   );

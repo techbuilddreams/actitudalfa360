@@ -49,7 +49,7 @@ describe('una sola fuente para cada dato de dinero', () => {
   it('plazos de envío y días del reto salen de site.ts: con otros valores, no queda ningún número viejo', async () => {
     vi.doMock('@/config/site', async (orig) => {
       const real = (await orig<typeof import('@/config/site')>()).site;
-      return { site: { ...real, shipping: { ...real.shipping, handlingDays: { min: 1, max: 2 }, transitDays: { min: 4, max: 6 } }, returns: { days: 14 }, challenge: { days: 21 } } };
+      return { site: { ...real, shipping: { ...real.shipping, handlingDays: { min: 1, max: 2 }, transitDays: { min: 4, max: 6 } }, returns: { days: 14 }, challenge: { days: 21 }, privacy: { deleteAfterUnsubscribeDays: 45, responseDays: 10 } } };
     });
     const { copy } = await import('@/content');
     const { staticCatalog } = await import('@/infrastructure/catalog/static-catalog');
@@ -63,6 +63,8 @@ describe('una sola fuente para cada dato de dinero', () => {
     expect(all).toContain('5 a 8');
     expect(all).toContain('hasta 84'); // 21 días × 4 pilares
     expect(all).toMatch(/Ejemplo · día \d+ de 21/);
+    expect(all).toContain('casillas en 45 días');
+    expect(all).toContain('Respondemos en 10 días');
   });
 
   it('los precios del copy son los del catálogo', async () => {
