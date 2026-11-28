@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { analytics, checkoutItems, type PriceCatalog } from '@/lib/analytics';
 
 export interface CheckoutItem { readonly sku: string; readonly quantity: number }
 /** Qué control abrió el pago: solo ese muestra el texto de espera y el error. */
@@ -34,7 +35,11 @@ export const NAVIGATION_STUCK_MS = 8_000;
  * está abriendo Stripe todos quedan deshabilitados (nunca dos sesiones de checkout a la vez).
  * El servidor pone el precio: aquí solo viajan sku y cantidad.
  */
-export function CheckoutProvider({ children, messages: t, schedule = defaultSchedule }: { children: ReactNode; messages: CheckoutMessages; schedule?: Schedule }) {
+export function CheckoutProvider({ children, messages: t, schedule = defaultSchedule, prices = {} }: {
+  children: ReactNode; messages: CheckoutMessages; schedule?: Schedule;
+  /** Nombre y precio por sku, solo para medir `begin_checkout`. El cobro lo pone el servidor, no esto. */
+  prices?: PriceCatalog;
+}) {
   const [busy, setBusy] = useState(false);
   const [origin, setOrigin] = useState<CheckoutOrigin | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +67,8 @@ export function CheckoutProvider({ children, messages: t, schedule = defaultSche
   async function start(items: readonly CheckoutItem[], from: CheckoutOrigin) {
     if (inFlight.current) return;
     inFlight.current = true;
+    const measured = checkoutItems(items, prices);
+    if (measured.length) analytics.track({ name: 'begin_checkout', items: measured });
     setBusy(true);
     setOrigin(from);
     setError(null);

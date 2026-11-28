@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { measurementId } from '@/config/analytics';
+import { buildCsp } from '@/lib/csp';
 
 /**
  * CSP estricta con nonce por petición + encabezados de seguridad.
@@ -12,19 +14,8 @@ export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
 
-  const csp = [
-    `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
-    `style-src 'self'${isDev ? " 'unsafe-inline'" : ` 'nonce-${nonce}'`}`,
-    `img-src 'self' data: blob:`,
-    `font-src 'self'`,
-    `connect-src 'self'`,
-    `form-action 'self'`,
-    `frame-ancestors 'none'`,
-    `base-uri 'self'`,
-    `object-src 'none'`,
-    `upgrade-insecure-requests`,
-  ].join('; ');
+  // Google solo entra en la CSP si hay medición configurada (y nunca en staging).
+  const csp = buildCsp({ nonce, isDev, analytics: measurementId() !== null });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);

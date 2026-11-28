@@ -32,6 +32,10 @@ export default function Politicas() {
       <h3 id="privacidad-reto">{copy.politicas.retoPrivacy.h3}</h3>
       <ul>{copy.politicas.retoPrivacy.items.map((i) => <li key={i}>{i}</li>)}</ul>
 
+      {/* BORRADOR del CTO (2026-11-28), pendiente de Luis y del abogado. Texto en copy.json → politicas.medicion. */}
+      <h3 id="medicion">{copy.politicas.medicion.h3}</h3>
+      <ul>{copy.politicas.medicion.items.map((i) => <li key={i}>{i}</li>)}</ul>
+
       <h2 id="terminos">Términos</h2>
       <p>{site.name} es una marca de {site.legalName} ({site.legalState}, EE. UU.). Los precios están en dólares estadounidenses y pueden cambiar sin aviso; el precio que pagas es el que ves al confirmar. Los colores pueden variar ligeramente entre la pantalla y el producto impreso. El nombre, el sello y los diseños de {site.name} son propiedad de la marca.</p>
 

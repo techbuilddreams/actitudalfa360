@@ -1,0 +1,139 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { clearGaCookies, GTAG_SRC, loadGtag } from '@/components/consent/gtag';
+import { ConsentManager, type ConsentText } from '@/components/consent/consent-manager';
+import { createAnalytics } from '@/lib/analytics';
+import type { ConsentDecision } from '@/domain/consent';
+
+type Win = Window & { dataLayer?: unknown[]; gtag?: (...a: unknown[]) => void };
+const w = window as Win;
+const calls = () => (w.dataLayer ?? []).map((a) => Array.from(a as ArrayLike<unknown>));
+
+const text: ConsentText = {
+  body: 'Usamos Google Analytics para saber qué páginas sirven.', policy: 'Qué medimos', accept: 'Aceptar', reject: 'Rechazar',
+  preferences: 'Preferencias de cookies', label: 'Medición',
+};
+const ID = 'G-TEST123';
+const decision = (d: Partial<ConsentDecision>): ConsentDecision => ({ analytics: false, showBanner: false, showPreferences: false, ...d });
+
+function reset() {
+  delete w.dataLayer;
+  delete w.gtag;
+  document.head.querySelectorAll('script').forEach((s) => s.remove());
+  for (const c of document.cookie.split(';')) {
+    const n = c.split('=')[0]?.trim();
+    if (n) document.cookie = `${n}=; Max-Age=0; Path=/`;
+  }
+}
+beforeEach(reset);
+afterEach(() => { cleanup(); reset(); });
+
+describe('loadGtag', () => {
+  it('consentimiento por defecto ANTES de config: anuncios negados, analítica concedida', () => {
+    loadGtag(ID);
+    const c = calls();
+    expect(c[0]).toEqual(['consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted' }]);
+    expect(c.find((x) => x[0] === 'config')).toEqual(['config', ID, { allow_google_signals: false, allow_ad_personalization_signals: false }]);
+  });
+  it('dataLayer recibe objetos `arguments` (gtag.js ignora arrays)', () => {
+    loadGtag(ID);
+    expect(Object.prototype.toString.call(w.dataLayer![0])).toBe('[object Arguments]');
+  });
+  it('un solo <script> async a googletagmanager, aunque se llame dos veces', () => {
+    loadGtag(ID);
+    loadGtag(ID);
+    const s = document.head.querySelectorAll(`script[src="${GTAG_SRC}?id=${ID}"]`);
+    expect(s).toHaveLength(1);
+    expect((s[0] as HTMLScriptElement).async).toBe(true);
+    expect(calls().filter((x) => x[0] === 'config')).toHaveLength(1);
+  });
+});
+
+describe('clearGaCookies', () => {
+  it('borra _ga y _ga_* y deja las demás', () => {
+    document.cookie = '_ga=GA1.1.1; Path=/';
+    document.cookie = '_ga_TEST123=GS1; Path=/';
+    document.cookie = 'otra=1; Path=/';
+    clearGaCookies();
+    expect(document.cookie).toBe('otra=1');
+  });
+});
+
+describe('ConsentManager', () => {
+  const setup = (d: Partial<ConsentDecision>) => {
+    const analytics = createAnalytics();
+    const load = vi.fn(loadGtag);
+    render(<ConsentManager measurementId={ID} decision={decision(d)} text={text} analytics={analytics} load={load} />);
+    return { analytics, load };
+  };
+
+  it('con permiso: carga gtag y los eventos llegan como gtag("event", …)', () => {
+    const { analytics, load } = setup({ analytics: true });
+    expect(load).toHaveBeenCalledWith(ID);
+    analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
+    expect(calls()).toContainEqual(['event', 'sign_up', { method: 'email', source: 'home' }]);
+    expect(screen.queryByRole('region', { name: text.label })).toBeNull();
+  });
+
+  it('sin permiso y sin banner (GPC, o rechazó antes): ni carga ni manda, y tira la cola', () => {
+    const { analytics, load } = setup({ analytics: false });
+    analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
+    expect(load).not.toHaveBeenCalled();
+    expect(w.dataLayer).toBeUndefined();
+    expect(document.head.querySelector('script')).toBeNull();
+  });
+
+  it('banner: Aceptar y Rechazar con el mismo aspecto (rechazar tan fácil como aceptar)', () => {
+    setup({ showBanner: true, showPreferences: true });
+    const accept = screen.getByRole('button', { name: text.accept });
+    const reject = screen.getByRole('button', { name: text.reject });
+    expect(accept.className).toBe(reject.className);
+    expect(screen.getByRole('link', { name: text.policy }).getAttribute('href')).toBe('/politicas#medicion');
+  });
+
+  it('mientras el banner espera, no sale nada a Google', () => {
+    const { load } = setup({ showBanner: true, showPreferences: true });
+    expect(load).not.toHaveBeenCalled();
+    expect(w.dataLayer).toBeUndefined();
+  });
+
+  it('Aceptar: guarda la cookie, carga, manda lo que esperaba y cierra el banner', () => {
+    const { analytics, load } = setup({ showBanner: true, showPreferences: true });
+    analytics.track({ name: 'view_item', item: { item_id: 'T', item_name: 'Taza', priceCents: 1999, quantity: 1 } });
+    fireEvent.click(screen.getByRole('button', { name: text.accept }));
+    expect(document.cookie).toContain('aa_consent=v1.granted');
+    expect(load).toHaveBeenCalledOnce();
+    expect(calls().some((c) => c[0] === 'event' && c[1] === 'view_item')).toBe(true);
+    expect(screen.queryByRole('region', { name: text.label })).toBeNull();
+  });
+
+  it('Rechazar: guarda la cookie, no carga y no manda lo que esperaba', () => {
+    const { analytics, load } = setup({ showBanner: true, showPreferences: true });
+    analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
+    fireEvent.click(screen.getByRole('button', { name: text.reject }));
+    expect(document.cookie).toContain('aa_consent=v1.denied');
+    expect(load).not.toHaveBeenCalled();
+    expect(w.dataLayer).toBeUndefined();
+    expect(screen.queryByRole('region', { name: text.label })).toBeNull();
+  });
+
+  it('Preferencias reabre el banner; retirar el permiso actualiza Google, borra _ga y corta los eventos', () => {
+    const { analytics } = setup({ analytics: true, showPreferences: true });
+    document.cookie = '_ga=GA1.1.1; Path=/';
+    fireEvent.click(screen.getByRole('button', { name: text.preferences }));
+    fireEvent.click(screen.getByRole('button', { name: text.reject }));
+    expect(calls()).toContainEqual(['consent', 'update', { analytics_storage: 'denied' }]);
+    expect(document.cookie).not.toContain('_ga=');
+    expect(document.cookie).toContain('aa_consent=v1.denied');
+    const before = calls().length;
+    analytics.track({ name: 'sign_up', method: 'email', source: 'home' });
+    expect(calls()).toHaveLength(before);
+  });
+
+  it('fuera de la UE no hay enlace de preferencias ni banner', () => {
+    setup({ analytics: true });
+    expect(screen.queryByRole('button', { name: text.preferences })).toBeNull();
+    expect(screen.queryByRole('button', { name: text.accept })).toBeNull();
+  });
+});

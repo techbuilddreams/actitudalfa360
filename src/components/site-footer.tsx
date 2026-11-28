@@ -1,11 +1,15 @@
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { copy } from '@/content';
 import { site } from '@/config/site';
 import { displayName } from '@/domain/product';
 import { catalog } from '@/infrastructure/container';
 
-/** Pie. Solo enlaza lo que existe: sin Guías ni páginas de pilar (van a sus reglas del reto). */
-export function SiteFooter() {
+/**
+ * Pie. Solo enlaza lo que existe: sin Guías ni páginas de pilar (van a sus reglas del reto).
+ * `consent`: el gestor de consentimiento que pone el layout («Preferencias de cookies» en la UE).
+ */
+export function SiteFooter({ consent }: { consent?: ReactNode } = {}) {
   const products = catalog.all();
   const t = copy.footer;
   return (
@@ -45,6 +49,7 @@ export function SiteFooter() {
           <a href={`mailto:${site.email}`}>{site.email}</a>
           <Link href="/politicas#privacidad">{t.privacidad}</Link>
           <Link href="/politicas#terminos">{t.terminos}</Link>
+          {consent}
         </div>
       </div>
     </footer>

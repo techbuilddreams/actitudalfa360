@@ -240,6 +240,16 @@
         "El reto es para mayores de 18 años.",
         "Para ver o borrar tus datos, escribe a {correo}. Respondemos en {diasRespuesta} días."
       ]
+    },
+    "medicion": {
+      "h3": "Qué medimos y por qué",
+      "items": [
+        "Usamos Google Analytics 4 para saber qué páginas sirven y dónde se traba la gente: las páginas que visitas, los productos que ves, cuándo empiezas a pagar y cuándo te apuntas al reto. Con eso decidimos qué mejorar.",
+        "Lo que no medimos: no enviamos tu correo, ni las casillas del reto, ni nada de tu salud. Cuando te apuntas al reto, Google solo sabe que alguien se apuntó.",
+        "No usamos anuncios: Google Signals y la personalización de anuncios están apagadas, y estos datos no se comparten para publicidad.",
+        "Google guarda estos datos 14 meses y después los borra.",
+        "Cómo decir no: si tu navegador envía la señal Global Privacy Control, no medimos nada. En la Unión Europea, el Reino Unido y Suiza no medimos hasta que aceptas, y puedes cambiar de idea cuando quieras en «Preferencias de cookies», al pie de cada página. Tu elección se guarda en una cookie propia durante 6 meses; después te volvemos a preguntar."
+      ]
     }
   },
   "organization": {
@@ -508,6 +518,14 @@
     "envios": "Envíos y devoluciones",
     "privacidad": "Privacidad",
     "terminos": "Términos"
+  },
+  "consent": {
+    "label": "Medición del sitio",
+    "body": "Usamos Google Analytics para saber qué páginas sirven. Solo si aceptas: no hay anuncios y los datos de tu reto nunca se envían.",
+    "policy": "Qué medimos",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "preferences": "Preferencias de cookies"
   },
   "eta": {
     "datedPre": "Pídela hoy y llega aprox. entre el ",

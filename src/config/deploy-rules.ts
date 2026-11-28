@@ -29,6 +29,8 @@ export const schema = z.object({
   // Lo que ve el NAVEGADOR (banner «pagos en modo prueba», noindex). Al desplegar debe ser igual a APP_ENV.
   NEXT_PUBLIC_APP_ENV: z.enum(['local', 'staging', 'production']).optional(),
   NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3000'),
+  // GA4. Sin ella no se mide. Mal escrita tumba la build (mismo patrón que src/config/analytics.ts).
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-[A-Z0-9]{4,16}$/).optional(),
 
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_/).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
