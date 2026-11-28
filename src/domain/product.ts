@@ -40,6 +40,11 @@ export interface Product {
   readonly images: readonly ProductImage[];
   readonly variants: readonly ProductVariant[];
   readonly category: string;
+  /** Pilar al que pertenece su frase (id de `copy.pillars`). */
+  readonly pillar?: string;
 }
+
+/** Nombre visible completo: la parte del H1 antes de la frase («Taza negra 15 oz»). */
+export const displayName = (p: Product): string => p.h1.split(/\s+—\s+/, 1)[0] ?? p.name;
 
 export const defaultVariant = (p: Product): ProductVariant => p.variants[0];

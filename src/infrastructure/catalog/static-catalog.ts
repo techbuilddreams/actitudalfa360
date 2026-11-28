@@ -15,6 +15,8 @@ const PRODUCTS: readonly Product[] = [
   {
     slug: 'taza-negra-15oz',
     name: 'Taza negra',
+    subtitle: t.cardLine,
+    pillar: t.pillar,
     tag: 'Doble cara',
     category: 'Tazas',
     seo: { title: t.title, description: t.description, keywords: t.keywords },
@@ -45,7 +47,8 @@ const PRODUCTS: readonly Product[] = [
   {
     slug: 'vaso-termico-20oz',
     name: 'Vaso térmico 20 oz',
-    subtitle: 'Tumbler de acero',
+    subtitle: v.cardLine,
+    pillar: v.pillar,
     tag: 'Cabe en el portavasos',
     category: 'Vasos térmicos',
     seo: { title: v.title, description: v.description, keywords: v.keywords },
