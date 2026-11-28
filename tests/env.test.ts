@@ -7,10 +7,18 @@ const base: ServerEnv = {
   DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres', DATABASE_MIGRATION_URL: undefined, DB_POOL_SIZE: 5,
   PRINTIFY_AUTO_ORDER: false, PRINTIFY_API_TOKEN: undefined, PRINTIFY_SHOP_ID: undefined,
   SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: 465, SMTP_USER: undefined, SMTP_PASSWORD: undefined,
-  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined,
+  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined, RETO_SIGNUP: 'resend',
 };
 
 describe('configuración de despliegue', () => {
+  it('producción con el alta del reto en modo log: falla (F3 pendiente)', () =>
+    expect(deploymentProblems({ ...base, RETO_SIGNUP: 'log' }).join()).toContain('El alta del reto solo registra en el log: falta F3'));
+  it('staging con el alta del reto en modo log: sigue funcionando', () =>
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', RETO_SIGNUP: 'log' })).toEqual([]));
+  it('RETO_SIGNUP por defecto es log', () => {
+    const r = parseEnv({});
+    expect(r.success && r.data.RETO_SIGNUP).toBe('log');
+  });
   it('producción completa: sin problemas', () => expect(deploymentProblems(base)).toEqual([]));
   it('producción sin base de datos: falla (nunca pedidos en memoria)', () =>
     expect(deploymentProblems({ ...base, DATABASE_URL: undefined }).join()).toContain('DATABASE_URL'));
