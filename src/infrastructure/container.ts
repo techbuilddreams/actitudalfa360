@@ -24,7 +24,7 @@ import { makeRequestRetoSignup } from '@/application/use-cases/request-reto-sign
 import type { RetoSignup } from '@/application/ports/reto-signup';
 import { LogRetoSignup } from './signup/log-reto-signup';
 import { createRateLimiter } from './security/rate-limit';
-import { isIanaTimeZone } from '@/lib/iana-time-zone';
+import { canonicalTimeZone } from '@/lib/iana-time-zone';
 
 /**
  * Composition root: el ÚNICO lugar que conecta casos de uso con adaptadores concretos.
@@ -46,7 +46,7 @@ function retoSignup(): RetoSignup {
   return new LogRetoSignup(logger);
 }
 
-export const requestRetoSignup = () => makeRequestRetoSignup({ signup: retoSignup(), isValidTimeZone: isIanaTimeZone });
+export const requestRetoSignup = () => makeRequestRetoSignup({ signup: retoSignup(), canonicalTimeZone });
 
 export function paymentGateway(): StripeGateway {
   payments ??= new StripeGateway({

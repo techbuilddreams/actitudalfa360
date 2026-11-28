@@ -7,7 +7,7 @@ vi.mock('@/infrastructure/container', async () => {
   return {
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     signupLimiter: { hit: () => ({ allowed, retryAfterSec: 30 }) },
-    requestRetoSignup: () => makeRequestRetoSignup({ signup: { request }, isValidTimeZone: (z) => z === 'America/New_York' }),
+    requestRetoSignup: () => makeRequestRetoSignup({ signup: { request }, canonicalTimeZone: (z) => (z === 'America/New_York' ? z : null) }),
   };
 });
 vi.mock('@/config/env', () => ({ env: () => ({ NEXT_PUBLIC_SITE_URL: 'https://actitudalfa360.com' }) }));
