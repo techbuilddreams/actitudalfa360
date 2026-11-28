@@ -7,7 +7,7 @@ const base: ServerEnv = {
   DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres', DATABASE_MIGRATION_URL: undefined, DB_POOL_SIZE: 5,
   PRINTIFY_AUTO_ORDER: false, PRINTIFY_API_TOKEN: undefined, PRINTIFY_SHOP_ID: undefined,
   SMTP_HOST: 'smtp.hostinger.com', SMTP_PORT: 465, SMTP_USER: undefined, SMTP_PASSWORD: undefined,
-  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined, RETO_SIGNUP: 'resend',
+  MAIL_FROM: 'x', ORDER_NOTIFY_EMAIL: undefined, SHIPPING_FLAT_CENTS: 899, VERCEL_ENV: undefined, RETO_SIGNUP: 'log',
 };
 
 describe('configuración de despliegue', () => {
@@ -19,7 +19,14 @@ describe('configuración de despliegue', () => {
     const r = parseEnv({});
     expect(r.success && r.data.RETO_SIGNUP).toBe('log');
   });
-  it('producción completa: sin problemas', () => expect(deploymentProblems(base)).toEqual([]));
+  // Hasta F3, NINGUNA configuración de producción pasa: el único problema que queda es el del alta del reto.
+  it('producción completa: el único problema es F3 (el alta del reto)', () => {
+    const p = deploymentProblems(base);
+    expect(p).toHaveLength(1);
+    expect(p[0]).toContain('falta F3');
+  });
+  it('RETO_SIGNUP=resend no existe hasta F3: se rechaza al validar', () =>
+    expect(parseEnv({ RETO_SIGNUP: 'resend' }).success).toBe(false));
   it('producción sin base de datos: falla (nunca pedidos en memoria)', () =>
     expect(deploymentProblems({ ...base, DATABASE_URL: undefined }).join()).toContain('DATABASE_URL'));
   it('producción con llave de prueba: falla', () =>
@@ -33,7 +40,7 @@ describe('configuración de despliegue', () => {
   it('producción de Vercel con APP_ENV=staging: falla (variables cruzadas de entorno)', () =>
     expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'production' }).join()).toContain('VERCEL_ENV'));
   it('entornos de Vercel bien emparejados: sin problemas', () => {
-    expect(deploymentProblems({ ...base, VERCEL_ENV: 'production' })).toEqual([]);
+    expect(deploymentProblems({ ...base, VERCEL_ENV: 'production' }).filter((x) => !x.includes('falta F3'))).toEqual([]);
     expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
   });
   it('local no exige nada', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', DATABASE_URL: undefined })).toEqual([]));

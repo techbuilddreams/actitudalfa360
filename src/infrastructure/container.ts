@@ -24,6 +24,7 @@ import { makeRequestRetoSignup } from '@/application/use-cases/request-reto-sign
 import type { RetoSignup } from '@/application/ports/reto-signup';
 import { LogRetoSignup } from './signup/log-reto-signup';
 import { createRateLimiter } from './security/rate-limit';
+import { isIanaTimeZone } from '@/lib/iana-time-zone';
 
 /**
  * Composition root: el ÚNICO lugar que conecta casos de uso con adaptadores concretos.
@@ -41,21 +42,11 @@ export const pageLookupLimiter = createRateLimiter(30, 60_000); // /gracias cons
 export const signupLimiter = createRateLimiter(5, 60_000);
 
 function retoSignup(): RetoSignup {
-  // F3: aquí entra el adaptador de Resend + suscriptores con doble opt-in.
-  if (env().RETO_SIGNUP === 'resend') throw new Error('RETO_SIGNUP=resend aún no está implementado (F3)');
+  // F3: aquí entra el adaptador de Resend + suscriptores con doble opt-in (y el valor `resend` en env.ts).
   return new LogRetoSignup(logger);
 }
 
-const isValidTimeZone = (zone: string) => {
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: zone });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const requestRetoSignup = () => makeRequestRetoSignup({ signup: retoSignup(), isValidTimeZone });
+export const requestRetoSignup = () => makeRequestRetoSignup({ signup: retoSignup(), isValidTimeZone: isIanaTimeZone });
 
 export function paymentGateway(): StripeGateway {
   payments ??= new StripeGateway({

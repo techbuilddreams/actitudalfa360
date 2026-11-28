@@ -48,8 +48,9 @@ const schema = z.object({
   // Centavos enteros, de 0 a $100. Un "" o "1e3" ya no valen 0/1000 en silencio.
   SHIPPING_FLAT_CENTS: z.string().regex(/^\d{1,5}$/).default('899').transform(Number).pipe(z.number().int().max(10_000)),
 
-  // Adaptador del alta del reto. 'log' (F2) solo registra y no puede ir a producción; 'resend' es el de F3.
-  RETO_SIGNUP: z.enum(['log', 'resend']).default('log'),
+  // Adaptador del alta del reto. 'log' (F2) solo registra y no puede ir a producción. 'resend' entra con F3, no antes:
+  // un valor aceptado sin adaptador pasaría la compuerta y lanzaría en cada alta.
+  RETO_SIGNUP: z.enum(['log']).default('log'),
 
   /** Lo pone Vercel solo (variable de sistema). Sirve para detectar variables cruzadas entre entornos. */
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
