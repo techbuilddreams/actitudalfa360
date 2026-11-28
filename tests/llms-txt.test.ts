@@ -57,6 +57,17 @@ describe('llmsTxt', () => {
     expect(txt).toContain(`${site.url}/politicas`);
   });
 
+  it('impuesto: misma nota que la ficha cuando Stripe cobra impuesto automático', () => {
+    expect(llmsTxt(catalog.all(), 899, true)).toContain(shippingNote(usd(899), true));
+    expect(llmsTxt(catalog.all(), 899, false)).toContain(shippingNote(usd(899), false));
+  });
+
+  it('garantía: dice cómo reclamar (no es automática)', async () => {
+    const { policyPhrases } = await import('@/lib/policy-facts');
+    expect(txt).toContain(policyPhrases().claimHow);
+    expect(txt).toContain(site.email);
+  });
+
   it('comparte fuente con /politicas: policyPhrases', () => {
     const f = policyPhrases();
     expect(f.onlyUs).toBe('solo dentro de Estados Unidos');

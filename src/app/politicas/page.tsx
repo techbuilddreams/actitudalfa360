@@ -24,7 +24,7 @@ export default function Politicas() {
       <p>Cada producto se imprime a pedido en EE. UU. La producción toma <strong>{f.handling}</strong> y la entrega <strong>{f.transit}</strong> más. {shipCents === 0 ? <>El envío es <strong>gratis</strong>.</> : <>El envío cuesta <strong>{ship}</strong> por pedido y se muestra antes de pagar.</>} Por ahora enviamos {f.onlyUs}. Cuando tu pedido salga, recibirás el número de rastreo por correo.</p>
 
       <h2 id="devoluciones">Devoluciones y cambios</h2>
-      <p>Como cada pieza se hace especialmente para ti, {f.noReturns}. Si tu producto llega <strong>{f.defectKinds}</strong>, escríbenos <strong>{f.defectWindow}</strong> con una foto y tu número de pedido, y te enviamos un reemplazo o te devolvemos el dinero sin costo para ti.</p>
+      <p>Como cada pieza se hace especialmente para ti, {f.noReturns}. Si tu producto llega <strong>{f.defectKinds}</strong>, escríbenos <strong>{f.defectWindow}</strong> {f.claimHow}, y te enviamos un reemplazo o te devolvemos el dinero sin costo para ti.</p>
 
       <h2 id="privacidad">Privacidad</h2>
       <p>Solo pedimos los datos necesarios para procesar y enviar tu pedido: nombre, correo y dirección de envío. Los pagos los procesa <strong>Stripe</strong>; nunca vemos ni guardamos los datos de tu tarjeta. Compartimos tu nombre y dirección únicamente con nuestro socio de impresión y la compañía de envío para entregar tu pedido. No vendemos tus datos. Para pedir que borremos tu información, escríbenos.</p>

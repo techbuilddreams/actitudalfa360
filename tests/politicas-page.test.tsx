@@ -78,3 +78,25 @@ describe('/politicas: qué medimos y por qué', () => {
     expect(text).toMatch(/dirección IP/);
   });
 });
+
+describe('/politicas: envíos y devoluciones salen de policyPhrases (Merchant Center lee esta página)', () => {
+  const section = (id: string) => document.querySelector(`#${id} + p`)!.textContent!;
+
+  it('#envios dice cada plazo y el país con las frases compartidas', async () => {
+    const { policyPhrases } = await import('@/lib/policy-facts');
+    render(<Politicas />);
+    const f = policyPhrases();
+    const text = section('envios');
+    for (const s of [f.handling, f.transit, f.onlyUs]) expect(text).toContain(s);
+    expect(text).not.toMatch(/todo el mundo|internacional/i);
+  });
+
+  it('#devoluciones dice no-devolución, tipos de defecto, plazo y cómo reclamar', async () => {
+    const { policyPhrases } = await import('@/lib/policy-facts');
+    render(<Politicas />);
+    const f = policyPhrases();
+    const text = section('devoluciones');
+    for (const s of [f.noReturns, f.defectKinds, f.defectWindow, f.claimHow]) expect(text).toContain(s);
+    expect(text).not.toMatch(/(?<!no )aceptamos devoluciones/);
+  });
+});

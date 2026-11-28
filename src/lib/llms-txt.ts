@@ -8,7 +8,7 @@ import { defaultVariant, displayName, type Product } from '@/domain/product';
 const mdText = (s: string) => s.replace(/[[\]]/g, '\\$&');
 
 /** /llms.txt (https://llmstxt.org): resumen en Markdown para que un LLM lea el sitio como hecho. Todo sale del catálogo y de `site`. */
-export function llmsTxt(products: readonly Product[], shippingCents: number): string {
+export function llmsTxt(products: readonly Product[], shippingCents: number, automaticTax = false): string {
   const f = policyPhrases();
   const lines = [
     `# ${site.name}`,
@@ -22,8 +22,8 @@ export function llmsTxt(products: readonly Product[], shippingCents: number): st
     }),
     '',
     '## Envíos y devoluciones',
-    `- [Políticas](${site.url}/politicas): envíos ${f.onlyUs}, ${shippingNote(usd(shippingCents), false)}, producción ${f.handling} + entrega ${f.transit}.`,
-    `- Todo se fabrica a pedido: ${f.noReturns}. Si llega ${f.defectKinds}, ${f.defectWindow}, reemplazo o reembolso sin costo.`,
+    `- [Políticas](${site.url}/politicas): envíos ${f.onlyUs}, ${shippingNote(usd(shippingCents), automaticTax)}, producción ${f.handling} + entrega ${f.transit}.`,
+    `- Todo se fabrica a pedido: ${f.noReturns}. Si llega ${f.defectKinds}, escríbenos a ${site.email} ${f.defectWindow} ${f.claimHow}: reemplazo o reembolso sin costo.`,
     '',
     '## Empresa',
     `- ${site.legalName}, ${site.legalState} (EE. UU.). Contacto: ${site.email}`,

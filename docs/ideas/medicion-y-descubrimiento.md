@@ -2,7 +2,7 @@
 
 > Pedido de Luis: GA4 «como en los otros sistemas», saber qué hace el usuario y mejorar, decirlo claro en la
 > política, las mejores formas de conversión, datos organizados que den valor a la empresa, y que nos encuentren
-> los LLM y la búsqueda social. **Estado: paso 1 mergeado (PR #10); paso 2 (`purchase` server-side + UTM) en la rama `medicion-purchase` (ver «Paso 2: estado» al final).** Va en su propia sesión.
+> los LLM y la búsqueda social. **Estado: pasos 1 y 2 mergeados (PR #10, #11); paso 3 en la rama `medicion-seo` (ver «Paso 3: estado»).** Va en su propia sesión.
 
 ## 1. Postura (lo que cambio del pedido, y por qué)
 
@@ -147,8 +147,8 @@ arreglados, con test rojo → verde.
     el `api_secret`, como exige Google).
 
 **Pendiente**
-- Luis aprueba las dos frases nuevas de `#medicion` (compra server-side + campaña; nombran `_ga_…` y Stripe).
-- Merge del PR → `develop`.
+- ~~Luis aprueba las dos frases nuevas de `#medicion`~~ aprobadas 2026-11-28.
+- ~~Merge del PR → `develop`~~ hecho (#11, ff8d8ed).
 
 **Deliberadamente NO hecho**
 - Sin reintento ni cola del `purchase`: si GA4 falla o la función muere justo tras guardar el pedido, esa compra no llega
@@ -160,8 +160,9 @@ arreglados, con test rojo → verde.
 
 ## Paso 3: estado (2026-11-28)
 
-Rama `worktree-agent-a7c56950e9b10cf38` (base `medicion-seo`). TDD; tests nuevos en `robots-policy`, `structured-data`, `merchant-feed` y
-`llms-txt`.
+Rama `medicion-seo` (PR a `develop`). TDD; construido por el Especialista en SEO, revisado por el QA de Merchant (build +
+`next start` + curl + 8 mutaciones) y por el Rompedor de feed en dos rondas. Tests nuevos en `robots-policy`,
+`structured-data`, `merchant-feed`, `llms-txt` y `politicas-page`.
 
 **Qué hace el código**
 - **robots.txt** (`src/lib/robots-policy.ts`, pura): `*` rastrea todo menos `/api/` y `/gracias`. Bots de **búsqueda** de IA
@@ -220,3 +221,11 @@ Rama `worktree-agent-a7c56950e9b10cf38` (base `medicion-seo`). TDD; tests nuevos
 - El feed lanza error si un producto tiene más de una variante (la ficha solo vende la 0).
 - `escapeXml` quita surrogates sueltos. Tests de valores exactos (país, URL de devoluciones, `DAY`, `seller`, `g:service`,
   sin `g:region`, categoría de Google exacta).
+
+**Ronda 3 (re-ataque del Rompedor)**
+- `/politicas#envios` y `#devoluciones` ahora tienen test contra `policyPhrases()` (antes la página podía decir «aceptamos
+  devoluciones» con la suite en verde; los tres mutantes del Rompedor mueren).
+- `llms.txt` lleva la nota de impuesto si `STRIPE_AUTOMATIC_TAX` (igual que la ficha) y cómo reclamar la garantía
+  (`claimHow`: correo, foto y número de pedido), para que un LLM no la presente como automática.
+- Nota: `anthropic-ai` y `Claude-Web` son tokens antiguos (Anthropic hoy documenta ClaudeBot, Claude-User, Claude-SearchBot);
+  `cohere-training-data-crawler` sin verificar contra docs de Cohere. Bloquearlos no daña nada.

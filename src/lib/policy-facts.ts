@@ -10,5 +10,6 @@ export function policyPhrases() {
     noReturns: 'no aceptamos devoluciones por cambio de opinión',
     defectKinds: 'dañado, defectuoso o equivocado',
     defectWindow: `dentro de los ${site.returns.days} días siguientes a la entrega`,
+    claimHow: 'con una foto y tu número de pedido',
   } as const;
 }
