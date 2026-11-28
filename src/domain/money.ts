@@ -18,3 +18,7 @@ export const formatMoney = (m: Money): string =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: m.currency.toUpperCase() }).format(m.cents / 100);
 
 export const toDecimalString = (m: Money): string => (m.cents / 100).toFixed(2);
+
+/** Precio de cartel: «$12» cuando no hay centavos, «$12.50» cuando sí. Nunca redondea: solo quita un .00 exacto. */
+export const formatMoneyShort = (m: Money): string =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: m.currency.toUpperCase(), minimumFractionDigits: m.cents % 100 === 0 ? 0 : 2 }).format(m.cents / 100);

@@ -28,6 +28,20 @@ describe('home', () => {
     expect(target!.closest('section')!.querySelector('form input[type=checkbox]')).toBeTruthy();
   });
 
+  it('la membresía se anuncia en dólares enteros: «$12», no «$12.00»', () => {
+    renderHome();
+    const price = document.querySelector('#membresia .price')!.textContent!;
+    expect(price).toMatch(/^\$12\b/);
+    expect(price).not.toContain('12.00');
+  });
+
+  it('el sello del hero (88 px en móvil) ofrece la variante de 68 en el srcset', () => {
+    renderHome();
+    const seal = document.querySelector('img.hero-seal')!;
+    expect(seal.getAttribute('src')).toBe('/img/sello-68.webp');
+    expect(seal.getAttribute('srcset')).toContain('/img/sello-68.webp 68w');
+  });
+
   it('sin sección del fundador (decisión C: fuera hasta que Luis mande foto y texto)', () => {
     renderHome();
     expect(screen.queryByRole('heading', { name: /fundador|quién está detrás/i })).toBeNull();

@@ -2,7 +2,7 @@ import 'server-only';
 import raw from './copy.json';
 import { publicEnv } from '@/config/env';
 import { site } from '@/config/site';
-import { formatMoney, usd } from '@/domain/money';
+import { formatMoney, formatMoneyShort, usd } from '@/domain/money';
 import { fillCopy } from '@/lib/fill-copy';
 import { PRICES } from '@/infrastructure/catalog/prices';
 
@@ -20,7 +20,7 @@ export const copy = fillCopy(raw, {
   precioVaso: formatMoney(PRICES.vaso),
   diasDevolucion: String(site.returns.days),
   diasReto: String(site.challenge.days),
-  precioMembresia: formatMoney(usd(site.membership.priceCents)),
+  precioMembresia: formatMoneyShort(usd(site.membership.priceCents)),
   // Puntuación máxima: un punto por pilar cada día. El día del ejemplo es relativo al total (12 de 30).
   puntosMax: String(site.challenge.days * raw.pillars.length),
   diaEjemplo: String(Math.round((site.challenge.days * 2) / 5)),

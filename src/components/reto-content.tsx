@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { copy } from '@/content';
 import { site } from '@/config/site';
-import { formatMoney, usd } from '@/domain/money';
+import { formatMoneyShort, usd } from '@/domain/money';
 import { EmailCapture } from './email-capture';
 import { Faq } from './faq';
 
@@ -72,7 +72,7 @@ export function RetoContent() {
           <div className="member">
             <div className="stack">
               <p className="eyebrow">{r.after.eyebrow}</p>
-              <div className="member-name"><h2 id="h-despues" className="h3">{r.after.h2}</h2><span className="price num">{formatMoney(usd(site.membership.priceCents))} <small>{copy.home.member.per}</small></span></div>
+              <div className="member-name"><h2 id="h-despues" className="h3">{r.after.h2}</h2><span className="price num">{formatMoneyShort(usd(site.membership.priceCents))} <small>{copy.home.member.per}</small></span></div>
               <p className="lede">{r.after.lede}</p>
             </div>
             <div className="stack">

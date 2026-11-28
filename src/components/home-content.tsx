@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { copy } from '@/content';
 import { site } from '@/config/site';
-import { addMoney, formatMoney, usd } from '@/domain/money';
+import { addMoney, formatMoneyShort, usd } from '@/domain/money';
 import { defaultVariant } from '@/domain/product';
 import { catalog } from '@/infrastructure/container';
 import { EmailCapture } from '@/components/email-capture';
@@ -25,7 +25,7 @@ export function HomeContent() {
             <EmailCapture source="home" text={copy.capture} />
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-seal appear d2" src="/img/sello-320.webp" srcSet="/img/sello-320.webp 320w, /img/sello.webp 640w"
+          <img className="hero-seal appear d2" src="/img/sello-68.webp" srcSet="/img/sello-68.webp 68w, /img/sello-176.webp 176w, /img/sello-320.webp 320w, /img/sello.webp 640w"
             sizes="(min-width: 900px) 360px, 88px" width={360} height={360} fetchPriority="high" decoding="async" alt={h.sealAlt} />
         </div>
       </div>
@@ -97,7 +97,7 @@ export function HomeContent() {
           <div className="member">
             <div className="stack">
               <p className="eyebrow">{h.member.eyebrow}</p>
-              <div className="member-name"><h2 id="h-member" className="h3">{h.member.h2}</h2><span className="price num">{formatMoney(usd(site.membership.priceCents))} <small>{h.member.per}</small></span></div>
+              <div className="member-name"><h2 id="h-member" className="h3">{h.member.h2}</h2><span className="price num">{formatMoneyShort(usd(site.membership.priceCents))} <small>{h.member.per}</small></span></div>
               <p className="lede">{h.member.lede}</p>
               {/* Decisión 10: no se vende aún. El aviso es el mismo alta del reto. */}
               <a className="btn ghost" href="#empieza-membresia">{h.member.cta}</a>
