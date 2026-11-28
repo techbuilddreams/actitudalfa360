@@ -2,7 +2,7 @@
 
 > Pedido de Luis: GA4 «como en los otros sistemas», saber qué hace el usuario y mejorar, decirlo claro en la
 > política, las mejores formas de conversión, datos organizados que den valor a la empresa, y que nos encuentren
-> los LLM y la búsqueda social. **Estado: decidido por Luis el 2026-11-28 (ver «Decisiones» al final). Nada construido.** Va en su propia sesión.
+> los LLM y la búsqueda social. **Estado: paso 1 (consentimiento + GA4) construido en la rama `medicion-consentimiento` (ver «Paso 1: estado» al final).** Va en su propia sesión.
 
 ## 1. Postura (lo que cambio del pedido, y por qué)
 
@@ -80,3 +80,42 @@ Lo que ya funciona, por orden de impacto:
 - **La promesa de Carácter no se guarda** (se escribe para uno mismo). F3 no tiene campo de texto libre.
 - Abierto para el abogado: si la ley de Washington (*My Health My Data*) cubre unas casillas de ejercicio. Mientras,
   se diseña como si las cubriera.
+
+## Paso 1: estado (2026-11-28)
+
+Rama `medicion-consentimiento` (PR a `develop`). Construido con TDD, revisado por un QA de medición y un Rompedor de
+consentimiento; todo lo que encontraron está arreglado y con test (rojo → verde). Probado en Chrome con la CSP real.
+
+**Qué hace el código**
+- Banner solo EEE/RU/CH + territorios UE con ISO propio + GI/JE/GG/IM (`src/domain/consent.ts`). Sin país ⇒ banner.
+- **Modo básico**, no avanzado: sin permiso no sale NINGUNA petición a Google (desviación del §2.2 «pings sin cookies»:
+  el modelado necesita ~1000 usuarios/día, no compensa el riesgo legal). GPC ⇒ nada, en cualquier región.
+- Retirar el permiso: `consent update denied` + `ga-disable-<ID>` + borra `_ga` + recarga (gtag.js sale de memoria).
+- Eventos (`src/lib/analytics.ts`): `page_view` propio con URL saneada (solo ruta + `utm_*`; el `cs_…` de `/gracias`
+  NO sale), `view_item`, `begin_checkout` (solo si el pago se abre), `sign_up` (método + origen, nunca el correo).
+- Solo mide `NEXT_PUBLIC_APP_ENV=production` con `NEXT_PUBLIC_GA_MEASUREMENT_ID`. Un ID mal escrito tumba la build.
+- Política: borrador «Qué medimos y por qué» en `/politicas#medicion` (copy.json → `politicas.medicion`).
+
+**Runbook de consola (Luis). El texto de la política depende de 2, 3, 4 y 5: sin ellos es falso.**
+1. GA4: crear propiedad + flujo web `actitudalfa360.com` → pasarme el `G-…`. Yo lo pongo en Vercel (solo Production).
+2. Admin → Recopilación de datos → **Conservación: 14 meses** (por defecto son 2).
+3. Flujo web → **Medición mejorada: APAGADA entera.** «Cambios de página por historial» mandaría la URL con query
+   (y duplicaría nuestro `page_view`); scroll, clics salientes, formularios, búsqueda y descargas no están en la política.
+4. Admin → **Google Signals apagado** y personalización de anuncios apagada en todas las regiones.
+5. Configuración de la cuenta → **Compartir datos: todo desmarcado** (la política dice que no se comparten para publicidad).
+6. Flujo web → Redacción de datos: activar correo y añadir el parámetro `pedido` (cinturón además de tirantes).
+7. Vincular BigQuery (sandbox, exportación diaria) + alerta de presupuesto en GCP.
+8. Search Console: propiedad de **dominio** `actitudalfa360.com` → pasarme el TXT → yo lo pongo en el DNS de Vercel.
+   Enviar `https://actitudalfa360.com/sitemap.xml`.
+9. Bing Webmaster Tools: «Importar desde Google Search Console».
+
+**Pendiente**
+- Luis aprueba el texto de `#medicion` → abogado (junto con el resto de la política, paso 4).
+- Humo en producción (cuando F3 levante la compuerta): Tiempo real de GA4 ve `page_view` sin query; con `Sec-GPC: 1`
+  no sale nada. Staging nunca mide, así que esto solo se puede comprobar en producción.
+- Paso 2: `purchase` server-side desde el webhook (Measurement Protocol) + UTM en el pedido.
+
+**Deliberadamente NO hecho**
+- Sin enlace «decir no» en EE. UU. aparte de GPC (decisión de Luis; la política no promete otro).
+- Sin `add_to_cart`: no hay carrito; el kit va directo al pago.
+- Sin modo avanzado / modelado (ver arriba).
