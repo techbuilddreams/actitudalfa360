@@ -31,7 +31,7 @@ export const config = {
   matcher: [
     {
       // Todo excepto API (Stripe debe poder llegar al webhook), estáticos y archivos públicos.
-      source: '/((?!api|_next/static|_next/image|img|fonts|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|\\.well-known).*)',
+      source: '/((?!api|_next/static|_next/image|img|fonts|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|merchant-feed.xml|\\.well-known).*)',
     },
   ],
 };

@@ -1,6 +1,6 @@
 import { copy } from '@/content';
 import { site } from '@/config/site';
-import { toDecimalString } from '@/domain/money';
+import { toDecimalString, usd } from '@/domain/money';
 import { defaultVariant, type Faq, type Product } from '@/domain/product';
 
 /** Constructores de schema.org: una sola implementación para todas las páginas (DRY). */
@@ -21,7 +21,7 @@ const returnPolicy = {
 
 const shippingDetails = (flatCents: number) => ({
   '@type': 'OfferShippingDetails',
-  shippingRate: { '@type': 'MonetaryAmount', value: (flatCents / 100).toFixed(2), currency: 'USD' },
+  shippingRate: { '@type': 'MonetaryAmount', value: toDecimalString(usd(flatCents)), currency: 'USD' },
   shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'US' },
   deliveryTime: {
     '@type': 'ShippingDeliveryTime',
@@ -30,22 +30,51 @@ const shippingDetails = (flatCents: number) => ({
   },
 });
 
-export const organizationLd = () => ({
-  '@type': 'Organization',
-  '@id': ORG_ID,
-  name: site.name,
-  url: site.url,
-  logo: abs('/img/icon-512.png'),
-  email: site.email,
-  slogan: copy.organization.slogan,
-  description: copy.organization.description,
-  parentOrganization: { '@type': 'Organization', name: site.legalName },
-  hasMerchantReturnPolicy: returnPolicy,
-});
+/**
+ * «calle, ciudad, ST 12345, país» ⇒ PostalAddress. Ilegible o null ⇒ null: se omite, no se inventa.
+ * (`site.postalAddress` es una sola cadena; el pie la muestra tal cual.)
+ */
+export function parsePostalAddress(raw: string | null) {
+  if (!raw) return null;
+  const parts = raw.split(',').map((x) => x.trim()).filter(Boolean);
+  if (parts.length < 4) return null;
+  const country = parts[parts.length - 1];
+  const stateZip = /^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/.exec(parts[parts.length - 2]);
+  if (!stateZip) return null;
+  return {
+    '@type': 'PostalAddress',
+    streetAddress: parts.slice(0, -3).join(', '),
+    addressLocality: parts[parts.length - 3],
+    addressRegion: stateZip[1],
+    postalCode: stateZip[2],
+    addressCountry: country === 'United States' ? 'US' : country,
+  };
+}
+
+/** Oferta vigente hasta el 31 de dic del año SIGUIENTE (UTC): siempre ≥ 12 meses de margen. Pura: el reloj entra por parámetro. */
+export const priceValidUntil = (now: Date): string => `${now.getUTCFullYear() + 1}-12-31`;
+
+export const organizationLd = () => {
+  const address = parsePostalAddress(site.postalAddress);
+  return {
+    '@type': 'Organization',
+    '@id': ORG_ID,
+    name: site.name,
+    legalName: site.legalName,
+    ...(address ? { address } : {}),
+    url: site.url,
+    logo: abs('/img/icon-512.png'),
+    email: site.email,
+    slogan: copy.organization.slogan,
+    description: copy.organization.description,
+    parentOrganization: { '@type': 'Organization', name: site.legalName },
+    hasMerchantReturnPolicy: returnPolicy,
+  };
+};
 
 export const websiteLd = () => ({ '@type': 'WebSite', '@id': abs('/#web'), url: site.url, name: site.name, inLanguage: 'es-US', publisher: { '@id': ORG_ID } });
 
-export const productLd = (p: Product, shippingCents: number) => {
+export const productLd = (p: Product, shippingCents: number, now: Date) => {
   const v = defaultVariant(p);
   return {
     '@type': 'Product',
@@ -55,12 +84,15 @@ export const productLd = (p: Product, shippingCents: number) => {
     image: p.images.map((i) => abs(i.jpg)),
     sku: v.sku,
     category: p.category,
+    ...(p.material ? { material: p.material } : {}),
+    ...(p.color ? { color: p.color } : {}),
     brand: { '@type': 'Brand', name: site.name },
     offers: {
       '@type': 'Offer',
       url: abs(`/productos/${p.slug}`),
       price: toDecimalString(v.price),
       priceCurrency: 'USD',
+      priceValidUntil: priceValidUntil(now),
       availability: v.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: { '@id': ORG_ID },

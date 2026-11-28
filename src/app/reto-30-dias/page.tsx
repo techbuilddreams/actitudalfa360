@@ -3,7 +3,7 @@ import { copy } from '@/content';
 import { site } from '@/config/site';
 import { JsonLd } from '@/components/json-ld';
 import { RetoContent } from '@/components/reto-content';
-import { breadcrumbLd, graph, webPageLd } from '@/lib/structured-data';
+import { breadcrumbLd, faqLd, graph, webPageLd } from '@/lib/structured-data';
 
 const PATH = '/reto-30-dias';
 
@@ -18,7 +18,7 @@ export default function RetoPage() {
   const r = copy.reto;
   return (
     <>
-      <JsonLd data={graph(webPageLd(PATH, r.h1, r.description), breadcrumbLd([{ name: 'Inicio', path: '/' }, { name: r.crumb, path: PATH }]))} />
+      <JsonLd data={graph(webPageLd(PATH, r.h1, r.description), breadcrumbLd([{ name: 'Inicio', path: '/' }, { name: r.crumb, path: PATH }]), faqLd(r.faq))} />
       <RetoContent />
     </>
   );
