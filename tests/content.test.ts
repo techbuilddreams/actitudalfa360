@@ -46,6 +46,25 @@ describe('una sola fuente para cada dato de dinero', () => {
     expect(raw).not.toMatch(/\b30 días\b/);
   });
 
+  it('plazos de envío y días del reto salen de site.ts: con otros valores, no queda ningún número viejo', async () => {
+    vi.doMock('@/config/site', async (orig) => {
+      const real = (await orig<typeof import('@/config/site')>()).site;
+      return { site: { ...real, shipping: { ...real.shipping, handlingDays: { min: 1, max: 2 }, transitDays: { min: 4, max: 6 } }, returns: { days: 14 }, challenge: { days: 21 } } };
+    });
+    const { copy } = await import('@/content');
+    const { staticCatalog } = await import('@/infrastructure/catalog/static-catalog');
+    vi.doUnmock('@/config/site');
+    const all = texts(copy) + texts(staticCatalog.all());
+    for (const old of ['2 a 5', '3 a 7', '5 a 12', 'Treinta días', 'hasta 120', 'día 12 de']) expect(all).not.toContain(old);
+    // «30 segundos», «30 minutos» y «30 s» son tiempos, no días del reto.
+    expect(all.match(/.{0,40}\b30\b(?! (segundos|minutos|s)\b).{0,20}/)?.[0]).toBeUndefined();
+    expect(all).toContain('1 a 2');
+    expect(all).toContain('4 a 6');
+    expect(all).toContain('5 a 8');
+    expect(all).toContain('hasta 84'); // 21 días × 4 pilares
+    expect(all).toMatch(/Ejemplo · día \d+ de 21/);
+  });
+
   it('los precios del copy son los del catálogo', async () => {
     const { copy } = await import('@/content');
     const { staticCatalog } = await import('@/infrastructure/catalog/static-catalog');

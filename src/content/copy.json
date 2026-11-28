@@ -13,7 +13,7 @@
     },
     "how": {
       "eyebrow": "Cómo funciona",
-      "h2": "Treinta días, una pregunta cada noche",
+      "h2": "{diasReto} días, una pregunta cada noche",
       "steps": [
         {
           "h": "Dejas tu correo",
@@ -24,8 +24,8 @@
           "p": "Cuatro casillas, una por pilar, en el mismo correo. Treinta segundos. Si te dormiste, tienes hasta el mediodía."
         },
         {
-          "h": "Al día 30, tu puntuación",
-          "p": "Un punto por pilar cumplido cada día, hasta 120. Ves en qué pilar cumples y en cuál te caes. Sin adornos."
+          "h": "Al día {diasReto}, tu puntuación",
+          "p": "Un punto por pilar cumplido cada día, hasta {puntosMax}. Ves en qué pilar cumples y en cuál te caes. Sin adornos."
         }
       ]
     },
@@ -34,7 +34,7 @@
       "h2": "Así se ve cumplir",
       "lede": "No es una app más. Es una pregunta honesta que te llega todos los días a la misma hora.",
       "q": "¿Cumpliste hoy?",
-      "example": "Ejemplo · día 12 de 30",
+      "example": "Ejemplo · día {diaEjemplo} de {diasReto}",
       "caption": "Ejemplo del registro diario",
       "rows": [
         {
@@ -73,7 +73,7 @@
       "eyebrow": "Próximamente",
       "h2": "Membresía El 360",
       "per": "al mes",
-      "lede": "Para que alguien te pregunte cada día si cumpliste, también después del día 30. Todavía no está abierta.",
+      "lede": "Para que alguien te pregunte cada día si cumpliste, también después del día {diasReto}. Todavía no está abierta.",
       "cta": "Avísame cuando abra",
       "micro": "Si haces el reto, te avisamos por correo. No cobramos nada hasta que abra.",
       "listLabel": "Lo que tendrá",
@@ -144,7 +144,7 @@
         "Cerámica negra de 15 oz, más grande que una taza estándar",
         "Impresa por ambos lados: el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\"",
         "Apta para microondas y lavavajillas",
-        "Hecha a pedido: producción en 2 a 5 días hábiles y envío en 3 a 7 días hábiles",
+        "Hecha a pedido: producción en {diasProduccion} días hábiles y envío en {diasEnvio} días hábiles",
         "Envío fijo de {envio} a cualquier dirección de Estados Unidos"
       ],
       "faq": [
@@ -158,7 +158,7 @@
         },
         {
           "q": "¿Cuánto cuesta la taza y cuánto tarda en llegar?",
-          "a": "La taza negra de 15 oz cuesta {precioTaza} más {envio} de envío fijo dentro de Estados Unidos.{impuesto} Se imprime a pedido: la producción toma de 2 a 5 días hábiles y el envío de 3 a 7 días hábiles, en total de 5 a 12 días hábiles aproximadamente."
+          "a": "La taza negra de 15 oz cuesta {precioTaza} más {envio} de envío fijo dentro de Estados Unidos.{impuesto} Se imprime a pedido: la producción toma de {diasProduccion} días hábiles y el envío de {diasEnvio} días hábiles, en total de {diasTotal} días hábiles aproximadamente."
         }
       ],
       "imageAlts": [
@@ -202,7 +202,7 @@
         },
         {
           "q": "¿Qué incluye el vaso térmico y cuánto cuesta?",
-          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta {precioVaso}. El envío dentro de Estados Unidos es de {envio} fijo.{impuesto} Se hace a pedido: de 2 a 5 días hábiles de producción más 3 a 7 días hábiles de envío."
+          "a": "El vaso térmico de acero inoxidable de 20 oz incluye tapa y popote, y cuesta {precioVaso}. El envío dentro de Estados Unidos es de {envio} fijo.{impuesto} Se hace a pedido: de {diasProduccion} días hábiles de producción más {diasEnvio} días hábiles de envío."
         }
       ],
       "imageAlts": [
@@ -224,7 +224,7 @@
   },
   "politicas": {
     "title": "Envíos, devoluciones y privacidad | Actitud Alfa 360",
-    "description": "Envío fijo de {envio} solo en EE. UU. Producción de 2 a 5 días hábiles y envío de 3 a 7. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días."
+    "description": "Envío fijo de {envio} solo en EE. UU. Producción de {diasProduccion} días hábiles y envío de {diasEnvio}. Reemplazo o reembolso por daño, defecto o error en {diasDevolucion} días."
   },
   "organization": {
     "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, con sede en Nueva York.",
@@ -338,7 +338,7 @@
     "factsLabel": "El reto en cifras",
     "facts": [
       {
-        "v": "30",
+        "v": "{diasReto}",
         "l": "días"
       },
       {
@@ -365,7 +365,7 @@
       "paras": [
         "El día del reto lo marca el calendario desde que empiezas. Un día que no cumples vale cero y hoy sigues en el día que toca: si ayer fallaste el día 9, hoy haces el 10. No recuperas el día perdido ni haces dos en uno.",
         "¿Se te pasó marcar por la noche? Puedes anotar el día anterior hasta el mediodía siguiente, en tu hora. Anotas lo que hiciste; no lo haces después.",
-        "Al día 30 cuenta tu puntuación, no tu racha.",
+        "Al día {diasReto} cuenta tu puntuación, no tu racha.",
         "Otros retos te obligan a reiniciar. Aquí, quien maneja doce horas y falla un martes no abandona el miércoles."
       ]
     },

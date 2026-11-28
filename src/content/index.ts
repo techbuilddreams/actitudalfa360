@@ -21,7 +21,11 @@ export const copy = fillCopy(raw, {
   diasDevolucion: String(site.returns.days),
   diasReto: String(site.challenge.days),
   precioMembresia: formatMoney(usd(site.membership.priceCents)),
+  // Puntuación máxima: un punto por pilar cada día. El día del ejemplo es relativo al total (12 de 30).
+  puntosMax: String(site.challenge.days * raw.pillars.length),
+  diaEjemplo: String(Math.round((site.challenge.days * 2) / 5)),
   diasProduccion: `${site.shipping.handlingDays.min} a ${site.shipping.handlingDays.max}`,
   diasEnvio: `${site.shipping.transitDays.min} a ${site.shipping.transitDays.max}`,
+  diasTotal: `${site.shipping.handlingDays.min + site.shipping.transitDays.min} a ${site.shipping.handlingDays.max + site.shipping.transitDays.max}`,
   impuesto: pub.STRIPE_AUTOMATIC_TAX ? ' El impuesto de tu estado se suma al pagar.' : '',
 });
