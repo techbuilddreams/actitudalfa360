@@ -133,8 +133,9 @@ del dinero, así que pasan por **QA y un rompedor** antes de llegar a Luis.
      URL = alias `git-develop` + `?x-vercel-protection-bypass=<secreto>`; el secreto lo pegó Luis.
    - Vercel Preview (todas las ramas, Sensitive): `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`, subidas con
      `vercel env add <K> --environment preview --sensitive --yes` leyendo stdin desde `.env.staging`.
-   - **Pendiente menor:** ver el pedido en Supabase y `SHOW statement_timeout` por el 6543 (la `DATABASE_URL` de
-     `.env.staging` está vacía; usar el conector de Supabase). En staging `printifyAutoOrder=false`: el pedido queda `paid`.
+   - Verificado en Supabase: pedido **10001** `paid`, 3398 ¢, `AA360-TAZA-15-NEGRA`, con envío; 1 fila = 1 pago.
+     `statement_timeout` = 15s por el 6543. `.env.staging` ya tiene la `DATABASE_URL` de Supabase (antes, la MySQL de Hostinger).
+     En staging `printifyAutoOrder=false`: el pedido queda `paid` (producción a mano).
    - Trampas: sin `--yes`, `vercel env add` pregunta la rama y se come el valor que llega por stdin. `vercel link`
      corrido fuera del repo deja `~/.vercel` (borrarlo). `vercel curl <ruta> --deployment <url>` pasa la protección
      sin manejar el secreto. `npx vercel` (v68) funciona aunque no haya `vercel` en el PATH.
