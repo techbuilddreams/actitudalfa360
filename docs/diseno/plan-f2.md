@@ -59,8 +59,10 @@
 1. ~~OK para fusionar el PR #8~~ hecho (2026-11-28).
 2. **Luis:** validar el borrador de reglas del reto y el texto de privacidad del reto (`copy.json` → `politicas.retoPrivacy`).
 3. **Luis:** dirección postal para el pie (CAN-SPAM, bloquea F3). Feriados en la fecha de entrega: sí/no.
-4. **CTO, sesión aparte:** el test `postgres.int.test.ts` «20 webhooks simultáneos ⇒ 1 pedido» falló una vez en CI
-   (0 `created`) y pasó al reintentar (run 46101348240). Ruta de dinero: investigar con un experto en concurrencia; no ignorar.
+4. ~~Test inestable «20 webhooks simultáneos ⇒ 1 pedido»~~ hecho (2026-11-28, `3398774`). Era bug del **test**, no de
+   producción: el creador del pedido puede perder el reclamo de producción ante un reenvío y sale con `RetryLaterError`
+   (Stripe reintenta → 200 `duplicate`; 1 aviso, 1 producción). El test ahora mide `orderPaid` + la fila, y hay un test
+   de intercalación forzada (determinista). 15 corridas seguidas en verde; mutante «avisar en duplicados» muerto.
 5. F3: Resend + suscriptores con doble confirmación + registro diario. Al cerrarlo, añadir el adaptador real a `RETO_SIGNUP`.
 
 ## Aceptado a propósito (no «arreglar»)
