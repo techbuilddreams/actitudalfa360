@@ -1,6 +1,6 @@
 import { copy } from '@/content';
 import { site } from '@/config/site';
-import { toDecimalString } from '@/domain/money';
+import { toDecimalString, usd } from '@/domain/money';
 import { defaultVariant, type Faq, type Product } from '@/domain/product';
 
 /** Constructores de schema.org: una sola implementación para todas las páginas (DRY). */
@@ -21,7 +21,7 @@ const returnPolicy = {
 
 const shippingDetails = (flatCents: number) => ({
   '@type': 'OfferShippingDetails',
-  shippingRate: { '@type': 'MonetaryAmount', value: (flatCents / 100).toFixed(2), currency: 'USD' },
+  shippingRate: { '@type': 'MonetaryAmount', value: toDecimalString(usd(flatCents)), currency: 'USD' },
   shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'US' },
   deliveryTime: {
     '@type': 'ShippingDeliveryTime',
@@ -30,18 +30,22 @@ const shippingDetails = (flatCents: number) => ({
   },
 });
 
-export const organizationLd = () => ({
-  '@type': 'Organization',
-  '@id': ORG_ID,
-  name: site.name,
-  url: site.url,
-  logo: abs('/img/icon-512.png'),
-  email: site.email,
-  slogan: copy.organization.slogan,
-  description: copy.organization.description,
-  parentOrganization: { '@type': 'Organization', name: site.legalName },
-  hasMerchantReturnPolicy: returnPolicy,
-});
+export const organizationLd = () => {
+  const address = site.postalAddress ? { '@type': 'PostalAddress', ...site.postalAddress } : null;
+  return {
+    '@type': 'Organization',
+    '@id': ORG_ID,
+    name: site.name,
+    legalName: site.legalName,
+    ...(address ? { address } : {}),
+    url: site.url,
+    logo: abs('/img/icon-512.png'),
+    email: site.email,
+    slogan: copy.organization.slogan,
+    description: copy.organization.description,
+    hasMerchantReturnPolicy: returnPolicy,
+  };
+};
 
 export const websiteLd = () => ({ '@type': 'WebSite', '@id': abs('/#web'), url: site.url, name: site.name, inLanguage: 'es-US', publisher: { '@id': ORG_ID } });
 
@@ -55,6 +59,8 @@ export const productLd = (p: Product, shippingCents: number) => {
     image: p.images.map((i) => abs(i.jpg)),
     sku: v.sku,
     category: p.category,
+    ...(p.material ? { material: p.material } : {}),
+    ...(p.color ? { color: p.color } : {}),
     brand: { '@type': 'Brand', name: site.name },
     offers: {
       '@type': 'Offer',

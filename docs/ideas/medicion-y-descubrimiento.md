@@ -2,7 +2,7 @@
 
 > Pedido de Luis: GA4 «como en los otros sistemas», saber qué hace el usuario y mejorar, decirlo claro en la
 > política, las mejores formas de conversión, datos organizados que den valor a la empresa, y que nos encuentren
-> los LLM y la búsqueda social. **Estado: paso 1 mergeado (PR #10); paso 2 (`purchase` server-side + UTM) en la rama `medicion-purchase` (ver «Paso 2: estado» al final).** Va en su propia sesión.
+> los LLM y la búsqueda social. **Estado: pasos 1 y 2 mergeados (PR #10, #11); paso 3 en la rama `medicion-seo` (ver «Paso 3: estado»).** Va en su propia sesión.
 
 ## 1. Postura (lo que cambio del pedido, y por qué)
 
@@ -147,8 +147,8 @@ arreglados, con test rojo → verde.
     el `api_secret`, como exige Google).
 
 **Pendiente**
-- Luis aprueba las dos frases nuevas de `#medicion` (compra server-side + campaña; nombran `_ga_…` y Stripe).
-- Merge del PR → `develop`.
+- ~~Luis aprueba las dos frases nuevas de `#medicion`~~ aprobadas 2026-11-28.
+- ~~Merge del PR → `develop`~~ hecho (#11, ff8d8ed).
 
 **Deliberadamente NO hecho**
 - Sin reintento ni cola del `purchase`: si GA4 falla o la función muere justo tras guardar el pedido, esa compra no llega
@@ -157,3 +157,75 @@ arreglados, con test rojo → verde.
   pierde lo mismo).
 - Un pago empezado con permiso y completado tras retirarlo (la pestaña de Stripe ya abierta) se mide.
 - `ga_cid`/`utm_*` quedan en la metadata de la sesión de Stripe (lo dice la política); no se borran tras el webhook.
+
+## Paso 3: estado (2026-11-28)
+
+Rama `medicion-seo` (PR a `develop`). TDD; construido por el Especialista en SEO, revisado por el QA de Merchant (build +
+`next start` + curl + 8 mutaciones) y por el Rompedor de feed en dos rondas. Tests nuevos en `robots-policy`,
+`structured-data`, `merchant-feed`, `llms-txt` y `politicas-page`.
+
+**Qué hace el código**
+- **robots.txt** (`src/lib/robots-policy.ts`, pura): `*` rastrea todo menos `/api/` y `/gracias`. Bots de **búsqueda** de IA
+  permitidos de forma explícita (OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot,
+  Claude-User) y con los mismos `disallow` repetidos (un grupo propio ignora a `*`). Bots de **entrenamiento** cerrados
+  (GPTBot, Google-Extended, ClaudeBot, CCBot, Applebot-Extended, meta-externalagent, Bytespider, anthropic-ai, Claude-Web,
+  cohere-training-data-crawler, AI2Bot). Amazonbot y Diffbot no: uso mixto. Staging: todo cerrado.
+  **Decisión pendiente de Luis:** bloquear `Google-Extended` también saca el sitio del grounding de Gemini Apps y Vertex AI
+  (no afecta a Google Search ni a AI Overviews). Hoy está bloqueado; es una línea en `robots-policy.ts`.
+- **JSON-LD** (`src/lib/structured-data.ts`): `Product`/`Offer` ahora con `material` y `color` (campos opcionales nuevos del dominio, rellenos en el catálogo).
+  `Organization` con `legalName` y `PostalAddress` (`site.postalAddress` es un objeto; el pie lo formatea con
+  `formatPostalAddress`; `null` ⇒ se omite). Sin `parentOrganization` (contradecía `legalName`). Sin `priceValidUntil`
+  (opcional; chocaba con «precios pueden cambiar sin aviso»).
+  `/reto-30-dias` emite `FAQPage` (desde 2023 Google no da resultado enriquecido por FAQ: sirve para los LLM). Devolución sigue en `MerchantReturnNotPermitted` (hecho a pedido).
+- **Feed** `GET /merchant-feed.xml` (`src/lib/merchant-feed.ts`, pura): RSS 2.0 con `g:`; un item por producto, mismo
+  catálogo y mismas constantes que el JSON-LD (test de paridad precio/disponibilidad/envío/plazos). Envío en un
+  `g:shipping` anidado (país, precio plano, plazos de manejo y tránsito). Staging: 404 + noindex. CDN 1 h.
+- **/llms.txt** ahora es un route handler generado del catálogo y `site.ts` (se borró `public/llms.txt`, que decía
+  «Nueva York»). También se corrigió `copy.organization.description` (salía en el JSON-LD con «Nueva York»).
+- El proxy no toca `/merchant-feed.xml` (igual que `llms.txt`): sin CSP ni nonce en un XML.
+
+**Runbook de consola (Luis)**
+1. Merchant Center: crear cuenta (negocio: Tech Build Dreams LLC, dirección de la LLC, país EE. UU.).
+2. Reclamar el dominio `actitudalfa360.com`: se verifica con Search Console (ya hay propiedad de dominio, paso 1.8).
+3. Envío: tarifa plana igual que la tienda ($8.99 EE. UU., 2–5 días de producción + 3–7 de entrega). Si cambia
+   `SHIPPING_FLAT_CENTS`, cambiarla aquí también: el feed lleva el precio, pero la configuración de la cuenta manda
+   si difiere.
+4. Devoluciones: **no se aceptan devoluciones por cambio de opinión** (hecho a pedido); daño/defecto ⇒ reemplazo o reembolso
+   dentro de 30 días. Misma redacción que `/politicas#devoluciones`.
+5. Productos → Feeds → nuevo feed principal → «Descarga programada» diaria de `https://actitudalfa360.com/merchant-feed.xml`
+   (país EE. UU., idioma español). Activar «listados gratuitos».
+6. Diagnóstico de Merchant Center: comprobar que `g:shipping` con plazos de manejo y tránsito no da aviso.
+7. Validar: Rich Results Test sobre `/productos/taza-negra-15oz`, `/productos/vaso-termico-20oz` y `/reto-30-dias`; en
+   Merchant Center, Diagnóstico del feed (esperar avisos y pasarme los textos).
+8. Bing Webmaster: ya importa la propiedad; añadir el sitemap si no está.
+
+**Pendiente**
+- Producción está tras la compuerta de F3: robots, feed y llms.txt solo sirven de verdad cuando se levante.
+- Comprobar en Merchant Center que Google acepta `google_product_category` en texto (Mugs; Travel Mugs & Tumblers). Si
+  la taxonomía cambió, el diagnóstico lo dirá.
+- Humo en producción: `curl -I /merchant-feed.xml` (200, `application/xml`), `/robots.txt`, `/llms.txt`.
+
+**Deliberadamente NO hecho**
+- Sin `HowTo` (decisión tomada: Google dejó de mostrarlo).
+- Sin GTIN/MPN: son productos propios hechos a pedido; `identifier_exists = no`.
+- El kit (taza + vaso en un pago) no va en el feed: no es un producto con SKU propio en el catálogo.
+- Sin `g:sale_price`, `g:item_group_id` ni variantes: cada producto tiene una sola variante.
+- Sin cambiar la política de devoluciones ni ofrecer «devolución gratis»: sería publicidad engañosa para Merchant Center.
+- Sin reglas por bot para Googlebot/Bingbot: caen en `*`.
+
+**Ronda 2 (arreglos tras QA y Rompedor)**
+- `llms.txt` y `/politicas` comparten frases (`src/lib/policy-facts.ts`: solo EE. UU., plazos, sin devolución por cambio de
+  opinión, «dañado, defectuoso o equivocado … dentro de los 30 días siguientes a la entrega»); envío con `shippingNote`;
+  estado de la LLC de `site.legalState` (también en `copy.organization.description`). Corchetes de enlaces Markdown escapados.
+- El precio ya no está dentro de `seo.description` (feed y JSON-LD heredaban un precio que podía quedar viejo).
+- El feed lanza error si un producto tiene más de una variante (la ficha solo vende la 0).
+- `escapeXml` quita surrogates sueltos. Tests de valores exactos (país, URL de devoluciones, `DAY`, `seller`, `g:service`,
+  sin `g:region`, categoría de Google exacta).
+
+**Ronda 3 (re-ataque del Rompedor)**
+- `/politicas#envios` y `#devoluciones` ahora tienen test contra `policyPhrases()` (antes la página podía decir «aceptamos
+  devoluciones» con la suite en verde; los tres mutantes del Rompedor mueren).
+- `llms.txt` lleva la nota de impuesto si `STRIPE_AUTOMATIC_TAX` (igual que la ficha) y cómo reclamar la garantía
+  (`claimHow`: correo, foto y número de pedido), para que un LLM no la presente como automática.
+- Nota: `anthropic-ai` y `Claude-Web` son tokens antiguos (Anthropic hoy documenta ClaudeBot, Claude-User, Claude-SearchBot);
+  `cohere-training-data-crawler` sin verificar contra docs de Cohere. Bloquearlos no daña nada.

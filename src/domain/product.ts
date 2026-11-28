@@ -40,6 +40,9 @@ export interface Product {
   readonly images: readonly ProductImage[];
   readonly variants: readonly ProductVariant[];
   readonly category: string;
+  /** Material y color principales (schema.org/Product y feed de Merchant Center). */
+  readonly material?: string;
+  readonly color?: string;
   /** Pilar al que pertenece su frase (id de `copy.pillars`). */
   readonly pillar?: string;
 }

@@ -1,3 +1,4 @@
+import { formatPostalAddress } from '@/domain/postal-address';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { copy } from '@/content';
@@ -45,7 +46,7 @@ export function SiteFooter({ consent }: { consent?: ReactNode } = {}) {
         </div>
         <div className="legal">
           <span>© {new Date().getFullYear()} {site.legalName}</span>
-          {site.postalAddress && <span>{site.postalAddress}</span>}
+          {site.postalAddress && <span>{formatPostalAddress(site.postalAddress)}</span>}
           <a href={`mailto:${site.email}`}>{site.email}</a>
           <Link href="/politicas#privacidad">{t.privacidad}</Link>
           <Link href="/politicas#terminos">{t.terminos}</Link>

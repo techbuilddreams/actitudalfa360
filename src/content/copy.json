@@ -140,7 +140,7 @@
   "products": {
     "taza-negra-15oz": {
       "title": "Taza negra 15 oz con frase en español | Actitud Alfa 360",
-      "description": "Taza negra de cerámica de 15 oz con el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". Apta para microondas. {precioTaza}.",
+      "description": "Taza negra de cerámica de 15 oz con el sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". Apta para microondas.",
       "h1": "Taza negra 15 oz — Háblame de hacer dinero, no de gente",
       "shortPitch": "Para el café de las 5 a. m. de alguien que tiene cosas que construir.",
       "longDescription": "Esta taza negra de cerámica de 15 oz está hecha para el primer café del día, ese que tomas antes de que el resto se levante. Por un lado lleva el sello Actitud Alfa 360, el ojo dentro del triángulo con la brújula; por el otro, la frase que resume la marca: \"Háblame de hacer dinero, no de gente\". Es una taza con frase en español para quien prefiere hablar de metas y no de chismes. Sus 15 oz alcanzan para un café grande o un té largo mientras trabajas. Se puede meter al microondas y al lavavajillas, así que aguanta el uso diario. Es un buen regalo para un emprendedor, para tu papá, tu pareja o el amigo que siempre está trabajando en algo. Cada taza se imprime a pedido y se envía dentro de Estados Unidos.",
@@ -184,7 +184,7 @@
     },
     "vaso-termico-20oz": {
       "title": "Vaso térmico 20 oz de acero inoxidable | Actitud Alfa 360",
-      "description": "Vaso térmico de acero inoxidable de 20 oz con tapa y popote, sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\". {precioVaso}.",
+      "description": "Vaso térmico de acero inoxidable de 20 oz con tapa y popote, sello Actitud Alfa 360 y la frase \"Háblame de hacer dinero, no de gente\".",
       "h1": "Vaso térmico 20 oz — Háblame de hacer dinero, no de gente",
       "shortPitch": "Para la ruta, el gym y los días largos: tu bebida va contigo.",
       "longDescription": "Hay días que empiezan en el carro y terminan en el gym. Este vaso térmico de acero inoxidable de 20 oz está hecho para esos días. Su forma delgada cabe en el portavasos del carro, así que te acompaña en la ruta de delivery, en el trayecto al trabajo o en la obra. Incluye tapa y popote para tomar sin detenerte. Lleva el sello Actitud Alfa 360 arriba y, debajo, la frase \"Háblame de hacer dinero, no de gente\": un recordatorio para los que están construyendo algo. Con 20 oz tienes espacio para el café de la mañana, el agua del entrenamiento o tu batido. Para cuidar el acabado, lávalo a mano. Es un regalo práctico para un repartidor, un chofer, un emprendedor o alguien que no se pierde un día de gym. Se hace a pedido y se envía dentro de Estados Unidos.",
@@ -255,7 +255,7 @@
     }
   },
   "organization": {
-    "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, con sede en Nueva York.",
+    "description": "Actitud Alfa 360 es una marca de mentalidad y estilo de vida en español para quienes están construyendo algo, basada en cuatro pilares: cuerpo, mente, dinero y carácter. Es propiedad de Tech Build Dreams LLC, constituida en {estadoLegal} (EE. UU.).",
     "slogan": "Háblame de hacer dinero, no de gente."
   },
   "social": {

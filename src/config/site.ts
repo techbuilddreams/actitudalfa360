@@ -1,3 +1,5 @@
+import type { PostalAddress } from '@/domain/postal-address';
+
 /** Datos públicos de la marca: una sola fuente de verdad (DRY). */
 export const site = {
   name: 'Actitud Alfa 360',
@@ -26,7 +28,13 @@ export const site = {
   /** Membresía: aún no se vende (decisión 10). El precio se muestra como «próximamente». */
   membership: { priceCents: 1200 },
   /** Dirección postal para el pie (CAN-SPAM): la de la LLC, dada por Luis el 2026-11-28. */
-  postalAddress: '2125 Biscayne Blvd, Ste 204, Miami, FL 33137, United States' as string | null,
+  postalAddress: {
+    streetAddress: '2125 Biscayne Blvd, Ste 204',
+    addressLocality: 'Miami',
+    addressRegion: 'FL',
+    postalCode: '33137',
+    addressCountry: 'US',
+  } as PostalAddress | null,
 } as const;
 
 export const deliveryPromise =

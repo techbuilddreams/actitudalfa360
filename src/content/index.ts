@@ -28,6 +28,7 @@ export const copy = fillCopy(texts, {
   diasDevolucion: String(site.returns.days),
   diasReto: String(site.challenge.days),
   correo: site.email,
+  estadoLegal: site.legalState,
   diasBorrado: String(site.privacy.deleteAfterUnsubscribeDays),
   diasRespuesta: String(site.privacy.responseDays),
   precioMembresia: formatMoneyShort(usd(site.membership.priceCents)),
