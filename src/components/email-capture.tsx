@@ -1,0 +1,85 @@
+'use client';
+
+import { useId, useRef, useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { normalizeEmail } from '@/domain/email';
+
+export interface CaptureText {
+  label: string; placeholder: string; button: string; busy: string; micro: string; privacy: string; health: string;
+  errEmpty: string; errInvalid: string; errRetry: string; okTitle: string; okBefore: string; okAfter: string;
+}
+
+export interface SignupPayload { email: string; timeZone: string; source: 'home' | 'reto' }
+
+const postSignup = (p: SignupPayload) =>
+  fetch('/api/reto/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+
+/** La zona del navegador: el día 1 y el corte del mediodía son en la hora del participante. */
+const browserTimeZone = () => {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { return 'UTC'; }
+};
+
+interface Props {
+  source: SignupPayload['source'];
+  text: CaptureText;
+  /** Puerto inyectable (tests). Por defecto, POST a /api/reto/signup. */
+  submit?: (p: SignupPayload) => Promise<Response>;
+}
+
+/** Alta en el reto: un solo campo. Misma regla de correo que el servidor (`normalizeEmail`). */
+export function EmailCapture({ source, text: t, submit = postSignup }: Props) {
+  const id = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy) return;
+    const raw = input.current?.value ?? '';
+    const email = normalizeEmail(raw);
+    if (!email) {
+      setError(raw.trim() ? t.errInvalid : t.errEmpty);
+      input.current?.focus();
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await submit({ email, timeZone: browserTimeZone(), source });
+      if (res.status === 202) { setDone(email); return; }
+      const body = res.status === 400 ? ((await res.json().catch(() => ({}))) as { error?: unknown }) : {};
+      setError(typeof body.error === 'string' && body.error ? body.error : t.errRetry);
+    } catch {
+      setError(t.errRetry);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="capture-ok" role="status">
+        <strong>{t.okTitle}</strong>
+        <span className="micro">{t.okBefore}{done}{t.okAfter}</span>
+      </div>
+    );
+  }
+
+  const errId = `${id}-err`;
+  return (
+    <form className="capture" noValidate onSubmit={onSubmit}>
+      <label htmlFor={id}>{t.label}</label>
+      <div className="capture-row">
+        <input ref={input} id={id} name="email" type="email" inputMode="email" autoComplete="email" placeholder={t.placeholder}
+          required aria-invalid={error ? true : undefined} aria-describedby={error ? errId : undefined}
+          onInput={() => setError(null)} />
+        <button className="btn" type="submit" disabled={busy} aria-busy={busy}>{t.button}</button>
+      </div>
+      {error && <p className="err" id={errId} role="alert">{error}</p>}
+      <p className="micro">{t.micro} <Link href="/politicas#privacidad">{t.privacy}</Link>.</p>
+      <p className="micro health-note">{t.health}</p>
+    </form>
+  );
+}

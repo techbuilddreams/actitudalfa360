@@ -80,4 +80,16 @@ export const breadcrumbLd = (trail: readonly { name: string; path: string }[]) =
   itemListElement: trail.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.name, item: abs(t.path) })),
 });
 
+/** Página genérica (p. ej. /reto-30-dias): parte del sitio, en español. */
+export const webPageLd = (path: string, name: string, description: string) => ({
+  '@type': 'WebPage',
+  '@id': abs(`${path}#page`),
+  url: abs(path),
+  name,
+  description,
+  inLanguage: 'es-US',
+  isPartOf: { '@id': abs('/#web') },
+  publisher: { '@id': ORG_ID },
+});
+
 export const graph = (...nodes: object[]) => ({ '@context': 'https://schema.org', '@graph': nodes });
