@@ -85,22 +85,70 @@ describe.skipIf(!url)('Postgres (integración, concurrencia real)', () => {
 
   it('20 webhooks simultáneos del mismo pago ⇒ 1 pedido y 1 producción', async () => {
     const createDraftOrder = vi.fn(async () => { await new Promise((r) => setTimeout(r, 30)); return 'pf_1'; });
+    const orderPaid = vi.fn(async () => {});
     const handle = makeHandlePayment({
       orders: repo(), catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
-      notifier: { orderPaid: async () => {}, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noop,
+      notifier: { orderPaid, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noop,
       newId: randomUUID, now: () => new Date(),
     });
     const paid = paidOf();
     const results = await Promise.allSettled(Array.from({ length: 20 }, () => handle(paid)));
-    expect(results.filter((r) => r.status === 'fulfilled' && r.value === 'created')).toHaveLength(1);
+    // "1 pedido" se mide con el aviso y la fila, NO con 'created': el creador puede perder el reclamo de producción
+    // ante un reenvío y salir con RetryLater (ver el test de intercalación forzada de abajo).
+    expect(orderPaid).toHaveBeenCalledOnce();
+    expect(results.filter((r) => r.status === 'fulfilled' && r.value === 'created').length).toBeLessThanOrEqual(1);
     expect(results.every((r) => r.status === 'fulfilled' || r.reason instanceof RetryLaterError)).toBe(true);
     expect(createDraftOrder).toHaveBeenCalledTimes(1);
+    expect(await handle(paid)).toBe('duplicate'); // el reintento de Stripe de los que pidieron RetryLater: 200
+    expect(orderPaid).toHaveBeenCalledOnce();
     const order = await repo().findByPaymentRef(paid.paymentRef);
     expect(order?.status).toBe('fulfillment_created');
     expect(order?.fulfillmentRef).toBe('pf_1');
     expect(order?.number).toBeGreaterThanOrEqual(10001);
     expect(order?.lines[0]?.unitCents).toBe(2499);
     expect(order?.shipping?.postalCode).toBe('12182');
+    const [{ n }] = await admin`SELECT count(*)::int AS n FROM orders WHERE payment_ref = ${paid.paymentRef}`;
+    expect(n).toBe(1);
+  });
+
+  it('el creador del pedido pierde el reclamo de producción ante un reenvío (intercalación forzada)', async () => {
+    // A inserta (autocommit) → B entra por el camino rápido, ve la fila y reclama → A llega tarde al reclamo.
+    const base = repo();
+    let inserted!: () => void;
+    const aInserted = new Promise<void>((r) => { inserted = r; });
+    let openGate!: () => void;
+    const gate = new Promise<void>((r) => { openGate = r; });
+    const ordersA: typeof base = Object.assign(Object.create(base), {
+      createIfAbsent: async (o: Order) => { const out = await base.createIfAbsent(o); inserted(); return out; },
+      claimForFulfillment: async (id: string, ttl: number) => { await gate; return base.claimForFulfillment(id, ttl); },
+    });
+    const ordersB: typeof base = Object.assign(Object.create(base), {
+      claimForFulfillment: async (id: string, ttl: number) => { const t = await base.claimForFulfillment(id, ttl); openGate(); return t; },
+    });
+    let aSettled!: () => void;
+    const aDone = new Promise<void>((r) => { aSettled = r; });
+    const createDraftOrder = vi.fn(async () => { await aDone; return 'pf_1'; }); // B sigue "en Printify" mientras A decide
+    const orderPaid = vi.fn(async () => {});
+    const mk = (orders: typeof base) => makeHandlePayment({
+      orders, catalog: staticCatalog, fulfillment: { name: 'fake', createDraftOrder },
+      notifier: { orderPaid, fulfillmentFailed: async () => {}, fulfillmentAnomaly: async () => {} }, logger: noop,
+      newId: randomUUID, now: () => new Date(),
+    });
+    const paid = paidOf();
+    const a = mk(ordersA)(paid).finally(() => aSettled());
+    await aInserted;
+    const b = mk(ordersB)(paid);
+    const [ra, rb] = await Promise.allSettled([a, b]);
+    // A creó el pedido y avisó el pago, pero pide reintento (otro proceso está produciendo): Stripe recibe 500.
+    expect(ra.status === 'rejected' && ra.reason instanceof RetryLaterError).toBe(true);
+    expect(rb).toEqual({ status: 'fulfilled', value: 'duplicate' });
+    expect(orderPaid).toHaveBeenCalledOnce(); // el aviso salió ANTES del RetryLater: no se pierde ni se repite
+    expect(createDraftOrder).toHaveBeenCalledOnce();
+    expect(await base.findByPaymentRef(paid.paymentRef)).toMatchObject({ status: 'fulfillment_created', fulfillmentRef: 'pf_1' });
+    // El reintento de Stripe de A ya no tiene nada que hacer: 200 "duplicate", sin segundo aviso ni producción.
+    expect(await mk(base)(paid)).toBe('duplicate');
+    expect(orderPaid).toHaveBeenCalledOnce();
+    expect(createDraftOrder).toHaveBeenCalledOnce();
     const [{ n }] = await admin`SELECT count(*)::int AS n FROM orders WHERE payment_ref = ${paid.paymentRef}`;
     expect(n).toBe(1);
   });
