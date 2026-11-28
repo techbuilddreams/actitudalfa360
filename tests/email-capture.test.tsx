@@ -56,8 +56,9 @@ describe('EmailCapture', () => {
   });
 
   // Consentimiento: una casilla premarcada no es consentimiento válido (TJUE, Planet49, C-673/17). El hash solo lleva
-  // al formulario, enfoca y resalta la casilla; la marca la persona.
-  it('llegar por «Avísame cuando abra» (#empieza-membresia) NO marca la casilla: la enfoca, la resalta y lleva a ella', async () => {
+  // al formulario y resalta la casilla; la marca la persona. El foco va al FORMULARIO, no a la casilla: con la casilla
+  // enfocada, un Espacio (p. ej. para bajar la página) la marcaría sin querer.
+  it('llegar por «Avísame cuando abra» (#empieza-membresia) NO marca la casilla: enfoca el formulario, la resalta y lleva a ella', async () => {
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
     window.location.hash = '';
@@ -66,7 +67,12 @@ describe('EmailCapture', () => {
     expect(box!.closest('label')!.classList.contains('highlight')).toBe(false);
     window.location.hash = '#empieza-membresia';
     await act(async () => { window.dispatchEvent(new HashChangeEvent('hashchange')); });
-    await waitFor(() => expect(document.activeElement).toBe(box));
+    const form = box!.closest('form')!;
+    await waitFor(() => expect(document.activeElement).toBe(form));
+    expect(document.activeElement).not.toBe(box);
+    expect(form.tabIndex).toBe(-1);
+    fireEvent.keyDown(document.activeElement!, { key: ' ', code: 'Space' });
+    fireEvent.keyUp(document.activeElement!, { key: ' ', code: 'Space' });
     expect(box!.checked).toBe(false);
     expect(other!.checked).toBe(false);
     expect(box!.closest('label')!.classList.contains('highlight')).toBe(true);
@@ -82,7 +88,8 @@ describe('EmailCapture', () => {
     window.location.hash = '#empieza-membresia';
     render(<EmailCapture source="home" text={t} submit={ok} membershipHash="empieza-membresia" />);
     const box = screen.getByRole('checkbox', { name: t.membership }) as HTMLInputElement;
-    await waitFor(() => expect(document.activeElement).toBe(box));
+    await waitFor(() => expect(document.activeElement).toBe(box.closest('form')));
+    expect(document.activeElement).not.toBe(box);
     expect(box.checked).toBe(false);
     window.location.hash = '';
   });

@@ -29,7 +29,8 @@ interface Props {
   resolveTimeZone?: () => string;
   /**
    * Si la URL llega con este hash («Avísame cuando abra»), se lleva a la persona a la casilla de la membresía:
-   * scroll, foco y resaltado. NUNCA se marca sola: una casilla premarcada no es consentimiento (TJUE, Planet49).
+   * scroll y resaltado; el foco va al FORMULARIO (tabIndex -1), no a la casilla: con ella enfocada, un Espacio la
+   * marcaría. NUNCA se marca sola: una casilla premarcada no es consentimiento (TJUE, Planet49).
    */
   membershipHash?: string;
 }
@@ -44,14 +45,14 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
   const [member, setMember] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const memberBox = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!membershipHash) return;
     const sync = () => {
       if (window.location.hash !== `#${membershipHash}`) return;
-      const box = memberBox.current;
-      box?.scrollIntoView?.({ block: 'center' });
-      box?.focus({ preventScroll: true });
+      memberBox.current?.scrollIntoView?.({ block: 'center' });
+      form.current?.focus({ preventScroll: true });
       setHighlight(true);
     };
     sync();
@@ -94,7 +95,7 @@ export function EmailCapture({ source, text: t, submit = postSignup, resolveTime
 
   const errId = `${id}-err`;
   return (
-    <form className="capture" noValidate onSubmit={onSubmit}>
+    <form ref={form} className="capture" tabIndex={-1} noValidate onSubmit={onSubmit}>
       <label htmlFor={id}>{t.label}</label>
       <div className="capture-row">
         <input ref={input} id={id} name="email" type="email" inputMode="email" autoComplete="email" placeholder={t.placeholder}
