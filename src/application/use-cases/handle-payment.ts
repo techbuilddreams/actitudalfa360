@@ -7,6 +7,7 @@ import type { Logger } from '../ports/logger';
 import type { Notifier } from '../ports/notifier';
 import type { OrderRepository } from '../ports/order-repository';
 import type { PaidCheckout } from '../ports/payment-gateway';
+import type { Defer, PurchaseReporter } from '../ports/purchase-reporter';
 
 export interface HandlePaymentDeps {
   orders: OrderRepository;
@@ -16,6 +17,8 @@ export interface HandlePaymentDeps {
   logger: Logger;
   newId: () => string;
   now: () => Date;
+  /** `purchase` server-side hacia GA4. Ausente = no se mide (local, staging, o sin secreto). */
+  analytics?: { reporter: PurchaseReporter; defer: Defer } | null;
 }
 
 export type HandlePaymentResult = 'created' | 'duplicate';
@@ -72,6 +75,7 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
       phone: paid.phone,
       shipping: paid.shipping,
       fulfillmentRef: null,
+      utm: paid.attribution.utm,
       createdAt: deps.now(),
     };
 
@@ -79,6 +83,20 @@ export function makeHandlePayment(deps: HandlePaymentDeps) {
     const { created, order } = await deps.orders.createIfAbsent(draft);
     if (created) await deps.notifier.orderPaid(order);
     else deps.logger.info('Pago ya registrado', { paymentRef: paid.paymentRef });
+
+    // 1b) Compra hacia GA4: solo el pedido NUEVO (un reenvío de Stripe no cuenta dos veces) y solo si la visita se
+    // midió con permiso (sin client_id no hubo permiso). Fuera de la respuesta, y su fallo nunca toca el pago.
+    const clientId = paid.attribution.gaClientId;
+    if (created && clientId && deps.analytics) {
+      const { reporter } = deps.analytics;
+      deps.analytics.defer(async () => {
+        try {
+          await reporter.reportPurchase(order, { clientId, sessionId: paid.attribution.gaSessionId });
+        } catch (err) {
+          deps.logger.error('analytics_purchase_failed', { orderId: order.id, reason: err instanceof Error ? err.message : 'desconocido' });
+        }
+      });
+    }
 
     // 2) Producción: solo el proceso que gana el reclamo atómico la ejecuta.
     if (deps.fulfillment && order.status !== 'paid') {

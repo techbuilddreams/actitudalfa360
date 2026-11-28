@@ -32,6 +32,13 @@ export const orders = pgTable(
     phone: varchar('phone', { length: 40 }),
     shipping: jsonb('shipping').$type<ShippingAddress | null>(),
     fulfillmentRef: varchar('fulfillment_ref', { length: 64 }),
+    // Campaña de la primera visita (solo si la medición estaba encendida). text: el dominio ya recorta a 100;
+    // un límite aquí convertiría una UTM larga en un pago cobrado sin guardar.
+    utmSource: text('utm_source'),
+    utmMedium: text('utm_medium'),
+    utmCampaign: text('utm_campaign'),
+    utmTerm: text('utm_term'),
+    utmContent: text('utm_content'),
     // Hora del reclamo según el reloj de la BASE (now()), nunca el de la app.
     claimedAt: timestamp('claimed_at', tz),
     // Token de turno: lo genera la base en cada reclamo; solo quien lo tiene puede cerrar el pedido.

@@ -1,5 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
+import { after } from 'next/server';
+import { purchaseReporting } from '@/config/analytics';
 import { env, isProduction, publicEnv, requireEnv } from '@/config/env';
 import { site } from '@/config/site';
 import { flatShipping } from '@/domain/cart';
@@ -25,6 +27,7 @@ import type { RetoSignup } from '@/application/ports/reto-signup';
 import { LogRetoSignup } from './signup/log-reto-signup';
 import { createRateLimiter } from './security/rate-limit';
 import { canonicalTimeZone } from '@/lib/iana-time-zone';
+import { MeasurementProtocolReporter } from './analytics/measurement-protocol';
 
 /**
  * Composition root: el ÚNICO lugar que conecta casos de uso con adaptadores concretos.
@@ -104,6 +107,12 @@ export const createCheckout = () =>
     siteUrl: env().NEXT_PUBLIC_SITE_URL.replace(/\/$/, ''),
   });
 
+/** `purchase` server-side: solo en producción con ID y secreto de GA4. Corre con `after`, fuera de la respuesta a Stripe. */
+function purchaseAnalytics() {
+  const cfg = purchaseReporting();
+  return cfg ? { reporter: new MeasurementProtocolReporter(cfg), defer: after } : null;
+}
+
 export const handlePayment = () =>
   makeHandlePayment({
     orders: orderRepository(),
@@ -115,6 +124,7 @@ export const handlePayment = () =>
     logger,
     newId: randomUUID,
     now: () => new Date(),
+    analytics: purchaseAnalytics(),
   });
 
 /**

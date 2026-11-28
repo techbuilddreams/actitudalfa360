@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { measurementId } from '@/config/analytics';
+import { measurementId, purchaseReporting } from '@/config/analytics';
 import { parseEnv } from '@/config/deploy-rules';
 import { buildCsp } from '@/lib/csp';
 import { consentFromRequest, measurementProps } from '@/lib/consent-request';
@@ -68,4 +68,16 @@ describe('measurementProps (lo que el layout pasa al gestor)', () => {
     expect(measurementProps(new Headers({ 'x-vercel-ip-country': 'DE' }), undefined, env)).toEqual({
       measurementId: 'G-AB12CD34EF', decision: { analytics: false, showBanner: true, showPreferences: true },
     }));
+});
+
+describe('purchaseReporting (¿se manda `purchase` desde el servidor?)', () => {
+  const base = { NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-AB12CD34EF', NEXT_PUBLIC_APP_ENV: 'production', GA_API_SECRET: 'abcdefghijklmnop' };
+  it('producción + ID + secreto ⇒ los dos', () =>
+    expect(purchaseReporting(base)).toEqual({ measurementId: 'G-AB12CD34EF', apiSecret: 'abcdefghijklmnop' }));
+  it('sin secreto, o fuera de producción ⇒ null (misma lista blanca que el navegador)', () => {
+    expect(purchaseReporting({ ...base, GA_API_SECRET: undefined })).toBeNull();
+    expect(purchaseReporting({ ...base, GA_API_SECRET: '  ' })).toBeNull();
+    expect(purchaseReporting({ ...base, NEXT_PUBLIC_APP_ENV: 'staging' })).toBeNull();
+    expect(purchaseReporting({ ...base, NEXT_PUBLIC_GA_MEASUREMENT_ID: undefined })).toBeNull();
+  });
 });

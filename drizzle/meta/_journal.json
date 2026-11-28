@@ -15,6 +15,13 @@
       "when": 1795751551321,
       "tag": "0001_rls_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795884854678,
+      "tag": "0002_utm_pedido",
+      "breakpoints": true
     }
   ]
 }

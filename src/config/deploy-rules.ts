@@ -31,6 +31,8 @@ export const schema = z.object({
   NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3000'),
   // GA4. Sin ella no se mide. Mal escrita tumba la build (mismo patrón que src/config/analytics.ts).
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-[A-Z0-9]{4,16}$/).optional(),
+  // Secreto de Measurement Protocol (GA4 → flujo web → «Secretos de la API»): `purchase` server-side. Solo servidor.
+  GA_API_SECRET: z.string().trim().min(10).optional(),
 
   STRIPE_SECRET_KEY: z.string().regex(/^(sk|rk)_(test|live)_/).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
@@ -90,6 +92,9 @@ export function deploymentProblems(e: ServerEnv): string[] {
   if (e.VERCEL_ENV === 'preview' && e.APP_ENV === 'production') problems.push('VERCEL_ENV=preview no puede correr con APP_ENV=production');
   if (e.VERCEL_ENV === 'production' && e.APP_ENV !== 'production') problems.push(`VERCEL_ENV=production requiere APP_ENV=production (hay ${e.APP_ENV})`);
   if (Boolean(e.SMTP_USER) !== Boolean(e.SMTP_PASSWORD)) problems.push('SMTP_USER y SMTP_PASSWORD van juntas');
+  // Medir páginas sin medir compras sería un embudo que nunca cierra, y nadie se enteraría.
+  if (e.APP_ENV === 'production' && e.NEXT_PUBLIC_GA_MEASUREMENT_ID && !e.GA_API_SECRET)
+    problems.push('Con NEXT_PUBLIC_GA_MEASUREMENT_ID en producción falta GA_API_SECRET: las compras no llegarían a GA4');
   if (e.APP_ENV === 'production' && e.RETO_SIGNUP === 'log')
     problems.push('El alta del reto solo registra en el log: falta F3 (Resend + suscriptores). No se puede publicar así');
   return problems;

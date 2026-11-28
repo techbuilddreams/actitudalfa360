@@ -38,4 +38,16 @@ describe('createCheckout', () => {
     await run([{ sku: TAZA, quantity: 2 }]);
     expect(createCheckout.mock.calls[0]![0].shipping.cents).toBe(899);
   });
+
+  it('la atribución del navegador llega a la sesión de pago, validada', async () => {
+    const { run, createCheckout } = setup();
+    await run([{ sku: TAZA, quantity: 1 }], { gaClientId: '123.456', gaSessionId: 'basura', utm: { source: 'ig' } });
+    expect(createCheckout.mock.calls[0]![0].attribution).toEqual({ gaClientId: '123.456', gaSessionId: null, utm: { source: 'ig', medium: null, campaign: null, term: null, content: null } });
+  });
+
+  it('sin atribución (medición apagada) ⇒ vacía', async () => {
+    const { run, createCheckout } = setup();
+    await run([{ sku: TAZA, quantity: 1 }]);
+    expect(createCheckout.mock.calls[0]![0].attribution).toEqual({ gaClientId: null, gaSessionId: null, utm: null });
+  });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildCheckoutSessionParams } from '@/infrastructure/stripe/stripe-gateway';
+import Stripe from 'stripe';
+import { buildCheckoutSessionParams, StripeGateway } from '@/infrastructure/stripe/stripe-gateway';
 import { priceCart } from '@/domain/cart';
 import { usd } from '@/domain/money';
 import { staticCatalog } from '@/infrastructure/catalog/static-catalog';
@@ -36,5 +37,47 @@ describe('buildCheckoutSessionParams', () => {
     expect(p.cancel_url).toBe(req.cancelUrl);
     expect(p.success_url).toBe(req.successUrl);
     expect(p.automatic_tax).toEqual({ enabled: true });
+  });
+});
+
+describe('atribución en la sesión de pago', () => {
+  const attribution = { gaClientId: '123.456', gaSessionId: '1700000123', utm: { source: 'tiktok', medium: null, campaign: 'reto', term: null, content: null } };
+
+  it('viaja en la metadata de la SESIÓN, sin pisar las líneas', () => {
+    const p = buildCheckoutSessionParams({ ...req, attribution }, opts);
+    expect(p.metadata).toEqual({ lines: 'AA360-TAZA-15-NEGRA:2', ga_cid: '123.456', ga_sid: '1700000123', utm_source: 'tiktok', utm_campaign: 'reto' });
+  });
+
+  it('el ID de GA4 NO se copia al PaymentIntent (una copia menos de un identificador)', () => {
+    const p = buildCheckoutSessionParams({ ...req, attribution }, opts);
+    expect(p.payment_intent_data?.metadata).toEqual({ lines: 'AA360-TAZA-15-NEGRA:2' });
+  });
+
+  it('sin atribución, la metadata es la de siempre', () =>
+    expect(buildCheckoutSessionParams(req, opts).metadata).toEqual({ lines: 'AA360-TAZA-15-NEGRA:2' }));
+});
+
+describe('parseWebhook lee la atribución (evento firmado de verdad, sin red)', () => {
+  const secret = 'whsec_test_atribucion';
+  const gateway = new StripeGateway({ secretKey: 'sk_test_x', webhookSecret: secret, automaticTax: false, deliveryDays: { min: 1, max: 2 } });
+  const signed = (metadata: Record<string, string>) => {
+    const payload = JSON.stringify({
+      id: 'evt_1', object: 'event', type: 'checkout.session.completed',
+      data: { object: { id: 'cs_test_1', object: 'checkout.session', payment_status: 'paid', amount_total: 3398, amount_subtotal: 2499, total_details: { amount_shipping: 899, amount_tax: 0, amount_discount: 0 }, metadata, customer_details: { email: 'a@b.com' } } },
+    });
+    return { payload, header: Stripe.webhooks.generateTestHeaderString({ payload, secret }) };
+  };
+
+  it('la devuelve validada', async () => {
+    const { payload, header } = signed({ lines: 'AA360-TAZA-15-NEGRA:1', ga_cid: '123.456', ga_sid: '1700000123', utm_source: 'tiktok' });
+    const paid = await gateway.parseWebhook(payload, header);
+    expect(paid?.attribution).toEqual({ gaClientId: '123.456', gaSessionId: '1700000123', utm: { source: 'tiktok', medium: null, campaign: null, term: null, content: null } });
+  });
+
+  it('una sesión vieja (sin claves) ⇒ atribución vacía, el pago sigue', async () => {
+    const { payload, header } = signed({ lines: 'AA360-TAZA-15-NEGRA:1' });
+    const paid = await gateway.parseWebhook(payload, header);
+    expect(paid?.attribution).toEqual({ gaClientId: null, gaSessionId: null, utm: null });
+    expect(paid?.total.cents).toBe(3398);
   });
 });

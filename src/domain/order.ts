@@ -1,3 +1,4 @@
+import type { Utm } from './attribution';
 import type { Money } from './money';
 
 /**
@@ -65,6 +66,8 @@ export interface Order {
   readonly phone: string | null;
   readonly shipping: ShippingAddress | null;
   readonly fulfillmentRef: string | null;
+  /** Campaña de la primera visita (UTM), si la medición estaba encendida. Dato propio del negocio. */
+  readonly utm: Utm | null;
   readonly createdAt: Date;
 }
 

@@ -1,3 +1,4 @@
+import { EMPTY_ATTRIBUTION } from '@/domain/attribution';
 import { usd } from '@/domain/money';
 import type { Order, OrderAmounts } from '@/domain/order';
 import type { PaidCheckout } from '@/application/ports/payment-gateway';
@@ -16,6 +17,7 @@ export const paidCheckout = (over: Partial<PaidCheckout> = {}): PaidCheckout => 
   email: 'a@b.com',
   phone: null,
   shipping: address,
+  attribution: EMPTY_ATTRIBUTION,
   ...over,
 });
 
@@ -23,7 +25,7 @@ export const order = (over: Partial<Order> = {}): Order => ({
   id: 'o1', number: 10001, paymentRef: 'cs_test_abcdefgh12345678', status: 'paid',
   lines: [{ sku: 'AA360-TAZA-15-NEGRA', quantity: 2, name: 'Taza negra 15 oz', unitCents: 2499 }],
   total: usd(5897), amounts: amounts(4998),
-  email: 'cliente@example.com', phone: null, shipping: address, fulfillmentRef: null, createdAt: new Date(),
+  email: 'cliente@example.com', phone: null, shipping: address, fulfillmentRef: null, utm: null, createdAt: new Date(),
   ...over,
 });
 

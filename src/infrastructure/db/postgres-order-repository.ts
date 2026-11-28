@@ -41,6 +41,10 @@ const mapRow = (r: Row, lines: OrderItem[]): Order => ({
   phone: r.phone,
   shipping: r.shipping ?? null,
   fulfillmentRef: r.fulfillmentRef,
+  // Sin source no hay campaña (misma regla que el dominio).
+  utm: r.utmSource
+    ? { source: r.utmSource, medium: r.utmMedium, campaign: r.utmCampaign, term: r.utmTerm, content: r.utmContent }
+    : null,
   createdAt: r.createdAt,
 });
 
@@ -72,6 +76,11 @@ export class PostgresOrderRepository implements OrderRepository {
         phone: order.phone,
         shipping: order.shipping,
         fulfillmentRef: order.fulfillmentRef,
+        utmSource: order.utm?.source ?? null,
+        utmMedium: order.utm?.medium ?? null,
+        utmCampaign: order.utm?.campaign ?? null,
+        utmTerm: order.utm?.term ?? null,
+        utmContent: order.utm?.content ?? null,
         createdAt: order.createdAt,
       })
       .onConflictDoNothing({ target: orders.paymentRef })
