@@ -32,7 +32,7 @@ describe('configuración de despliegue', () => {
   it('producción con llave de prueba: falla', () =>
     expect(deploymentProblems({ ...base, STRIPE_SECRET_KEY: 'rk_test_x' }).join()).toContain('live'));
   it('staging con llave live: falla', () =>
-    expect(deploymentProblems({ ...base, APP_ENV: 'staging' }).join()).toContain('Staging'));
+    expect(deploymentProblems({ ...base, APP_ENV: 'staging' }).join()).toContain('live solo vale con APP_ENV=production (hay staging)'));
   it('Printify automático sin token: falla al arrancar, no al cobrar', () =>
     expect(deploymentProblems({ ...base, PRINTIFY_AUTO_ORDER: true }).join()).toContain('PRINTIFY'));
   it('preview de Vercel con APP_ENV=production: falla (un preview nunca cobra de verdad)', () =>
@@ -43,7 +43,7 @@ describe('configuración de despliegue', () => {
     expect(deploymentProblems({ ...base, VERCEL_ENV: 'production' }).filter((x) => !x.includes('falta F3'))).toEqual([]);
     expect(deploymentProblems({ ...base, APP_ENV: 'staging', STRIPE_SECRET_KEY: 'rk_test_x', VERCEL_ENV: 'preview' })).toEqual([]);
   });
-  it('local no exige nada', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', DATABASE_URL: undefined })).toEqual([]));
+  it('local no exige nada (con llave de prueba)', () => expect(deploymentProblems({ ...base, APP_ENV: 'local', STRIPE_SECRET_KEY: 'rk_test_x', DATABASE_URL: undefined })).toEqual([]));
 });
 
 describe('URLs de base de datos (Postgres)', () => {

@@ -12,9 +12,9 @@
   **Paso 2 desplegado en staging (2026-11-27):** build de `develop` con `migrations_ok`; verificado en Supabase:
   2 migraciones, RLS activo, `anon`/`authenticated` sin privilegios, rol `postgres` con `statement_timeout=15s` e
   `idle_in_transaction_session_timeout=15s` (el `ALTER ROLE` SÍ está permitido en Supabase). **Paso 4 HECHO.**
-- **Staging responde 500 a propósito** hasta el paso 5: `assertDeployable` exige `STRIPE_SECRET_KEY` y
-  `STRIPE_WEBHOOK_SECRET` en staging (log: "Configuración inválida: STRIPE_SECRET_KEY es obligatoria en staging…").
-  La base ya no falta: la siguiente barrera es Stripe.
+- **Staging ya no publica sin Stripe: la BUILD falla** (2026-11-27, ronda 3). `vercel-build` corre primero
+  `scripts/check-deploy.ts` (la misma `checkDeployment` que el arranque): sin `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`
+  sale 1 con `deploy_check_failed` y Vercel deja vivo el deploy anterior, en vez de Ready + 500 en todo.
 - **Hostinger ya no existe** (plan cancelado y reembolsado el 2026-11-10). Nada de este proyecto está en vivo.
 - El código **todavía** usa SMTP (paso 3).
 - Luis tiene **Vercel Pro** (equipo `techbuilddreams`, compartido con otros proyectos).
