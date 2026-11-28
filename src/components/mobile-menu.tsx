@@ -9,7 +9,7 @@ interface NavLink { href: string; label: string }
  * Menú móvil: botón con aria-expanded que muestra un panel bajo la cabecera.
  * Esc cierra y devuelve el foco. Se monta con `key={ruta}`: al navegar se cierra solo.
  */
-export function MobileMenu({ links }: { links: readonly NavLink[] }) {
+export function MobileMenu({ links, labels }: { links: readonly NavLink[]; labels: { open: string; close: string; aria: string } }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
 
@@ -26,9 +26,9 @@ export function MobileMenu({ links }: { links: readonly NavLink[] }) {
     <>
       <button ref={button} type="button" className="menu-btn" aria-expanded={open} aria-controls="mobile-nav"
         onClick={() => setOpen((o) => !o)}>
-        {open ? 'Cerrar' : 'Menú'}
+        {open ? labels.close : labels.open}
       </button>
-      <nav id="mobile-nav" className="mobile-nav" aria-label="Menú" hidden={!open}>
+      <nav id="mobile-nav" className="mobile-nav" aria-label={labels.aria} hidden={!open}>
         <div className="wrap">
           <ul>
             {links.map((l) => (

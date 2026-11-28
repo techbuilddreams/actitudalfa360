@@ -3,12 +3,12 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface CheckoutItem { readonly sku: string; readonly quantity: number }
-/** Qué control abrió el pago: solo ese dice «Abriendo pago seguro…» y muestra el error. */
+/** Qué control abrió el pago: solo ese muestra el texto de espera y el error. */
 export type CheckoutOrigin = 'buy' | 'kit';
 
 interface CheckoutState {
   busy: boolean;
-  /** «Abriendo pago seguro…», desde copy.json. */
+  /** Texto de espera del botón (copy.json → `checkout.busy`). */
   busyLabel: string;
   origin: CheckoutOrigin | null;
   error: string | null;

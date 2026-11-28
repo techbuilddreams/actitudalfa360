@@ -6,6 +6,8 @@ import { formatEtaRange } from '@/lib/format-eta';
 
 interface Props {
   shipping: { handlingDays: DayRange; transitDays: DayRange };
+  /** Textos (copy.json → `eta`): el rango sin fecha ya viene rellenado desde site.shipping. */
+  labels: { datedPre: string; datedMid: string; range: string };
   /** Reloj inyectable (tests). */
   now?: () => Date;
 }
@@ -14,9 +16,9 @@ interface Props {
  * «Llega aprox. entre …». La fecha depende del día del VISITANTE, no del de la build:
  * se calcula al montar. En el servidor (y antes de hidratar) va una línea neutra sin fechas.
  */
-export function DeliveryEta({ shipping, now = () => new Date() }: Props) {
+export function DeliveryEta({ shipping, labels: l, now = () => new Date() }: Props) {
   const [eta, setEta] = useState<{ from: string; to: string } | null>(null);
-  const { handlingDays: h, transitDays: t } = shipping;
+
 
   useEffect(() => {
     const r = estimateDelivery(now(), shipping);
@@ -27,6 +29,6 @@ export function DeliveryEta({ shipping, now = () => new Date() }: Props) {
   }, []);
 
   return eta
-    ? <b>{`Pídela hoy y llega aprox. entre el ${eta.from} y el ${eta.to}`}</b>
-    : <b>{`Llega en ${h.min + t.min} a ${h.max + t.max} días hábiles`}</b>;
+    ? <b>{`${l.datedPre}${eta.from}${l.datedMid}${eta.to}`}</b>
+    : <b>{l.range}</b>;
 }

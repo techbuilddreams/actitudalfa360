@@ -46,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {site.isStaging && <div className="preview-bar">Staging · no es la tienda real · pagos en modo prueba</div>}
         <a className="skip" href="#main">Ir al contenido</a>
-        <SiteHeader />
+        <SiteHeader labels={copy.nav} />
         <main id="main">{children}</main>
         <SiteFooter />
       </body>

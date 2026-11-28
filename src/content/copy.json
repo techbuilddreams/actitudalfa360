@@ -468,6 +468,33 @@
       "value": "Cantidad elegida"
     }
   },
+  "nav": {
+    "aria": "Principal",
+    "reto": "Reto",
+    "retoLong": "Reto de {diasReto} días",
+    "pilares": "Pilares",
+    "tienda": "Tienda",
+    "membresia": "Membresía",
+    "cta": "Reto gratis",
+    "menuOpen": "Menú",
+    "menuClose": "Cerrar",
+    "menuAria": "Menú"
+  },
+  "footer": {
+    "reto": "Reto",
+    "retoLink": "Reto de {diasReto} días",
+    "membresia": "Membresía",
+    "pilares": "Pilares",
+    "tienda": "Tienda",
+    "envios": "Envíos y devoluciones",
+    "privacidad": "Privacidad",
+    "terminos": "Términos"
+  },
+  "eta": {
+    "datedPre": "Pídela hoy y llega aprox. entre el ",
+    "datedMid": " y el ",
+    "range": "Llega en {diasTotal} días hábiles"
+  },
   "checkout": {
     "busy": "Abriendo pago seguro…",
     "errorStart": "No se pudo iniciar el pago.",

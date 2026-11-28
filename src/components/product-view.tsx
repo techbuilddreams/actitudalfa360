@@ -60,7 +60,7 @@ export function ProductView({ product, partner, shippingCents, automaticTax }: P
             <p className="lede">{product.shortPitch}</p>
             <p className="paywith">{t.paywith}</p>
             <div className="arrive">
-              <DeliveryEta shipping={site.shipping} />
+              <DeliveryEta shipping={site.shipping} labels={copy.eta} />
               <span>{capitalize(shippingNote(shipping, automaticTax))} · {t.printed}</span>
             </div>
             {kit && (
